@@ -6,17 +6,24 @@ import { DrawerMenu } from '../interfaces/drawer-menu'
 import { PrimeNG } from 'primeng/config'
 import { FormGroup } from '@angular/forms'
 import moment from 'moment'
-import { HttpClient } from '@angular/common/http'
+import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { SelectOption } from '../interfaces/general'
 import _ from 'lodash'
+import { StorageService } from './storage.service'
 
 @Injectable({
   providedIn: 'root',
 })
 export class UtilityService {
 
+  private storage = inject(StorageService);
+  private http = inject(HttpClient);
+  private config = inject(PrimeNG);
+
   filterValues = signal<any>({})
   drawerVisible = signal<boolean>(false)
+  groupVisible = signal<boolean>(false);
+  categoryVisible = signal<boolean>(false);
   isDarkTheme = signal<boolean>(false)
   tableSkeletonRows = Array(5).fill({})
 
@@ -67,11 +74,11 @@ export class UtilityService {
     { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
     { label: 'Screens', icon: 'pi pi-desktop', routerLink: '/screens/screen-registration' },
     { label: 'Assets', icon: 'pi pi-image', routerLink: '/assets/asset-library' },
-    { label: 'Layouts', icon: 'pi pi-palette', routerLink: '/layout/design-layout-library' },
+    // { label: 'Layouts', icon: 'pi pi-palette', routerLink: '/layout/design-layout-library' },
     { label: 'Playlists', icon: 'pi pi-list', routerLink: '/playlist/playlist-library' },
     { label: 'Schedules', icon: 'pi pi-calendar', routerLink: '/schedule/schedule-library' },
     { label: 'Screen Mangement', icon: 'pi pi-cloud', routerLink: '/screen-management' },
-    { label: 'Reports', icon: 'pi pi-chart-bar', routerLink: '/reports' },
+    // { label: 'Reports', icon: 'pi pi-chart-bar', routerLink: '/reports' },
     {
       label: 'Settings',
       icon: 'pi pi-cog',
@@ -82,6 +89,9 @@ export class UtilityService {
         { label: 'Roles', icon: 'pi pi-lock', routerLink: ['/settings/role-management'] },
         { separator: true },
         { label: 'Broadcast', icon: 'pi pi-megaphone', routerLink: ['/settings/broadcast'] },
+        { separator: true },
+        { label: 'Groups', icon: 'pi pi-tag', routerLink: ['/settings/group'] },
+        { label: 'Categories', icon: 'pi pi-tag', routerLink: ['/settings/category'] },
         { label: 'Tags', icon: 'pi pi-tag', routerLink: ['/settings/tag'] },
       ],
     },
@@ -99,6 +109,20 @@ export class UtilityService {
     { label: 'Pending', value: 'pending' },
     { label: 'Suspended', value: 'suspended' },
   ]
+
+  ageGroups = signal<any[]>([
+    { id: 1, value: 'Child' },
+    { id: 2, value: 'Teen' },
+    { id: 3, value: 'Young Adult' },
+    { id: 4, value: 'Adult' },
+    { id: 5, value: 'Middle Age' },
+    { id: 6, value: 'Senior' },
+  ])
+
+  genders = signal<any[]>([
+    { id: 1, value: 'Male' },
+    { id: 2, value: 'Female' },
+  ])
 
   private breakPointObserver = inject(BreakpointObserver)
   readonly isMobile = toSignal(
@@ -256,7 +280,7 @@ export class UtilityService {
     return times
   }
 
-  constructor(private config: PrimeNG, private http: HttpClient) {}
+  constructor() {}
 
   formatDate(date: any, format: string, timeZone: string = 'Asia/Manila') {
     return moment(date).tz(timeZone)
@@ -425,6 +449,50 @@ export class UtilityService {
     const regex = /(?:youtube\.com\/.*v=|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     return match ? match[1] : '';
+  }
+
+  onGETApi(url: string) {
+    const tenantId = this.storage.get('id');
+    const accessToken = `Bearer ${this.storage.get('accessToken')}`;
+
+    const headers = new HttpHeaders({
+      'x-tenant-id': tenantId,
+      'Authorization': accessToken
+    });
+    return this.http.get(url, { headers }); 
+  }
+
+  onPOSTApi(url: string, body: any) {
+    const tenantId = this.storage.get('id');
+    const accessToken = `Bearer ${this.storage.get('accessToken')}`;
+
+    const headers = new HttpHeaders({
+      'x-tenant-id': tenantId,
+      'Authorization': accessToken
+    });
+    return this.http.post(url, body, { headers }); 
+  }
+
+  onPATCHApi(url: string, body: any) {
+    const tenantId = this.storage.get('id');
+    const accessToken = `Bearer ${this.storage.get('accessToken')}`;
+
+    const headers = new HttpHeaders({
+      'x-tenant-id': tenantId,
+      'Authorization': accessToken
+    });
+    return this.http.patch(url, body, { headers }); 
+  }
+
+  onDELETEApi(url: string) {
+    const tenantId = this.storage.get('id');
+    const accessToken = `Bearer ${this.storage.get('accessToken')}`;
+
+    const headers = new HttpHeaders({
+      'x-tenant-id': tenantId,
+      'Authorization': accessToken
+    });
+    return this.http.delete(url, { headers }); 
   }
 
   // Public API

@@ -4,9 +4,10 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { UtilityService } from '../../../core/services/utility.service';
 import { AssetsService } from '../assets.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { TagService } from '../../settings/tags/tag.service';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
+import { CategoryService } from '../../settings/categories/category.service';
 
 @Component({
   selector: 'app-asset-details',
@@ -17,19 +18,11 @@ import { ComponentsModule } from '../../../core/modules/components/components.mo
 export class AssetDetailsComponent {
 
   pageInfo: MenuItem = [ {label: 'Asset Library'}, {label: 'Lists', routerLink: '/assets/asset-library'}, {label: 'Details'} ];
-  fileSettingItems: MenuItem[] = [
-    { 
-      label: 'Options', 
-      items: [ 
-        { label: 'Schedule', icon: 'pi pi-calendar', command: () => this.isShowSchedule.set(!this.isShowSchedule()) }, 
-        { label: 'Audience Tag', icon: 'pi pi-users', command: () => this.isShowAudienceTag.set(!this.isShowAudienceTag()) }, 
-      ] 
-    }
-  ]
 
   utils = inject(UtilityService);
   tagService = inject(TagService);
   assetService = inject(AssetsService);
+  cagetoryService = inject(CategoryService);
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
   router = inject(Router);
@@ -47,14 +40,13 @@ export class AssetDetailsComponent {
 
   allowedLinks: string[] = [ 'web', 'widget', 'youtube', 'facebook' ];
 
-  filterCategory = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('categories')).data();
-  })
-
-  filterSubCategory = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('subCategories')).data();
-  })
-
+  isShowCategoryForm = signal<boolean>(false);
+  isShowSubCategoryForm = signal<boolean>(false);
+  categoryForm: FormGroup = new FormGroup({
+    name: new FormControl(null),
+    description: new FormControl(null)
+  })  
+  
   showLinkInput = () => {
     const type = this.assetTypeControl.value;
     return this.allowedLinks.includes(type);
@@ -75,6 +67,8 @@ export class AssetDetailsComponent {
     if (!this.isEditMode()) this.assetTypeControl.enable();
     const type = this.formControl('type').value;
     this.assetTypeControl.patchValue(this.allowedLinks.includes(type) ? type : 'file');
+
+    this.onLoadCategories();
   }
 
   ngOnDestroy() {
@@ -88,13 +82,23 @@ export class AssetDetailsComponent {
     return this.assetForm.invalid;
   }
 
+  onLoadCategories() {
+    this.cagetoryService.onLoadCategories(1, 10);
+  }
+
+  onLoadSubCategoriesById(id: number) {
+    if (!id) return;
+    this.formControl('subCategory').reset();
+    this.cagetoryService.onLoadSubCategoriesById(id);
+  }
+
   onChangeType(event: any) {
     const type = event.value;
     if (this.allowedLinks.includes(type)) {
-      this.formFileDetails('orientation').enable();
+      this.formControl('orientation').enable();
       this.assetForm.patchValue({ type, name: null, link: null })
     } else {
-      this.formFileDetails('orientation').disable();
+      this.formControl('orientation').disable();
       this.assetForm.reset();
     }
   }
@@ -137,7 +141,7 @@ export class AssetDetailsComponent {
     }
     
     try {
-      const result = await this.assetService.processFile(file);
+      const result = await this.assetService.processFile(file);      
       
       if (result) {
         this.assetForm.patchValue(result);
@@ -219,6 +223,35 @@ export class AssetDetailsComponent {
       reject: () => { }
     })
   }
+
+  onSaveCategory(type: string) {
+    const categoryId = this.formControl('category').value;
+    if (type == 'category') {
+      this.cagetoryService.onSaveCategories(categoryId, this.categoryForm.value).subscribe({
+        next: (res: any) => {
+          this.message.add({ severity:'success', summary: 'Success', detail: 'Category updated successfully!' }),
+          this.cagetoryService.categories().push(res);
+        },
+        error: () => this.message.add({ severity:'error', summary: 'Error', detail: 'Failed to update category!' }),
+        complete: () => {
+          this.isShowCategoryForm.set(false);
+          this.categoryForm.reset();
+        }
+      });
+    } else {
+      this.cagetoryService.onSaveSubCategories(categoryId, 0, this.categoryForm.value).subscribe({
+        next: (res: any) => {
+          this.message.add({ severity:'success', summary: 'Success', detail: 'Sub Category updated successfully!' }),
+          this.cagetoryService.subCategories().push(res);
+        },
+        error: () => this.message.add({ severity:'error', summary: 'Error', detail: 'Failed to update sub category!' }),
+        complete: () => {
+          this.isShowSubCategoryForm.set(false);
+          this.categoryForm.reset();
+        }
+      });
+    }
+  }
   
   onClickCancel() {
     this.router.navigate([ '/assets/asset-library' ]);
@@ -226,16 +259,14 @@ export class AssetDetailsComponent {
 
   onClickClear() {
     this.assetForm.patchValue({ link: null, name: null, duration: 10 })
-    this.fileDetails?.reset();
   }
 
   onClickCloseSchedule() {
     const isAvailable = this.availability?.value;
-    const dateRange = this.dateRange;
     const weekdays = this.weekdays?.value;
     const hours = this.hours?.value;
     if (isAvailable) {
-      if (dateRange?.errors?.['startAfterEnd'] || weekdays.length === 0 || hours.length === 0) {
+      if (this.assetForm?.errors?.['startAfterEnd'] || weekdays.length === 0 || hours.length === 0) {
         this.message.add({ severity: 'error', summary: 'Error', detail: 'Please input required fields (*)' });
         return;
       }
@@ -243,14 +274,16 @@ export class AssetDetailsComponent {
     this.isShowSchedule.set(false);
   }
 
-  onClickCloseAudienceTag() {
-    this.isShowAudienceTag.set(false);
+  onAudienceTagChange(event: any) {
+    this.assetForm.patchValue({ audienceTag: event });
   }
   
   onChangeAvailability(event: any) {
     const checked = event.checked;
     if (!checked) {
-      this.dateRangeControl?.reset();
+      this.formControl('start')?.reset();
+      this.formControl('end')?.reset();
+      this.formControl('allWeekdays')?.reset();
       this.weekdays?.reset();
       this.hours?.reset();
     }
@@ -260,13 +293,7 @@ export class AssetDetailsComponent {
     return this.utils.getFormControl(this.assetForm, fieldName);
   }
 
-  formFileDetails(fieldName: string) {
-    return this.formControl('fileDetails').get(fieldName) as FormGroup;
-  }
-
   get orientations() { return this.utils.orientations; }
-  
-  get tagsLists() { return this.tagService.tagsLists; }
 
   get isEditMode() { return this.assetService.isEditMode; }
   get isLoading() { return this.assetService.isLoading; }
@@ -274,11 +301,12 @@ export class AssetDetailsComponent {
   get assetForm() { return this.assetService.assetForm; }
   get assetTypes() { return this.assetService.assetType; }
   get assetTypeControl() { return this.assetService.assetTypeControl; }
-  get fileDetails() { return this.assetForm.get('fileDetails'); }
+
   get type() { return this.assetForm.get('type'); }
   get availability() { return this.assetForm.get('availability'); }
-  get dateRange() { return this.assetForm.get('dateRange'); }
   get weekdays() { return this.assetForm.get('weekdays'); }
   get hours() { return this.assetForm.get('hours'); }
-  get dateRangeControl() { return this.assetForm.get('dateRange'); }
+
+  get categories() { return this.cagetoryService.categories; }
+  get subCategories() { return this.cagetoryService.subCategories; }
 }

@@ -18,16 +18,18 @@
             <div class="grid grid-cols-2 md:grid-cols-1 gap-2">
                 <p-datepicker formControlName="dateRange" selectionMode="range" placeholder="Date Range" readonlyInput showIcon fluid />
                 <p-select [options]="types()" formControlName="type" optionLabel="label" optionValue="value" placeholder="Type" showClear />
-                <p-select [options]="filterGroup()" formControlName="group" placeholder="Group" showClear />
-                <p-select [options]="filterSubGroup()" formControlName="subGroup" placeholder="Sub Group" showClear />
+                <p-select [options]="groups()" formControlName="group" 
+                    (onChange)="onLoadSubGroupsById($event.value)"
+                    optionLabel="name" optionValue="id" placeholder="Group" showClear />
+                <p-select [options]="subGroups()" formControlName="subGroup" optionLabel="name" optionValue="id"  placeholder="Sub Group" showClear />
 
                 @if (showOrientation) {
                     <p-select [options]="orientations()" formControlName="orientation" optionLabel="label" optionValue="value" placeholder="Orientation" showClear />
                 }
                 
-                @if (showLocation) {
+                <!-- @if (showLocation) {
                     <p-select [options]="filterLocation()" formControlName="location" placeholder="Location" showClear />
-                }
+                } -->
 
                 @if (showScreenStatus) {
                     <p-select [options]="screenStatus()" formControlName="screenStatus" optionLabel="label" optionValue="value" placeholder="Screen Status" showClear />

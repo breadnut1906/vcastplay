@@ -32,15 +32,15 @@ export class ScreenDetailsComponent {
   })
 
   tagsFilter = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('tags')).data();
+    return null //this.tagsLists().find(tag => tag.id.includes('tags')).data();
   })
 
   filterGroups = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('groups')).data();
+    return null //this.tagsLists().find(tag => tag.id.includes('groups')).data();
   })
 
   filterSubGroups = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('subGroups')).data();
+    return null //this.tagsLists().find(tag => tag.id.includes('subGroups')).data();
   })
 
   ngOnInit() { }
@@ -145,5 +145,5 @@ export class ScreenDetailsComponent {
   get address() { return this.screenForm.get('address'); }
   get tags() { return this.screenForm.get('tags'); }
 
-  get tagsLists() { return this.tagService.tagsLists; }
+  get tagsLists() { return null }//this.tagService.tagsLists; }
 }

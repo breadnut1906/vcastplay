@@ -1,44 +1,41 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
 import { StorageService } from './storage.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  token = signal<any>(null);
   storage = inject(StorageService);
   router = inject(Router);
-  loginForm: FormGroup = new FormGroup({
-    username: new FormControl('', [ Validators.required ]),
-    password: new FormControl('', [ Validators.required ]),
-    rememberMe: new FormControl(false)
-  });
+  http = inject(HttpClient);
 
-  constructor(private message: MessageService) { }
+  api: string = environment.api;
 
-  onLogin() {
-    if (this.loginForm.invalid) {
-      this.message.add({ summary: 'Login Error', detail: 'Please input required fields (*)', icon: 'pi pi-info-circle', severity: 'error' });
-      return;
-    }
-    this.storage.set('id', this.token());
+  constructor() { }
 
-    if (this.token()) {
-      this.message.add({ severity: 'info', summary: 'Info', detail: 'This login is for customers only' });
-      this.router.navigate(['/dashboard']);
-    } else {
-      this.message.add({ severity: 'info', summary: 'Info', detail: 'This login is for administrator only' });
-      this.router.navigate(['/admin/summary']);
-    }
+  isAuthenticated(): boolean {
+    return !!this.onGetToken();
+  }
+
+  onLogin(body: any, tenantId: string) {
+    const headers = new HttpHeaders({ 'x-tenant-id': tenantId });
+    return this.http.post(`${this.api}tenants/auth/login`, body, { headers })
   }
 
   onLogout() {
     const id = this.storage.get('id');
-    this.storage.remove('id');
-    this.router.navigate(['/login'], { queryParams: id ? { id } : {} });
+    
+    this.storage.remove('accessToken');
+    this.storage.remove('refreshToken');
+
+    return Promise.resolve(id);
+  }
+
+  onGetToken() {
+    return this.storage.get('accessToken');
   }
 }

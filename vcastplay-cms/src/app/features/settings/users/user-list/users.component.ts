@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { PrimengUiModule } from '../../../../core/modules/primeng-ui/primeng-ui.module';
 import { ComponentsModule } from '../../../../core/modules/components/components.module';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -24,42 +24,27 @@ export class UsersComponent {
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
 
-  filteredUsers = computed(() => {
-    const { status, keywords }: any = this.utils.filterValues();
-    const statusFilter = (status ?? '').toLowerCase().trim();
-    const keywordFilter = (keywords ?? '').toLowerCase().trim();
-    return this.userService.users().filter(user => {
-      const matchesStatus = statusFilter ? user.status?.toLowerCase().trim() === statusFilter : true;
-      const matchesKeyword = keywordFilter ? (user.firstName + ' ' + user.lastName)?.toLowerCase().includes(keywordFilter) : true;
-      return matchesStatus && matchesKeyword;
-    })
-  })
-
-  rows: number = 8;
-  totalRecords: number = 0;
-
   ngOnInit() { 
     this.onInitializeData();
   }
 
   onInitializeData() {
-    this.userService.onGetUsers();
-    this.roleService.onGetRoles();
-    this.totalRecords = this.filteredUsers().length;
+    this.userService.onLoadUsers();
   }
   
   onClickRefresh() {
-    this.userService.onRefreshUser();
+    this.onInitializeData();
   }
 
   onClickAddNew() {
     this.showDialog.set(true);
-    this.userService.userForm.reset();
+    this.userForm.reset();
   }
 
   onClickEdit(user: User) {
-    this.userService.onEditUser(user);
+    this.userForm.patchValue(user);
     this.showDialog.set(true);
+    this.isEdit.set(true);
   }
   
   onClickSave(event: Event) {
@@ -85,10 +70,21 @@ export class UsersComponent {
         label: 'Save',
       },
       accept: () => {
-        this.userService.onSaveUser(this.userForm.value);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'User saved successfully!' });
-        this.showDialog.set(false);
-        this.userForm.reset();
+        const { id, mobileNo, ...data } = this.userForm.value;
+        const mode = this.isEdit() ? 'edit' : 'create';
+        this.userService.onSaveUser(id, { mobileNo: this.isEdit() ? mobileNo : `0${mobileNo}`, ...data} , mode).subscribe({
+          next: (res: any) => {
+            this.message.add({ severity:'success', summary: 'Success', detail: 'User saved successfully!' });
+            if (mode === 'create') this.onSaveNewUsers(res);
+            else this.onUpdateUser(res);
+          },
+          error: () => this.message.add({ severity:'error', summary: 'Error', detail: 'Failed to save user!' }),
+          complete: () => {
+            this.showDialog.set(false);
+            this.userForm.reset();
+            this.isEdit.set(false);
+          }
+        });
       },
     })
   }
@@ -111,8 +107,15 @@ export class UsersComponent {
         severity: 'danger',
       },
       accept: () => {
-        this.userService.onDeleteUser(user);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' });
+        this.userService.onDeleteUser(user).subscribe({
+          next: () => {
+            this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' });
+          },
+          error: () => this.message.add({ severity:'error', summary: 'Error', detail: 'Failed to delete user!' }),
+          complete: () => {
+            this.users().splice(this.users().findIndex(x => x.id === user.id), 1);
+          }
+        });
       },
       reject: () => { }
     })
@@ -122,6 +125,22 @@ export class UsersComponent {
     this.showDialog.set(false);
     this.userForm.reset();
   }
+  
+  onPageChange(event: any) {
+    const pageNumber = event.first / event.rows + 1;
+    this.paginatedUsers.currentPage = pageNumber;
+    this.paginatedUsers.itemsPerPage = event.rows;
+    this.userService.onLoadUsers(pageNumber, event.rows);
+  }
+
+  onSaveNewUsers(item: User) {
+    this.users().unshift(item);
+  }
+
+  onUpdateUser(item: User) {
+    const index = this.users().findIndex(x => x.id === item.id);
+    if (index !== -1) this.users()[index] = item;
+  }
 
   get userForm() {
     return this.userService.userForm;
@@ -129,5 +148,21 @@ export class UsersComponent {
 
   get showDialog() {
     return this.userService.showDialog;
+  }
+
+  get isEdit() {
+    return this.userService.isEdit;
+  }
+
+  get users() {
+    return this.userService.users;
+  }
+
+  get paginatedUsers() {
+    return this.userService.paginatedUsers();
+  }
+
+  get userLoading() {
+    return this.userService.userLoading;
   }
 }

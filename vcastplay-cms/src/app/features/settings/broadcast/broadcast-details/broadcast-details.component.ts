@@ -16,11 +16,11 @@ export class BroadcastDetailsComponent {
   tagService = inject(TagService);
   utils = inject(UtilityService);
 
-  filterCategories = computed(() => this.tagsLists().find(tag => tag.id.includes('categories')).data());
+  filterCategories = null //computed(() => this.tagsLists().find(tag => tag.id.includes('categories')).data());
 
   get icons() { return this.utils.icons; }
 
-  get tagsLists() { return this.tagService.tagsLists; }
+  get tagsLists() { return null } //this.tagService.tagsLists; }
 
   get broadCastMessageForm() { return this.broadcastService.broadCastMessageForm; }
 }

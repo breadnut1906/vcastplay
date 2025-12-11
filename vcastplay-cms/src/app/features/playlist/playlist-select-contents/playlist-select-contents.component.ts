@@ -26,11 +26,11 @@ export class PlaylistSelectContentsComponent {
   tagService = inject(TagService);
   
   filterCategory = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('categories')).data();
+    return null //this.tagsLists().find(tag => tag.id.includes('categories')).data();
   })
 
   filterSubCategory = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('subCategories')).data();
+    return null //this.tagsLists().find(tag => tag.id.includes('subCategories')).data();
   })
 
   constructor() {
@@ -55,7 +55,7 @@ export class PlaylistSelectContentsComponent {
       return matchesCategory || matchesSubCategory;
     });
 
-    const audienceTag = this.audienceTagForm.value.audienceTag;
+    const audienceTag: any = null //this.audienceTagForm.value.audienceTag;
     const hasValues = Object.values(audienceTag).some((arr: any) => Array.isArray(arr) && arr.length > 0);
     const filtered = this.filterItems(filteredItems, audienceTag);    
     
@@ -97,7 +97,7 @@ export class PlaylistSelectContentsComponent {
   get filteredAssets() { return this.playListService.filteredAssets; }
   get categoryForm() { return this.playListService.categoryForm; }
 
-  get audienceTagForm() { return this.tagService.audienceTagForm; }
+  get audienceTagForm() { return null } //this.tagService.audienceTagForm; }
 
-  get tagsLists() { return this.tagService.tagsLists; }
+  get tagsLists() { return [] } //this.tagService.tagsLists; }
 }

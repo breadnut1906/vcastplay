@@ -49,7 +49,7 @@
                         <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" />
                     </div>
                 </div>
-                <div class="col-span-1 md:col-span-6">
+                <!-- <div class="col-span-1 md:col-span-6">
                     <p-floatlabel variant="on">
                         <p-select inputId="group" [options]="filterGroups()" formControlName="group" 
                             [ngClass]="{ 'ng-invalid ng-dirty': formControl('group').invalid && formControl('group').touched }" appendTo="body" showClear fluid />
@@ -62,7 +62,7 @@
                             [ngClass]="{ 'ng-invalid ng-dirty': formControl('subGroup').invalid && formControl('subGroup').touched }" appendTo="body" showClear fluid />
                         <label for="subGroup">Sub Group</label>
                     </p-floatlabel>
-                </div>
+                </div> -->
                 <div class="col-span-1 md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-4" formGroupName="displaySettings">
                     <div class="col-span-1 md:col-span-6">
                         <p-floatlabel variant="on">
@@ -102,10 +102,10 @@
                 </div>
                 <div class="col-span-1 md:col-span-6 flex flex-col gap-2">
                     <p-inputgroup>
-                        <p-floatlabel variant="on">
+                        <!-- <p-floatlabel variant="on">
                             <p-select id="tag" [options]="tagsFilter()" [formControl]="tagControl" fluid />
                             <label for="tag">Tag</label>
-                        </p-floatlabel>
+                        </p-floatlabel> -->
                         <p-inputgroup-addon>
                             <p-button icon="pi pi-plus" [text]="false" pTooltip="Add" tooltipPosition="bottom" (onClick)="onClickAddTag()" />
                         </p-inputgroup-addon>

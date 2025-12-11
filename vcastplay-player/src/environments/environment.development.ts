@@ -1,5 +1,6 @@
 export const environment = {
     timeout: 10,
+    socketUrl: 'http://beta.caltondatx.com:4001',
     geoAPI: 'https://ipapi.co/json',
     androidFilePath: 'https://appassets.androidplatform.net/assets/',
     desktopFilePath: 'C:/Users/rbtubat/Downloads/vcastplay/',

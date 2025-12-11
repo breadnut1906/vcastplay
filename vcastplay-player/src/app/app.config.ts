@@ -12,6 +12,7 @@ import { initializeApp } from './core/interfaces/app-initializer';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DialogService } from 'primeng/dynamicdialog';
 
 // Use window.system to call functions from preload.js
 declare global {
@@ -58,6 +59,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideAppInitializer(initializeApp()),
     ConfirmationService,
-    MessageService
+    MessageService,
+    DialogService
   ]
 };

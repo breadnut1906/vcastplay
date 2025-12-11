@@ -1,5 +1,5 @@
 <div class="grid grid-cols-5 w-full h-screen">
-    <ng-container *ngIf="tokenValue()">
+    <ng-container *ngIf="token()">
         <div class="col-span-3 hidden lg:block relative">
             <p-carousel [value]="slides" [numVisible]="1" [numScroll]="1" [circular]="true" [showIndicators]="false" [showNavigators]="false" [autoplayInterval]="5000">
                 <ng-template let-item #item>
@@ -14,20 +14,20 @@
             </p-carousel>
         </div>
     </ng-container>
-    <div class="col-span-5 text-white" [ngClass]="{ 'lg:col-span-2': tokenValue() }" (keydown.enter)="auth.onLogin()">
+    <div class="col-span-5 text-white" [ngClass]="{ 'lg:col-span-2': token() }" (keydown.enter)="onClickLogin()">
         <div class="relative flex flex-col items-center justify-center h-full p-3 md:p-10 bg-[var(--p-primary-500)]">
-            <div class="flex flex-col gap-4 px-4 lg:px-0 w-full" [ngClass]="{ 'md:w-1/2 xl:w-1/4': !tokenValue(), 'sm:w-1/2 lg:w-full': tokenValue() }">
+            <div class="flex flex-col gap-4 px-4 lg:px-0 w-full" [ngClass]="{ 'md:w-1/2 xl:w-1/4': !token(), 'sm:w-1/2 lg:w-full': token() }">
                 <div class="flex flex-col gap-10 items-center justify-center">
                     <img src="assets/vcastplay-icon-transparent.png" alt="app logo" width="100">
                     <p class="text-2xl font-bold">
-                        @if (tokenValue()) { Login to your account }
+                        @if (token()) { Login to your account }
                         @else { Administrator Login }
                     </p>
                 </div>
-                <form class="grid grid-cols-1 gap-4 my-[2rem]" [formGroup]="auth.loginForm">
+                <form class="grid grid-cols-1 gap-4 my-[2rem]" [formGroup]="loginForm">
                     <p-floatlabel variant="in">
-                        <input id="username" pInputText formControlName="username" [fluid]="true" />
-                        <label for="username">Username</label>
+                        <input id="email" pInputText formControlName="email" [fluid]="true" />
+                        <label for="email">Email Address</label>
                     </p-floatlabel>
                     <p-floatlabel variant="in">
                         <p-password formControlName="password" inputId="password" [toggleMask]="true" [fluid]="true" [feedback]="false" />
@@ -35,8 +35,8 @@
                     </p-floatlabel>
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
-                            <p-checkbox inputId="rememberMe" formControlName="rememberMe" [binary]="true" />
-                            <label for="rememberMe" class="ml-2">Remember Me</label>
+                            <p-checkbox inputId="remember" formControlName="remember" [binary]="true" />
+                            <label for="remember" class="ml-2">Remember Me</label>
                         </div>
                         <a href="/" class="hover:text-[var(--p-primary-200)]">Forgot Password?</a>
                     </div>

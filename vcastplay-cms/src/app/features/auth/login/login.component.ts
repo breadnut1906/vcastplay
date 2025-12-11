@@ -1,8 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { AuthService } from '../../../core/services/auth.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService } from '../../../core/services/storage.service';
+import { MessageService } from 'primeng/api';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
@@ -15,13 +17,34 @@ export class LoginComponent {
 
   auth = inject(AuthService);
   storage = inject(StorageService);
+  router = inject(Router);
   route = inject(ActivatedRoute);
+  message = inject(MessageService);
+  
+  token = signal<any>(null);
+  loginForm: FormGroup = new FormGroup({
+    email: new FormControl('tenant2@gmail.com', [ Validators.required ]),
+    password: new FormControl('password', [ Validators.required ]),
+    remember: new FormControl(false)
+  });
+
+  constructor() {
+    if (this.auth.isAuthenticated()) this.router.navigate(['/dashboard']);
+    else {
+      const tenatId = this.storage.get('id');
+      if (tenatId) {
+        this.token.set(tenatId);
+        this.router.navigate([], { queryParams: { id: tenatId } });
+      }
+    }
+  }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const token = params['id'];
-      if (token) {
-        this.tokenValue.set(token);
+      const id = params['id'] ?? null;
+      if (id) {
+        this.token.set(id);
+        this.storage.set('id', this.token(), true);
       }
     });
   }
@@ -50,12 +73,30 @@ export class LoginComponent {
   ]
 
   ngOnDestroy() {
-    this.auth.loginForm.reset();
+    this.loginForm.reset();
   }
 
   onClickLogin() {
-    this.auth.onLogin();
-  }
+    if (this.loginForm.invalid) {
+      this.message.add({ summary: 'Login Error', detail: 'Please input required fields (*)', icon: 'pi pi-info-circle', severity: 'error' });
+      return;
+    }
 
-  get tokenValue() { return this.auth.token; }
+    if (!this.token()) {
+      this.message.add({ severity: 'info', summary: 'Info', detail: 'This login is for administrator only' });
+    }
+
+    const { email, password, remember } = this.loginForm.value;
+
+    this.auth.onLogin({ email, password }, this.token()).subscribe({
+        next: (res: any) => {
+          this.storage.set('accessToken', res.accessToken, remember);
+          this.storage.set('refreshToken', res.refreshToken, remember);
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err: any) => {
+          this.message.add({ severity: 'error', summary: 'Error', detail: err.message });
+        }
+      });
+  }
 }

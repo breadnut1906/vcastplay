@@ -1,4 +1,4 @@
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1" [formGroup]="userForm">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-1" [formGroup]="userForm">
     <div class="col-span-2 md:col-span-1">
         <p-floatlabel variant="on">
             <input id="firstName" pInputText formControlName="firstName" 
@@ -13,6 +13,12 @@
                 </div>
             }
         }
+    </div>
+    <div class="col-span-2 md:col-span-1">
+        <p-floatlabel variant="on">
+            <input id="middleName" pInputText formControlName="middleName" fluid />
+            <label for="middleName">Middle Name</label>
+        </p-floatlabel>
     </div>
     <div class="col-span-2 md:col-span-1">
         <p-floatlabel variant="on">
@@ -47,21 +53,27 @@
     </div>
     <div class="col-span-2 md:col-span-1">
         <p-floatlabel variant="on">
-            <p-inputnumber inputId="integeronly" formControlName="mobile" 
-                [ngClass]="{ 'ng-invalid ng-dirty': formControl('mobile')?.invalid && formControl('mobile')?.touched }" fluid />
+            <p-inputnumber inputId="integeronly" formControlName="mobileNo" [useGrouping]="false" [prefix]="'(+63)'"
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('mobileNo')?.invalid && formControl('mobileNo')?.touched }" fluid />
             <!-- <p-inputmask mask="999-999-9999" formControlName="mobile" styleClass="w-full" /> -->
-            <label for="mobile">Mobile Number</label>
+            <label for="mobileNo">Mobile Number</label>
         </p-floatlabel>
-        @if (formControl('mobile')?.touched && (formControl('mobile')?.dirty || formControl('mobile')?.invalid)) {
-            @if (formControl('mobile')?.invalid) {
+        @if (formControl('mobileNo')?.touched && (formControl('mobileNo')?.dirty || formControl('mobileNo')?.invalid)) {
+            @if (formControl('mobileNo')?.invalid) {
                 <div class="p-2 text-sm text-red-500 flex items-center gap-2">
                     <i class="pi pi-exclamation-circle"></i>
-                    @if (formControl('mobile')?.errors?.['required']) { This field is required }
+                    @if (formControl('mobileNo')?.errors?.['required']) { This field is required }
                 </div>
             }
         }
     </div>
     <div class="col-span-2 md:col-span-1">
+        <p-floatlabel variant="on">
+            <p-password formControlName="password" [feedback]="false" toggleMask fluid />
+            <label for="password">Password</label>
+        </p-floatlabel>
+    </div>
+    <!-- <div class="col-span-2 md:col-span-1">
         <p-floatlabel variant="on">
             <p-select formControlName="role" inputId="role" [options]="roleService.roles()" appendTo="body" optionLabel="name" optionValue="id" 
                 [ngClass]="{ 'ng-invalid ng-dirty': formControl('role')?.invalid && formControl('role')?.touched }" fluid />
@@ -75,5 +87,5 @@
                 </div>
             }
         }
-    </div>
+    </div> -->
 </div>

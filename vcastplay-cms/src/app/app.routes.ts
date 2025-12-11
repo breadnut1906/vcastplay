@@ -1,19 +1,17 @@
 import { Routes } from '@angular/router'
 import { environment } from '../environments/environment.development'
+import { authGuard, authGuardChild } from './core/guards/auth.guard'
 
 const appTitle: string = environment.appTitle
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+    loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent),
     title: `Login • ${appTitle}`,
   },
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   {
     path: 'admin',
-    loadComponent: () => 
-      import('./admin/admin-main/admin-main.component').then((m) => m.AdminMainComponent),
+    loadComponent: () => import('./admin/admin-main/admin-main.component').then((m) => m.AdminMainComponent),
     children: [
       {
         path: 'summary',
@@ -32,6 +30,8 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./main/main.component').then((m) => m.MainComponent),
+    canActivate: [ authGuard ],
+    canActivateChild: [ authGuardChild ],
     children: [
       {
         path: 'dashboard',
@@ -65,5 +65,6 @@ export const routes: Routes = [
     ],
   },
   { path: 'upgrade', loadChildren: () => import('./features/upgrade/upgrade.routes'), },
-  { path: '**', redirectTo: '/dashboard', pathMatch: 'full', },
+  { path: '**', redirectTo: 'dashboard' },
+  // { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
 ]

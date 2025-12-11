@@ -136,17 +136,17 @@ export class PlaylistDetailsComponent {
     
     switch (event.type) {
       case 'design':
-        const newFiles = event.files.filter((file: Assets) => !files.some((existingFile: Assets) => existingFile.id === file.id && existingFile.link === file.link));
+        const newFiles = event.files.filter((file: Assets) => !files.some((existingFile: Assets) => existingFile.id === file.id && existingFile.url === file.url));
         this.playlistForm.patchValue({ 
           files: [...files, ...newFiles]
         });
         break;
     
       default:
-        const existingFile = files.find((file: Assets) => file.id === event.id && file.link === event.link);
+        const existingFile = files.find((file: Assets) => file.id === event.id && file.url === event.url);
         if (!existingFile) {
           this.playlistForm.patchValue({ 
-            files: [...files, { id: event.id, name: event.name, link: event.link, duration: event.duration  } ]
+            files: [...files, { id: event.id, name: event.name, url: event.url, duration: event.duration  } ]
           });
         } 
         break;

@@ -8,39 +8,30 @@ export interface Screen {
     code: string;
     name: string;
     type: 'desktop' | 'android' | 'web';
-    address: {
-        country: string;
-        region: string;
-        city: string;
-        fullAddress: string;
-        latitude: number;
-        longitude: number;
-        zipCode: string;
-    };
+    country: string;
+    region: string;
+    city: string;
+    fullAddress: string;
+    latitude: number;
+    longitude: number;
+    zipCode: string;
     group?: string;
     subGroup?: string;
-    displaySettings: {
-        orientation: string;
-        resolution: string;
-    }
+    orientation: string;
+    dimensions: string;
     allDay?: boolean; // Always On
     weekdays?: string[];
     hours?: string[];
-    geographic?: {
-        location: string;
-        landmark: string;
-    };
+    location: string;
+    landmark: string;
     tags?: string[];
     status: 'active' | 'inactive';
     screenStatus?: 'playing' | 'standby' | 'disconnected';
     displayStatus?: 'on' | 'off';
-    assignedContent?: {
-        type: 'asset' | 'playlist' | 'schedule' | 'design';
-        content: Assets | Playlist | Schedule | DesignLayout;
-    }
+    assignedContent?: Assets | Playlist | Schedule | DesignLayout;
     messages?: ScreenMessage[]; 
     response?: string;
-    others?: any;
+    others?: any;   
     screenshotOn?: Date;
     onlineOn?: Date;
     registeredOn?: Date;

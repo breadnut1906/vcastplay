@@ -7,28 +7,38 @@
         </p-tablist>
         <p-tabpanels class="h-full">
             <p-tabpanel value="0">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm" >
-                    <div class="flex gap-3 items-center">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm" >
+                    <div class="flex gap-3 items-center col-span-2 lg:col-span-1">
                         <p>X:</p>
                         <p-inputnumber formControlName="x" [min]="0" [step]="1" [showButtons]="true" size="small" fluid />
                     </div>
-                    <div class="flex gap-3 items-center">
+                    <div class="flex gap-3 items-center col-span-2 lg:col-span-1">
                         <p>Y:</p>
                         <p-inputnumber formControlName="y" [min]="0" [step]="1" [showButtons]="true" size="small" fluid />
                     </div>
-                    <div class="flex gap-3 items-center">
+                    <div class="flex gap-3 items-center col-span-2 lg:col-span-1">
                         <p>W:</p>
                         <p-inputnumber formControlName="w" [min]="0" [step]="1" [showButtons]="true" size="small" fluid />
                     </div>
-                    <div class="flex gap-3 items-center">
+                    <div class="flex gap-3 items-center col-span-2 lg:col-span-1">
                         <p>H:</p>
                         <p-inputnumber formControlName="h" [min]="0" [step]="1" [showButtons]="true" size="small" fluid />
                     </div>
                     <p-divider class="col-span-2" />
                     <div class="col-span-2 flex gap-3 items-center justify-between w-full">
                         <p>Angle:</p>
-                        <p-inputnumber class="!w-18" formControlName="a" [min]="0" [step]="1" [max]="360" 
+                        <p-inputnumber class="!w-18 lg:!w-24" formControlName="a" [min]="0" [step]="1" [max]="360" 
                             [minFractionDigits]="0" [maxFractionDigits]="0" [showButtons]="true" size="small" fluid />
+                    </div>
+                    <p-divider class="col-span-2" />
+                    <div class="col-span-2 flex gap-3 items-center justify-between w-full">
+                        <p>Locked:</p>
+                        <p-toggleswitch formControlName="locked" size="small" binary />
+                    </div>
+                    <p-divider class="col-span-2" />
+                    <div class="col-span-2 flex gap-3 items-center justify-between w-full">
+                        <p>Hidden:</p>
+                        <p-checkbox formControlName="locked" size="small" binary />
                     </div>
                 </div>
             </p-tabpanel>

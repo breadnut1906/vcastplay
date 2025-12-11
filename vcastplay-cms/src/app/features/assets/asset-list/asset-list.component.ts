@@ -58,19 +58,16 @@ export class AssetListComponent {
     const { category, subCategory, type, keywords, orientation }: any = this.assetFilters();
     const assets = this.assetService.assets();
 
-    const hasAnyValue = Object.values(this.audienceTagSignal()).some(arr => Array.isArray(arr) && arr.length > 0);
-    const filteredItems = this.utils.onFilterItems(assets, this.audienceTagSignal());
-
-    const data = hasAnyValue ? filteredItems : assets;    
+    const data = assets;    
 
     const filteredAssets = data.filter(asset => {
       const matchesCategory = category ? asset.category?.toLowerCase().includes(category.toLowerCase()) : true;
       const matchesSubCategory = subCategory ? asset.subCategory?.toLowerCase().includes(subCategory.toLowerCase()) : true;
       const matchesType = type ? asset.type?.toLowerCase().includes(type.toLowerCase()) : true;
       const matchesKeywords = keywords ? asset.name?.toLowerCase().includes(keywords.toLowerCase()) : true;
-      const matchesOrientation = orientation ? asset.fileDetails.orientation?.toLowerCase().includes(orientation.toLowerCase()) : true;
+      // const matchesOrientation = orientation ? asset.fileDetails.orientation?.toLowerCase().includes(orientation.toLowerCase()) : true;
 
-      return matchesCategory && matchesSubCategory && matchesType && matchesKeywords && matchesOrientation;
+      return matchesCategory && matchesSubCategory && matchesType && matchesKeywords //&& matchesOrientation;
     });
 
     return filteredAssets;

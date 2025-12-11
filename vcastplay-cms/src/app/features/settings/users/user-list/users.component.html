@@ -22,36 +22,44 @@
                 </div>
             </ng-template>
             <div class="flex-1">
+                    <!-- (onPage)="onPageChange($event)" 
+                    [rows]="paginatedUsers.itemsPerPage || 10"
+                    [totalRecords]="paginatedUsers.totalItems"
+                    [first]="(paginatedUsers.currentPage - 1) * paginatedUsers.itemsPerPage || 10" -->
+                    
+                    <!-- paginator  -->
                 <p-table 
                     class="hidden lg:block" 
-                    [value]="userService.loadingSignal() ? utils.tableSkeletonRows : filteredUsers()" 
+                    [value]="userLoading() ? utils.tableSkeletonRows : users()"
                     selectionMode="single"
                     [scrollable]="true" 
                     size="small"  
-                    stripedRows
+                    stripedRows 
+                    showGridlines
+                    lazy
                 >
                     <ng-template #header>
                         <tr>
-                            <th>Code</th>
+                            <th>ID</th>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Status</th>
+                            <!-- <th>Status</th> -->
                             <th>
                                 <div class="text-center">Actions</div>
                             </th>
                         </tr>
                     </ng-template>
                     <ng-template #body let-item>
-                        @if (userService.loadingSignal()) {
+                        @if (userLoading()) {
                             <tr>
                                 @for (item of [1,2,3,4,5]; track $index) { <td><p-skeleton /></td> }
                             </tr>
                         } @else {
                             <tr class="text-sm">
-                                <td>{{ item.code }}</td>
+                                <td>{{ item.id }}</td>
                                 <td>{{ item.firstName }} {{ item.lastName }}</td>
                                 <td>{{ item.email }}</td>
-                                <td><p-tag [value]="item.status" [severity]="utils.getStatus(item.status)" /></td>
+                                <!-- <td><p-tag [value]="item.status" [severity]="utils.getStatus(item.status)" /></td> -->
                                 <td class="flex flex-row justify-center gap-2">
                                     <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
                                 </td>
@@ -68,8 +76,8 @@
                 </p-table>
             </div>
             <div class="block lg:hidden flex flex-col gap-4">
-                @if (!userService.loadingSignal()) {
-                    @for (item of filteredUsers(); track $index) {
+                @if (!userLoading()) {
+                    @for (item of users(); track $index) {
                         <app-user-list-item [user]="item" [actionBtn]="actionBtn" />
                     } @empty {
                         <div class="flex justify-center items-center p-5 h-100">
@@ -82,9 +90,6 @@
                     }
                 }
             </div>
-            <ng-template #footer>
-                <p-paginator [rows]="rows" [totalRecords]="totalRecords"></p-paginator>
-            </ng-template>
         </p-card>
     </div>
 </div>

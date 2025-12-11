@@ -1,13 +1,20 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Screen, ScreenMessage } from '../../features/screens/screen';
 import { SelectOption } from '../interfaces/general';
 import { MenuItem } from 'primeng/api';
+import { environment } from '../../../environments/environment.development';
+import { StorageService } from './storage.service';
+import { UtilityService } from './utility.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ScreenService {
+
+  api: string = environment.api;
+  storage = inject(StorageService);
+  utils = inject(UtilityService);
 
   isEditMode = signal<boolean>(false);
 
@@ -135,83 +142,11 @@ export class ScreenService {
   tagControl: FormControl = new FormControl(null);
 
   onLoadScreens() {
-    /**Call GET roles API */
-    this.screenSignal.set([
-      { 
-        id: 1,
-        code: 'NYX001',
-        name: 'PLAYER-NYX001',
-        type: 'desktop',
-        address: {
-          country: 'Philippines',
-          region: 'Manila',
-          city: 'Quezon City',
-          fullAddress: `Secret of God’s Child Learning Center, Inc., 176 12th Avenue corner Rosal Street,, A. Luna Street, Balong-Bato, San Juan, 1st District, Eastern Manila District, Metro Manila, 1132, Philippines`,
-          latitude: 14.6091,
-          longitude: 121.0223,
-          zipCode: '1100'
-        },
-        displaySettings: {
-          orientation: 'landscape',
-          resolution: '1920x1080'
-        },
-        status: 'inactive',
-        screenStatus: 'standby',
-        displayStatus: 'on',
-        createdOn: new Date('2024-01-01'),
-        updatedOn: new Date('2024-02-01'),
-      },
-      { 
-        id: 2,
-        code: 'NYX002',
-        name: 'PLAYER-NYX002',
-        type: 'android',
-        address: {
-          country: 'Philippines',
-          region: 'Metro Manila',
-          city: 'Mandaluyong',
-          fullAddress: '35 San Francisco Street, Barangay Plainview, Mandaluyong, Metro Manila, Philippines',
-          latitude: 14.5903,
-          longitude: 121.0341,
-          zipCode: '1550'
-        },
-        displaySettings: {
-          orientation: 'portrait',
-          resolution: '757x1062'
-        },
-        status: 'inactive',
-        screenStatus: 'standby',
-        displayStatus: 'on',
-        createdOn: new Date('2024-01-01'),
-        updatedOn: new Date('2024-02-01'),
-      },
-      
-      { 
-        id: 3,
-        code: 'NYX003',
-        name: 'PLAYER-NYX003',
-        type: 'web',
-        address: {
-          country: 'Philippines',
-          region: 'Metro Manila',
-          city: 'Mandaluyong',
-          fullAddress: '221 Boni Avenue, Mandaluyong, Metro Manila, Philippines',
-          latitude: 14.5852,
-          longitude: 121.0346,
-          zipCode: '1550'
-        },
-        displaySettings: {
-          orientation: 'landscape',
-          resolution: '757x1062'
-        },
-        status: 'inactive',
-        screenStatus: 'standby',
-        displayStatus: 'on',
-        createdOn: new Date('2024-01-01'),
-        updatedOn: new Date('2024-02-01'),
-      },
-    ]);
-    this.totalRecords.set(this.screens().length);
+    this.utils.onGETApi(`${this.api}tenants/screens`).subscribe((res: any) => {
+      const { items, meta } = res;
+      this.screenSignal.set(items);
+      this.totalRecords.set(meta.totalItems);
+    })
   }
 
   onGetScreens() {

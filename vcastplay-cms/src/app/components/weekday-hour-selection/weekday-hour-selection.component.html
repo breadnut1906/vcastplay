@@ -12,13 +12,13 @@
         </div>
     }
     <p-fieldset legend="Weekdays">
-      <div class="grid grid-cols-3 md:grid-cols-4 gap-3 mt-3">
+      <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mt-3">
         <div class="flex items-center gap-2">
           <p-checkbox
             formControlName="allWeekdays"
             (onChange)="onCheckAllWeekdays($event)"
             [indeterminate]="isCheckedWeekday()"
-            [readonly]="allDay"
+            [readonly]="allDay || isDisabled"
             binary
           />
           <label for="All">All</label>

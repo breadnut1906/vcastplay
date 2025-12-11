@@ -1,50 +1,57 @@
-<div class="relative flex flex-col gap-5 h-full" [formGroup]="audienceTagInputForm">
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-        <div class="col-span-1 md:col-span-5">
-            <p-floatlabel variant="on">
-                <p-select [options]="filteredTagLists()" optionLabel="name" optionValue="name" formControlName="category" appendTo="body" fluid />
-                <label for="category">Tags</label>
-            </p-floatlabel>
+<p-dialog header="Audience Tags" [(visible)]="isShowAudienceTag" (onHide)="audienceTagInputForm.reset()"
+    [style]="{ width: '50rem', height: '500px' }" [draggable]="false" appendTo="body" modal>
+    <div class="relative flex flex-col gap-5 h-full" [formGroup]="audienceTagInputForm">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
+            <div class="col-span-1 md:col-span-5">
+                <p-floatlabel variant="on">
+                    <p-select [options]="tags()" optionLabel="name" optionValue="name" placeholder="Select Tags"
+                        formControlName="tags" appendTo="body" (onChange)="onSelectionChange($event)" fluid />
+                </p-floatlabel>
+            </div>
+            <div class="col-span-1 md:col-span-5">
+                <p-floatlabel variant="on">
+                    <p-select [options]="tagValues()" optionLabel="value" optionValue="value" placeholder="Select Values"
+                        formControlName="tagValue" appendTo="body" fluid />
+                </p-floatlabel>
+            </div>
+            <div class="col-span-1 md:col-span-2">
+                <p-button label="Add" icon="pi pi-plus" (onClick)="onClickAddTag()" size="small" fluid />
+            </div>
         </div>
-        <div class="col-span-1 md:col-span-5">
-            <p-floatlabel variant="on">
-                <p-select [options]="categoryLists()" formControlName="name" appendTo="body" fluid />
-                <label for="category">Values</label>
-            </p-floatlabel>
-        </div>
-        <div class="col-span-1 md:col-span-2">
-            <p-button label="Add" icon="pi pi-plus" (onClick)="onClickAddTag()" size="small" fluid />
+        <div class="flex-1 min-h-[180px] overflow-y-auto">
+            <p-table class="h-full" [value]="audienceTags" [scrollable]="true" scrollHeight="flex" size="small" stripedRows showGridlines>
+                <ng-template #header>
+                    <tr>
+                        <th>Tags</th>
+                        <th>Values</th>
+                        <th style="width: 12%;">
+                            <div class="text-center">Actions</div>
+                        </th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-item>
+                    <tr>
+                        <td>{{ item.tags }}</td>
+                        <td>{{ item.tagValue }}</td>
+                        <td>
+                            <div class="flex flex-row justify-center">
+                                <p-button icon="pi pi-trash" (onClick)="onClickRemoveTag(item)" severity="danger" text />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template #emptymessage>
+                    <tr>
+                        <td colspan="3">
+                            <div class="flex justify-center items-center h-50">No audience tags found.</div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
         </div>
     </div>
-    <div class="flex-1 min-h-[180px] overflow-y-auto">
-        <p-table [value]="audienceTags" [scrollable]="true" scrollHeight="flex" size="small" stripedRows showGridlines>
-            <ng-template #header>
-                <tr>
-                    <th>Tags</th>
-                    <th>Values</th>
-                    <th style="width: 12%;">
-                        <div class="text-center">Actions</div>
-                    </th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-item>
-                <tr>
-                    <td>{{ item.category }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>
-                        <div class="flex flex-row justify-center">
-                            <p-button icon="pi pi-trash" (onClick)="onClickRemoveTag(item)" severity="danger" text />
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-            <ng-template #emptymessage>
-                <tr>
-                    <td colspan="3">
-                        <div class="flex justify-center items-center h-50">No audience tags found.</div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
-    </div>
-</div>
+    <ng-template #footer>
+        <p-button label="Close" icon="pi pi-times" (onClick)="isShowAudienceTag.set(false)" size="small" text />
+        <p-button label="Apply" icon="pi pi-check" (onClick)="onClickApply()" size="small" />
+    </ng-template>
+</p-dialog>

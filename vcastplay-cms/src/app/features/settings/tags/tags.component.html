@@ -1,0 +1,155 @@
+<div class="flex flex-col gap-1 h-full">
+    <app-breadcrumbs [menu]="pageInfo"></app-breadcrumbs>
+    <div class="flex-1 grid grid-cols-12 gap-6">
+        <div class="col-span-12 md:col-span-6">
+            <p-card styleClass="h-full">
+                <div class="flex flex-col gap-3">
+                    <div class="flex gap-3 items-center justify-between">
+                        <p class="text-xl font-medium">Tags</p>
+                        <p-button icon="pi pi-plus" (onClick)="showTagForm.set(true); tagValues.set([]); selectedTag = null" size="small" />
+                    </div>
+                    <ng-container *ngTemplateOutlet="dataTable; context: { 
+                        $implicit: tags(), 
+                        title: 'Tags', 
+                        type: 'tags',
+                        paginator: paginatedTag
+                    }"></ng-container>
+                </div>
+            </p-card>
+        </div>
+        <div class="col-span-12 md:col-span-6">
+            <p-card styleClass="h-full">
+                <div class="flex flex-col gap-3">
+                    <div class="flex gap-3 items-center justify-between">
+                        <p class="text-xl font-medium">Values</p>
+                        <p-button icon="pi pi-plus" (onClick)="showTagValueForm.set(true)" [disabled]="!selectedTag" size="small" />
+                    </div>
+                    <ng-container *ngTemplateOutlet="dataTable; context: { 
+                        $implicit: tagValues(), 
+                        title: 'Values', 
+                        type: 'values',
+                        paginator: paginatedTagValue
+                    }"></ng-container>
+                </div>
+            </p-card>
+        </div>
+    </div>
+</div>
+
+<p-dialog [(visible)]="showTagForm" styleClass="w-[30rem]" [modal]="true" draggable [resizable]="false" (onHide)="onClickCancel('tags')">
+    <ng-template #header>
+        <div class="inline-flex items-center gap-2">
+            <i class="pi pi-info-circle"></i> <span>{{ isEditTag() ? 'Edit Tag' : 'Add Tag' }}</span>
+        </div>
+    </ng-template>
+    <ng-template #content>
+        <ng-container *ngTemplateOutlet="formDataInput; context: { $implicit: tagData, type: 'tags' }"></ng-container>
+    </ng-template>
+    <ng-template #footer>
+        <div class="float-right flex gap-3">
+            <p-button label="Cancel" severity="secondary" (onClick)="showTagForm.set(false)" />
+            <p-button label="Save" (onClick)="onClickSave('tags')" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showTagValueForm" styleClass="w-[30rem]" [modal]="true" draggable [resizable]="false" (onHide)="onClickCancel('values')">
+    <ng-template #header>
+        <div class="inline-flex items-center gap-2">
+            <i class="pi pi-info-circle"></i> <span>{{ isEditTagValue() ? 'Edit Value' : 'Add Value' }}</span>
+        </div>
+    </ng-template>
+    <ng-template #content>
+        <ng-container *ngTemplateOutlet="formDataInput; context: { $implicit: tagValueData, type: 'values' }"></ng-container>
+    </ng-template>
+    <ng-template #footer>
+        <div class="float-right flex gap-3">
+            <p-button label="Cancel" severity="secondary" (onClick)="showTagValueForm.set(false)" />
+            <p-button label="Save" (onClick)="onClickSave('values')" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<ng-template #dataTable let-item let-title="title" let-type="type" let-paginator="paginator">
+    <div class="flex-1">
+        <p-table [value]="item" [scrollable]="true" scrollHeight="flex" size="small"
+            (onPage)="onPageChange($event, type)" 
+            [rows]="paginator?.itemsPerPage ?? 10"
+            [totalRecords]="paginator?.totalItems ?? 0"
+            [first]="(paginator?.currentPage - 1) * (paginator?.itemsPerPage ?? 0)"
+            (selectionChange)="onSelectionChange($event, type)" 
+            selectionMode="single" 
+            stripedRows 
+            showGridlines
+            paginator 
+            lazy
+        >
+            <ng-template #header>
+                <tr>
+                    @if (type == 'tags') {
+                        <th>Name</th>
+                        <th>Description</th>
+                    } @else {
+                        <th>Value</th>
+                    }
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-item>
+                <tr class="text-sm" [pSelectableRow]="item">
+                    @if (type == 'tags') {
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.description }}</td>
+                    } @else {
+                        <td>{{ item.value }}</td>
+                    }
+                    <td>
+                        <div class="flex flex-row justify-center">
+                            <p-button icon="pi pi-pencil" (onClick)="onClickEditTag(item, type)" severity="success" text />
+                            <p-button icon="pi pi-trash" (onClick)="onClickRemoveTag(item, type)" severity="danger" text />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="4">
+                        <div class="flex justify-center items-center h-50">
+                            @if (!selectedTag) {
+                                <span class="text-sm italic">Please select or create a group.</span>
+                            } @else {
+                                <span class="text-sm italic">No {{ title }} found for <strong>{{ selectedTag.name }}</strong>.</span>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</ng-template>
+
+<ng-template #formDataInput let-formTag let-type="type">
+    <div class="flex flex-col gap-5 items-center justify-center mt-1" [formGroup]="formTag">
+        @if (type == "tags") {
+            <div class="w-full">
+                <p-floatlabel variant="on">
+                    <input id="name" type="text" pInputText formControlName="name" fluid>
+                    <label for="name">Name</label>
+                </p-floatlabel>
+            </div>
+            <div class="w-full">
+                <p-floatlabel variant="on">
+                    <textarea id="description" type="text" formControlName="description" [rows]="5" pTextarea fluid></textarea>
+                    <label for="description">Description</label>
+                </p-floatlabel>
+            </div>
+        } @else {
+            <div class="w-full">
+                <p-floatlabel variant="on">
+                    <input id="value" type="text" pInputText formControlName="value" fluid>
+                    <label for="value">Value</label>
+                </p-floatlabel>
+            </div>
+        }
+    </div>
+</ng-template>

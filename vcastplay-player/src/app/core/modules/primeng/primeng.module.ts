@@ -59,6 +59,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { StyleClassModule } from 'primeng/styleclass';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DynamicDialogModule } from 'primeng/dynamicdialog';
 
 const PRIMENG_MODULES = [
   CommonModule,
@@ -120,6 +121,7 @@ const PRIMENG_MODULES = [
   InputOtpModule,
   ChipModule,
   ProgressSpinnerModule,
+  DynamicDialogModule,
 ];
 
 @NgModule({

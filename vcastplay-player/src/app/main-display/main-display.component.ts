@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, effect, forwardRef, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
 import { PrimengModule } from '../core/modules/primeng/primeng.module';
 import { NetworkService } from '../core/services/network.service';
 import { UtilsService } from '../core/services/utils.service';
@@ -7,9 +7,9 @@ import { IndexedDbService } from '../core/services/indexed-db.service';
 import { ComponentsModule } from '../core/modules/components/components.module';
 import { StorageService } from '../core/services/storage.service';
 import { PlatformService } from '../core/services/platform.service';
-import { environment } from '../../environments/environment.development';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
+import { WebsocketService } from '../core/services/websocket.service';
 
 @Component({
   selector: 'app-main-display',
@@ -19,6 +19,7 @@ import { MenuItem, MessageService } from 'primeng/api';
 })
 export class MainDisplayComponent {
 
+  // webSocket = inject(WebsocketService);
   platformService = inject(PlatformService);
   networkService = inject(NetworkService);
   indexedDB = inject(IndexedDbService);
@@ -111,7 +112,7 @@ export class MainDisplayComponent {
     if (this.currentContent && !['design', 'design2'].includes(type)) this.nextCurrent = this.currentContent
     else this.currentContent = null;
 
-    const content = this.player.onSetContent(type);
+    const content: any = this.player.onSetContent(type);
     console.log('🧭 New Content detected:', content);
     
     const files: any[] = !['playlist', 'playlist2', 'design', 'design2'].includes(type) ? [ content ] : content.files;

@@ -3,6 +3,7 @@ import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.mod
 import { ScreenService } from '../../../core/services/screen.service';
 import { TagService } from '../../settings/tags/tag.service';
 import { UtilityService } from '../../../core/services/utility.service';
+import { GroupService } from '../../settings/groups/group.service';
 
 @Component({
   selector: 'app-screen-filter',
@@ -20,21 +21,24 @@ export class ScreenFilterComponent {
 
   screenService = inject(ScreenService);
   tagService = inject(TagService);
+  groupService = inject(GroupService);
   utils = inject(UtilityService);
 
   useFilter = signal<boolean>(false);
 
-  filterGroup = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('groups')).data();
-  })
+  ngOnInit() {
+    this.onLoadGroups()
+  }
 
-  filterSubGroup = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('subGroups')).data();
-  })
+  onLoadGroups() {
+    this.groupService.onLoadGroups(1, 10)
+  }
 
-  filterLocation = computed(() => {
-    return this.tagsLists().find(tag => tag.id.includes('locations')).data();
-  })
+  onLoadSubGroupsById(id: number) {
+    this.subGroups.set([]);
+    if (!id) return
+    this.groupService.onLoadSubGroupsById(id, 1, 10)
+  }
 
   onClickApply(filter: any) {
     const filters = this.screenFilterForm.value;
@@ -52,11 +56,12 @@ export class ScreenFilterComponent {
 
   get status() { return this.utils.status; }
   get orientations() { return this.utils.orientations; }
-
-  get tagsLists() { return this.tagService.tagsLists; }
   
   get types() { return this.screenService.types; }
   get screenStatus() { return this.screenService.screenStatus; }
   get contentStatus() { return this.screenService.contentStatus; }
   get screenFilterForm() { return this.screenService.screenFilterForm; }
+
+  get groups() { return this.groupService.groups };
+  get subGroups() { return this.groupService.subGroups };
 }

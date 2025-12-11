@@ -2,6 +2,10 @@
 @use "tailwindcss";
 @use "primeicons/primeicons.css";
 
+body {
+    background-color: var(--p-primary-500);
+}
+
 .video-js {
     width: 100vw !important;
     height: 100vh !important;

@@ -36,13 +36,13 @@
         <div class="flex gap-2 items-center">
             <p class="font-semibold">Orientation:</p>
             <div class="flex gap-2 items-center ml-auto">
-                <p class="text-sm font-semibold">{{ screen.displaySettings.orientation.toUpperCase() || '-' }}</p>
+                <p class="text-sm font-semibold">{{ screen.dimensions.toUpperCase() || '-' }}</p>
             </div>
         </div>
         <div class="flex gap-2 items-center">
             <p class="font-semibold">Resolution:</p>
             <div class="flex gap-2 items-center ml-auto">
-                <p class="text-sm font-semibold">{{ screen.displaySettings.resolution || '-' }}</p>
+                <p class="text-sm font-semibold">{{ screen.dimensions || '-' }}</p>
             </div>
         </div>
         <div class="flex gap-2 items-center">

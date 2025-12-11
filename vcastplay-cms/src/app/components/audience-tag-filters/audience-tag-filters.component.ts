@@ -2,6 +2,8 @@ import { Component, computed, EventEmitter, inject, Input, Output, signal } from
 import { PrimengUiModule } from '../../core/modules/primeng-ui/primeng-ui.module';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { TagService } from '../../features/settings/tags/tag.service';
+import { UtilityService } from '../../core/services/utility.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-audience-tag-filters',
@@ -11,61 +13,94 @@ import { TagService } from '../../features/settings/tags/tag.service';
 })
 export class AudienceTagFiltersComponent {
 
-  @Input() audienceTagForm!: FormGroup;
+  @Input() isShowAudienceTag = signal<boolean>(false);
+
+  @Output() onAudienceTagChange = new EventEmitter<any>();
 
   tagService = inject(TagService);
+  message = inject(MessageService);
+  utils: any = inject(UtilityService);
 
   audienceTags: any[] = [];
   audienceTagInputForm: FormGroup = new FormGroup({
-    category: new FormControl(null, [ Validators.required ]),
-    name: new FormControl(null, [ Validators.required ]),
+    tags: new FormControl(null, [ Validators.required ]),
+    tagValue: new FormControl(null, [ Validators.required ]),
   });
 
   categoryLists = signal<any[]>([]);
 
-  filteredTagLists = computed(() => {
-    return this.tagsLists().filter(tags => !['groups', 'subGroups', 'categories', 'subCategories'].includes(tags.id));
-  })
+  constructor() { }
 
-  constructor() {
-    this.category?.valueChanges.subscribe(value => {
-      const lists = this.tagsLists().find((audienceTag: any) => audienceTag.name === value)
-      this.categoryLists.set(lists?.data() || []);
-    })
+  ngOnInit() {
+    this.onLoadTags();
   }
 
-  ngOnInit() {    
-    this.audienceTags = this.tagService.onGetFilteres(this.audienceTag?.value);
+  ngOnDestroy() {
+    this.tagValues.set([]);
+  }
+
+  ngAfterViewInit() { }
+
+  onLoadTags() {
+    // const { currentPage, itemsPerPage }: any = this.paginatedTag;
+    this.tagService.onLoadTags(1, 10);
+  }
+
+  onLoadTagValuesById(id: number) {
+    this.tagValues.set([]);
+    // const { currentPage, itemsPerPage }: any = this.paginatedTagValue;
+    this.tagService.onLoadTagValuesById(id, 1, 10);
+  }
+
+  onSelectionChange(event: any) {
+    const groupId = this.tags().find((tag: any) => tag.name === event.value)?.id;
+    this.onLoadTagValuesById(groupId);
   }
 
   onClickAddTag() {
     if (this.audienceTagInputForm.invalid) return;
-    const tempData = this.audienceTags;
-    const value = this.audienceTagInputForm.value;
-    const index = tempData.findIndex(data => data.name == value.name && data.category == value.category);
-    if (index == -1) tempData.push(value);
-    this.audienceTags = [...tempData];
-    this.audienceTagInputForm.reset();
 
-    const newFilters = this.tagService.onGenerateFilters(this.audienceTags);
-    this.audienceTagForm.patchValue({ audienceTag: newFilters });
+    const tags = this.audienceTags;
+    const tag = this.audienceTagInputForm.value;
+
+    const index = tags.findIndex(data => data.name == tag.name && data.tagValue == tag.tagValue);
+
+    if (index != -1) {
+      this.message.add({ severity: 'error', summary: 'Error', detail: 'Tag already added' });
+      return;
+    }
+
+    this.audienceTags = [...tags, tag];
+    this.audienceTagInputForm.reset();
+    this.tagValues.set([]);
   }
 
-  onClickRemoveTag(index: number) {
+  onClickRemoveTag(item: any) {
     const tempData = this.audienceTags;
+    const index = tempData.findIndex(data => data.name == item.name && data.tagValue == item.tagValue);
     tempData.splice(index, 1);
     this.audienceTags = [...tempData];
-
-    const newFilters = this.tagService.onGenerateFilters(this.audienceTags);
-    this.audienceTagForm.patchValue({ audienceTag: newFilters });
   }
 
-  get category() {
-    return this.audienceTagInputForm.get('category');
+  onClickApply() {
+    this.onAudienceTagChange.emit(this.audienceTags);
+    this.isShowAudienceTag.set(false);
   }
 
-  get tagsLists() { return this.tagService.tagsLists; }
-  get ageGroups() { return this.tagService.ageGroups; }
-  get genders() { return this.tagService.genders; }
-  get audienceTag() { return this.audienceTagForm.get('audienceTag'); }
+
+  get tags() {
+    return this.tagService.tags;
+  }
+
+  get tagValues() {
+    return this.tagService.tagValues;
+  }
+
+  get paginatedTag() {
+    return this.tagService.paginatedTags();
+  }
+
+  get paginatedTagValue() {
+    return this.tagService.paginatedTagValues();
+  }
 }

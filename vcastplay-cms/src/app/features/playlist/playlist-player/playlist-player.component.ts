@@ -183,7 +183,7 @@ export class PlaylistPlayerComponent {
   }
 
   onIFrameLoad(item: Assets) {
-    if (item.type == 'web') return item.link;
+    if (item.type == 'web') return item.url;
     else return '';
   }
 

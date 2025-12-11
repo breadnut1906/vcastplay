@@ -45,7 +45,7 @@ export class AssetPreviewComponent {
     await this.ytService.onLoadSDK()
     this.ytTimerId = setTimeout(async () => {
       const ytPlayer = this.ytPlayerRef?.nativeElement;
-      const { videoId } = this.utils.onGetEmbedUrl(this.asset.link);
+      const { videoId } = this.utils.onGetEmbedUrl(this.asset.url);
       if (!ytPlayer) return;
       
       try {

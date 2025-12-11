@@ -1,27 +1,38 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { User } from '../../../core/interfaces/account-settings';
+import { StorageService } from '../../../core/services/storage.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../../../environments/environment.development';
+import { Pagination } from '../../../core/interfaces/general';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
 
-  private userSignal = signal<User[]>([]);
-  users = computed(() => this.userSignal());
+  storage = inject(StorageService);
+  http = inject(HttpClient);
+  api: string = environment.api
 
-  loadingSignal = signal<boolean>(false);
+  private usersCache = new Map<string, any>();
+  users = signal<User[]>([]);
+  paginatedUsers = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
+  userLoading = signal<boolean>(false);
   showDialog = signal<boolean>(false);
+  isEdit = signal<boolean>(false);
 
   userForm: FormGroup = new FormGroup({
     id: new FormControl(''),
-    code: new FormControl(''),
+    // code: new FormControl(''),
     firstName: new FormControl('', [ Validators.required ]),
+    middleName: new FormControl(''),
     lastName: new FormControl('', [ Validators.required ]),
     email: new FormControl('', [ Validators.required, Validators.email ]),
-    mobile: new FormControl('', [ Validators.required ]),
-    role: new FormControl('', [ Validators.required ]),
-    status: new FormControl(''),
+    password: new FormControl('', [ Validators.required ]),
+    mobileNo: new FormControl('', [ Validators.required ]),
+    // role: new FormControl('', [ Validators.required ]),
+    // status: new FormControl(''),
     // expiredAt: new FormControl(''),
   })  
 
@@ -34,105 +45,55 @@ export class UserService {
       this.forbiddenStartValidator() 
     ]),
     confirmNewPassword: new FormControl(null, [ Validators.required ])
-  }, {
-    validators: this.passMatchValidator
-  });
+  }, { validators: this.passMatchValidator });
 
   constructor() { }
 
-  onLoadUsers() {
-    this.loadingSignal.set(false);
-    /**Call GET users API */
-    this.userSignal.set([
-      {
-        id: 1,
-        code: 'NYX001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        mobile: 1234567890,
-        role: null,
-        status: 'Active',
-        createdOn: new Date('2024-01-01'),
-        updatedOn: new Date('2024-02-01'),
+  onGetHTTPHeaders() {
+    const tenantId = this.storage.get('id');
+    const accessToken = `bearer ${this.storage.get('accessToken')}`;
+    const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'Authorization': accessToken });
+    return headers;
+  }  
+
+  onLoadUsers(page: number = 1, limit: number = 10) {
+    const key = `${page}-${limit}`
+
+    this.users.set([]);
+    this.userLoading.set(true);
+
+    if (this.usersCache.has(key)) {
+      const cached = this.usersCache.get(key);
+      this.users.set(cached);
+      this.userLoading.set(false);
+      return
+    }
+
+    this.http.get(`${this.api}tenants/users?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() }).subscribe({
+      next: (response: any) => {
+        this.usersCache.set(key, response);
+        this.users.set(response);
+        // this.paginatedUsers.set(response.meta);
       },
-      {
-        id: 2,
-        code: 'NYX002',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@example.com',
-        mobile: 9876543210,
-        role: null,
-        status: 'Active',
-        createdOn: new Date('2024-01-05'),
-        updatedOn: new Date('2024-02-05'),
+      error: (error: any) => {
+        console.log(error);
       },
-      {
-        id: 3,
-        code: 'NYX003',
-        firstName: 'Michael',
-        lastName: 'Johnson',
-        email: 'michael.johnson@example.com',
-        mobile: 1122334455,
-        role: null,
-        status: 'Inactive',
-        createdOn: new Date('2024-01-10'),
-        updatedOn: new Date('2024-02-10'),
-      },
-      {
-        id: 4,
-        code: 'NYX004',
-        firstName: 'Emily',
-        lastName: 'Davis',
-        email: 'emily.davis@example.com',
-        mobile: 2233445566,
-        role: null,
-        status: 'Active',
-        createdOn: new Date('2024-01-15'),
-        updatedOn: new Date('2024-02-15'),
-      },
-      {
-        id: 5,
-        code: 'NYX005',
-        firstName: 'Robert',
-        lastName: 'Brown',
-        email: 'robert.brown@example.com',
-        mobile: 3344556677,
-        role: null,
-        status: 'Suspended',
-        createdOn: new Date('2024-01-20'),
-        updatedOn: new Date('2024-02-20'),
-      },
-    ]);
-    this.loadingSignal.set(false);
+      complete: () => {
+        this.userLoading.set(false);
+      }
+    })
   }
 
-  onGetUsers() {
-    if (this.userSignal().length === 0) this.onLoadUsers();
-    return this.userSignal();
-  }
-
-  onRefreshUser() {
-    this.userSignal.set([]);
-    this.onLoadUsers();
-  }
-
-  onSaveUser(user: User) {
-    const tempUsers = this.users();
-    const { id, code, status, ...info } = user;
-    const index = tempUsers.findIndex(u => u.id === id);
-    if (index !== -1) tempUsers[index] = { ...tempUsers[index], ...info };
-    else tempUsers.push({ id: tempUsers.length + 1, code: `NYX00${tempUsers.length + 1}`, status: 'pending', ...info, createdOn: new Date(), updatedOn: new Date() });
-
-    this.userSignal.set([...tempUsers]);
-    /**Call POST/PATCH user API */
+  onSaveUser(id: number, item: User, mode: string = 'create') {
+    if (mode == 'create') {
+      return this.http.post(`${this.api}tenants/users`, item, { headers: this.onGetHTTPHeaders() });
+    } else {
+      return this.http.patch(`${this.api}tenants/users/${id}`, item, { headers: this.onGetHTTPHeaders() });
+    }
   }
 
   onDeleteUser(user: User) {
-    const tempUsers = this.users().filter(u => u.id !== user.id);
-    this.userSignal.set([...tempUsers]);
-    /**Call DELETE user API */
+    return this.http.delete(`${this.api}tenants/users/${user.id}`, { headers: this.onGetHTTPHeaders() });
   }
   
   forbiddenStartValidator(): ValidatorFn {
@@ -149,9 +110,5 @@ export class UserService {
     const confirmPassword = control.get('confirmNewPassword')?.value;
 
     return password === confirmPassword ? null : { mismatch: true };
-  }
-
-  onEditUser(user: User) {
-    this.userForm.patchValue(user);
   }
 }

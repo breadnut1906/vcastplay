@@ -36,11 +36,11 @@ export class ScreenManagementListComponent {
       const matchesGroup = !group || screen.group?.includes(group);
       const matchesSubGroup = !subGroup || screen.subGroup?.includes(subGroup);
       const matchesKeywords = !keywords || _.includes(screen.name.toLowerCase(), keywords.toLowerCase()) || _.includes(screen.code, keywords);
-      const matchedLocation = !location || screen?.geographic?.location.includes(location);
+      const matchedLocation = !location || screen?.location.includes(location);
       const matchedScreenStatus = !screenStatus || screen.screenStatus == screenStatus;
-      const matchedContentStatus = !contentStatus || screen.assignedContent?.content.status == contentStatus;
+      // const matchedContentStatus = !contentStatus || screen.assignedContent?.status == contentStatus;
 
-      return matchesStatus && matchesType && matchesGroup && matchesSubGroup && matchesKeywords && matchedLocation && matchedScreenStatus && matchedContentStatus;
+      return matchesStatus && matchesType && matchesGroup && matchesSubGroup && matchesKeywords && matchedLocation && matchedScreenStatus //&& matchedContentStatus;
     })
   });
 

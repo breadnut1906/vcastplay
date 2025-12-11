@@ -1,41 +1,35 @@
-import { AudienceTag } from "../../core/interfaces/general";
-
 export interface Assets {
     id: number;
     code: string;
     name: string;
     type: string;
-    link: string;
+    url: string;
     category?: string;
     subCategory?: string;
     thumbnail?: string
-    fileDetails: AssetInfo;
-    dateRange?: { 
-        start: Date | null;
-        end: Date | null;
-    };
-    hours?: string[];
-    weekdays?: string[];
     duration: number;
-    audienceTag: AudienceTag;
-    status: string;
+    size?: number;
+    orientation?: string;
+    dimensions?: string;
+
+    // Availability
+    availability: boolean;
+    start: Date | null;
+    end: Date | null;
+    allDay: boolean;
+    allWeekdays: boolean;
+    weekdays?: string[];
+    hours?: string[];
+
+    // Audience Tagging
+    audienceTag: any;
+
+    // content id for playlist
     contentId?: any;
-    createdOn: Date;
-    updatedOn: Date;
-}
 
-export interface AssetType {
-    label: string;
-    value: string;
-}
-
-export interface AssetInfo {
-    name: string;
-    type: string;
-    size: number;
-    orientation: string;
-    resolution: { width: number; height: number };
-    link?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
 }
 
 export interface UploadResults {

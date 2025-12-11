@@ -92,7 +92,7 @@ export class ScreenMapComponent {
   }
   onAddMarkers(): void {
     this.filterScreens().forEach(screen => {      
-      const marker = L.marker([screen.address.latitude, screen.address.longitude], {
+      const marker = L.marker([screen.latitude, screen.longitude], {
         icon: this.onCreateDivIcon(screen)
       }).bindTooltip(screen.name, {
         permanent: false,
@@ -104,7 +104,7 @@ export class ScreenMapComponent {
       
       marker.on('click', ({ latlng }: any) => {
         const { lat, lng } = latlng;
-        const screen: any = this.filterScreens().find(screen => screen.address.latitude === lat && screen.address.longitude === lng);
+        const screen: any = this.filterScreens().find(screen => screen.latitude === lat && screen.longitude === lng);
         this.selectedScreen.set(screen);
         if (!this.isMobile) this.map.flyTo({ lat: lat - 0.00005, lng }, 22);
         this.drawerVisible.set(true);
@@ -113,7 +113,7 @@ export class ScreenMapComponent {
   }
   onClickScreen(screen: Screen) {
     this.selectedScreen.set(screen);    
-    this.map.flyTo({ lat: screen.address.latitude, lng: screen.address.longitude }, 22);
+    this.map.flyTo({ lat: screen.latitude, lng: screen.longitude }, 22);
     this.drawerVisible.set(true);
   }
 

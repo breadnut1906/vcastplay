@@ -53,7 +53,7 @@ export class ScreenSelectionComponent {
 
   onGetPreviewStyle(screen: Screen) {
     const maxSize = 100; // preview area size
-    const resolution: any = screen.displaySettings.resolution.split('x');
+    const resolution: any = screen.dimensions.split('x');
     const ratio = resolution[0] / resolution[1];
 
     let previewWidth: number;

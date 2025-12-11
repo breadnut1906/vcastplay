@@ -19,8 +19,18 @@ export default [
         title: `Profile • ${appTitle}`,
     },
     {
+        path: 'group',
+        loadComponent: () => import('./groups/groups.component').then(m => m.GroupsComponent),
+        title: `Groups • ${appTitle}`,
+    },
+    {
+        path: 'category',
+        loadComponent: () => import('./categories/categories.component').then(m => m.CategoriesComponent),
+        title: `Categories • ${appTitle}`,
+    },
+    {
         path: 'tag',
-        loadComponent: () => import('./tags/tag-list/tags.component').then(m => m.TagsComponent),
+        loadComponent: () => import('./tags/tags.component').then(m => m.TagsComponent),
         title: `Tags • ${appTitle}`,
     },
     {
