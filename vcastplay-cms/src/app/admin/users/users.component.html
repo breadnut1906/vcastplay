@@ -1,0 +1,96 @@
+<div class="flex flex-col gap-4 h-full">
+    <app-breadcrumbs [menu]="pageInfo"></app-breadcrumbs>
+
+    <div class="flex-1">
+        <p-card styleClass="h-full">
+            <ng-template #header>
+                <div class="mt-4 px-6 py-2">
+                    <p class="text-2xl font-semibold">{{ pageInfo[1].label }}</p>
+                </div>
+            </ng-template>
+            <div class="flex-1">
+                <p-table 
+                    class="hidden lg:block" 
+                    [value]="users()"
+                    selectionMode="single"
+                    [loading]="isLoading()"
+                    [scrollable]="true" 
+                    [showLoader]="false"
+                    size="small"
+                    stripedRows 
+                    lazy
+                >
+                    <ng-template #header>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Created At</th>
+                            <th [style]="{ width: '8rem', textAlign: 'center' }">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-item>
+                        <tr class="text-sm">
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.firstName }} {{ item.lastName }}</td>
+                            <td>{{ item.email }}</td>
+                            <!-- <td><p-tag [value]="item.status" [severity]="utils.getStatus(item.status)" /></td> -->
+                            <td>{{ utils.onGetLastUpdatedLabel(item.createdAt) }}</td>
+                            <td class="flex flex-row justify-center gap-2">
+                                <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #emptymessage>
+                        <tr>
+                            <td colspan="5" [height]="20">
+                                <div class="flex justify-center p-5"><p>No users found</p></div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #loadingbody>
+                        @for (row of utils.tableSkeletonRows; track $index) {
+                            <tr>
+                                @for (col of [1, 2, 3, 4, 5]; track $index) {
+                                    <td><p-skeleton height="1.5rem" /></td>
+                                }
+                            </tr>
+                        }
+                    </ng-template>
+                </p-table>
+            </div>
+            <div class="block lg:hidden flex flex-col gap-4">
+                @if (!isLoading()) {
+                    @for (item of users(); track $index) {
+                        <app-user-list-item [user]="item" [actionBtn]="actionBtn" />
+                    } @empty {
+                        <div class="flex justify-center items-center p-5 h-100">
+                            <p>No roles found</p>
+                        </div>
+                    }
+                } @else {
+                    @for (item of utils.tableSkeletonRows; track $index) {
+                        <p-skeleton height="5rem" />
+                    }
+                }
+            </div>
+            <ng-template #footer>
+                <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * 10" 
+                    [totalRecords]="pagination().totalItems" (onPageChange)="onPageChange($event)"></p-paginator>
+            </ng-template>
+        </p-card>
+    </div>
+</div>
+
+<ng-template #actionBtn let-item>
+    <p-button (onClick)="onClickEdit(item)" pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="success" size="small" />
+    <p-button (onClick)="onClickDelete(item, $event)" pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
+</ng-template>
+
+<!-- <p-dialog header="User Information" [(visible)]="userService.showDialog" styleClass="w-[30rem] h-auto" [modal]="true" [draggable]="false" [focusOnShow]="false">
+    <app-user-details [userForm]="userForm" />
+    <ng-template #footer>
+        <p-button label="Cancel" severity="secondary" (onClick)="onClickCancel()" />
+        <p-button label="Save" (onClick)="onClickSave($event)" />
+    </ng-template>
+</p-dialog> -->

@@ -17,6 +17,12 @@ export default [
         title: `Screen Management • ${appTitle}`,
     },
     {
+        path: 'users',
+        loadComponent: () =>
+            import('./users/users.component').then((m) => m.UsersComponent),
+        title: `User Management • ${appTitle}`,
+    },
+    {
         path: '**',
         redirectTo: 'summary',
     }

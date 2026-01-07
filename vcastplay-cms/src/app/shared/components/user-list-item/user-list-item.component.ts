@@ -1,7 +1,7 @@
 import { Component, inject, Input, TemplateRef } from '@angular/core';
-import { PrimengUiModule } from '../../../../core/modules/primeng-ui/primeng-ui.module';
-import { User } from '../../../../shared/interfaces/account-settings';
-import { UtilityService } from '../../../../core/services/utility.service';
+import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
+import { User } from '../../interfaces/account-settings';
+import { UtilityService } from '../../../core/services/utility.service';
 
 @Component({
   selector: 'app-user-list-item',

@@ -114,6 +114,14 @@ export class ScreenListComponent {
     });
   }
 
+  onPageChange(event: any) {
+    const rows = event.rows;
+    const pageNumber = event.first / event.rows + 1;
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.screenService.onLoadScreens(pageNumber, event.rows);
+  }
+
   onFilterChange(event: any) {
     this.screenFilters.set(event.filters);
   }
@@ -126,6 +134,7 @@ export class ScreenListComponent {
   get showOTP() { return this.screenService.showOTP; }
   get screenForm() { return this.screenService.screenForm; }
   get isEditMode() { return this.screenService.isEditMode; }
+  get pagination() { return this.screenService.pagination; }
   get totalRecords() { return this.screenService.totalRecords; }
   get showDownload() { return this.screenService.showDownload; }
   get selectedScreen() { return this.screenService.selectedScreen; }

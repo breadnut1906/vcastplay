@@ -23,7 +23,7 @@
                             <div class="flex items-center text-sm justify-between gap-3 select-none">
                                 <span class="font-semibold">Disks:</span>
                                 @for (disk of disks; track $index) {
-                                    <div class="text-center border border-[var(--p-surface-300)] w-full p-2 hover:bg-[var(--p-surface-100)] rounded-lg">
+                                    <div class="text-center border border-[var(--p-surface-300)] w-full p-1 hover:bg-[var(--p-surface-100)] rounded-lg">
                                         {{ disk.mount }} ({{ disk.size }})
                                     </div>
                                 }

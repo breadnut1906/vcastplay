@@ -29,6 +29,7 @@
                     [scrollable]="true" 
                     size="small"
                     stripedRows
+                    lazy
                 >
                     <ng-template #header>
                         <tr>
@@ -115,7 +116,8 @@
                 </div>
             </div>
             <ng-template #footer>
-                <p-paginator [rows]="rows" [totalRecords]="totalRecords"></p-paginator>
+                <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * 10" 
+                    [totalRecords]="pagination().totalItems" (onPageChange)="onPageChange($event)"></p-paginator>
             </ng-template>
         </p-card>
     </div>

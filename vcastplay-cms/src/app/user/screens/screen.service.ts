@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { SelectOption } from '../../shared/interfaces/general';
+import { Pagination, SelectOption } from '../../shared/interfaces/general';
 import { MenuItem } from 'primeng/api';
 import { environment } from '../../../environments/environment.development';
 import { StorageService } from '../../core/services/storage.service';
@@ -46,6 +46,7 @@ export class ScreenService {
     type: new FormControl(null),
   })
   
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
   rows = signal<number>(8);
   totalRecords = signal<number>(0);
 
@@ -143,11 +144,12 @@ export class ScreenService {
     return headers;
   }  
 
-  onLoadScreens() {  
-    this.utils.onGETApi(`${this.api}tenants/screens`).subscribe((res: any) => {
+  onLoadScreens(page: number = 1, limit: number = 10) {
+    this.utils.onGETApi(`${this.api}tenants/screens?page=${page}&limit=${limit}`).subscribe((res: any) => {
       const { items, meta } = res;
       this.screenSignal.set(items);
-      this.totalRecords.set(meta.totalItems);
+      this.pagination.set(meta);
+      // this.totalRecords.set(meta.totalItems);
     })
   }
 

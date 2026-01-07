@@ -11,7 +11,7 @@ import { WeekdayHourSelectionComponent } from '../../../shared/components/weekda
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { BroadcastListItemComponent } from '../../../user/settings/broadcast/broadcast-list-item/broadcast-list-item.component';
 import { BroadcastDetailsComponent } from '../../../user/settings/broadcast/broadcast-details/broadcast-details.component';
-import { UserListItemComponent } from '../../../user/settings/users/user-list-item/user-list-item.component';
+import { UserListItemComponent } from '../../../shared/components/user-list-item/user-list-item.component';
 import { UserDetailsComponent } from '../../../user/settings/users/user-details/user-details.component';
 import { UserApprovalComponent } from '../../../user/settings/users/user-approval/user-approval.component';
 import { RoleListItemComponent } from '../../../user/settings/roles/role-list-item/role-list-item.component';

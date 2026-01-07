@@ -23,11 +23,7 @@
             <div class="flex-1 md:h-full">
                 <p-table
                     class="hidden lg:block" 
-                    [value]="screens" 
-                    (onPage)="onPageChange($event)" 
-                    [first]="(pagination().currentPage - 1) * 10"
-                    [rows]="pagination().itemsPerPage || 10"
-                    [totalRecords]="pagination().totalItems"
+                    [value]="screens"
                     [loading]="isLoading()"
                     [showLoader]="false"
                     selectionMode="single"
@@ -35,7 +31,6 @@
                     scrollHeight="flex-1"
                     size="small"
                     stripedRows
-                    paginator
                     lazy
                 >
                     <ng-template #header>
@@ -114,9 +109,10 @@
                     }
                 </div>
             </div>
-            <!-- <ng-template #footer>
-                <p-paginator [rows]="rows" [totalRecords]="totalRecords"></p-paginator>
-            </ng-template> -->
+            <ng-template #footer>
+                <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * 10" 
+                    [totalRecords]="pagination().totalItems" (onPageChange)="onPageChange($event)"></p-paginator>
+            </ng-template>
         </p-card>
     </div>
 </div>
