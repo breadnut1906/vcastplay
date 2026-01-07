@@ -1,0 +1,131 @@
+<div class="flex flex-col gap-1 h-full">
+    <app-breadcrumbs [menu]="pageInfo"></app-breadcrumbs>
+    <div class="flex-1">
+        <p-card styleClass="h-full">
+            <ng-template #header>
+                <div class="mt-4 px-6">
+                    <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
+                </div>
+            </ng-template>
+            <!-- <ng-template #title>
+                <div class="flex gap-4 items-center">
+                    <app-screen-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" [showOrientation]="true" />
+                    <div class="gap-3 ml-auto hidden md:flex">
+                        <p-button (onClick)="showOTP.set(true)" label="Register" icon="pi pi-plus" [text]="false" outlined />
+                        <p-button (onClick)="showDownload.set(true)" label="Download" icon="pi pi-download" [text]="false" />
+                    </div>
+                    <div class="flex gap-2 ml-auto md:hidden">
+                        <p-button (onClick)="showDownload.set(true)" icon="pi pi-download" 
+                            [text]="false" pTooltip="Download" tooltipPosition="bottom" />
+                    </div>
+                </div>
+            </ng-template> -->
+            <div class="flex-1 md:h-full">
+                <p-table
+                    class="hidden lg:block" 
+                    [value]="screens" 
+                    (onPage)="onPageChange($event)" 
+                    [first]="(pagination().currentPage - 1) * 10"
+                    [rows]="pagination().itemsPerPage || 10"
+                    [totalRecords]="pagination().totalItems"
+                    [loading]="isLoading()"
+                    [showLoader]="false"
+                    selectionMode="single"
+                    [scrollable]="true" 
+                    scrollHeight="flex-1"
+                    size="small"
+                    stripedRows
+                    paginator
+                    lazy
+                >
+                    <ng-template #header>
+                        <tr>
+                            <th>Screen</th>
+                            <th>Orientation</th>
+                            <th>Resolution</th>
+                            <th>Registered On</th>
+                            <th>Last Update</th>
+                            <th>Status</th>
+                            <th>
+                                <div class="text-center">Actions</div>
+                            </th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-item>
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center" [pTooltip]="utils.toTitleCase(item.type)" tooltipPosition="bottom">
+                                        @switch (item.type) {
+                                            @case('desktop') { <i class="pi pi-desktop !font-black !text-2xl !text-blue-500"></i> }
+                                            @case('android') { <i class="pi pi-android !text-2xl !text-lime-500"></i> }
+                                            @default { <i class="pi pi-globe !text-2xl"></i> }
+                                        }
+                                    </div>
+
+                                    <div class="flex flex-col">
+                                        <p class="text-base font-semibold">
+                                            {{ item.name || item.info.hostname || 'BROWSER' }}
+                                        </p>
+                                        <p class="text-sm">{{ item.code }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><p class="text-sm font-semibold">{{ item.orientation.toUpperCase() ?? '-' }}</p></td>
+                            <td><p class="text-sm">{{ item.resolution }}</p></td>
+                            <td>
+                                @if (item.registeredAt) {
+                                    <p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.registeredAt) }}</p>
+                                } @else {
+                                    <p class="text-sm text-red-500 italic">Not Registered</p>
+                                }
+                            </td>
+                            <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
+                            <td><p-tag [value]="item.status || 'active'" [icon]="'pi ' + utils.getIcon(item?.status || 'active')"
+                                [severity]="utils.getStatus(item?.status || 'active')" /></td>
+                            <td>
+                                <div class="flex flex-row justify-center gap-2">
+                                    <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
+                                </div> 
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #emptymessage>
+                        <tr>
+                            <td colspan="9" [height]="20">
+                                <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+                <div class="block lg:hidden flex flex-col gap-4">
+                    @if (!isLoading()) {
+                        @for (item of screens; track $index) {
+                            <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" [isAdmin]="true" />
+                        } @empty {
+                            <div class="flex justify-center items-center p-5 h-100">
+                                <p>No screens found</p>
+                            </div>
+                        }
+                    } @else {
+                        @for (item of utils.tableSkeletonRows; track $index) {
+                            <p-skeleton height="5rem" />
+                        }
+                    }
+                </div>
+            </div>
+            <!-- <ng-template #footer>
+                <p-paginator [rows]="rows" [totalRecords]="totalRecords"></p-paginator>
+            </ng-template> -->
+        </p-card>
+    </div>
+</div>
+
+<ng-template #actionBtn let-item>
+    <p-button (onClick)="onClickView(item)" pTooltip="View" tooltipPosition="bottom" icon="pi pi-eye" severity="info" size="small" />
+    <p-button (onClick)="onClickDelete(item, $event)" [disabled]="item.registeredAt"
+        pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
+</ng-template>
+
+
+<app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" [isAdmin]="true" />

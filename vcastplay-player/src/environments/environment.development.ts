@@ -1,10 +1,10 @@
 export const environment = {
-    timeout: 10,
+    apiKey: 'nyx3y3@vc@stplay@2025*',
+    api: 'http://beta.caltondatx.com:4001/api/v1/',
     socketUrl: 'http://beta.caltondatx.com:4001',
     geoAPI: 'https://ipapi.co/json',
-    androidFilePath: 'https://appassets.androidplatform.net/assets/',
-    desktopFilePath: 'C:/Users/rbtubat/Downloads/vcastplay/',
     secretKey: 'NYXSYS_KEY',
     version: '2.0.0',
+    timeout: 10,
     production: false,
 };

@@ -1,0 +1,51 @@
+<p-card>
+    <ng-template #title>
+        <div class="flex gap-2 items-center">
+            <div class="flex items-end justify-center gap-2">
+                <p-checkbox [(ngModel)]="selectMultipleScreens" [inputId]="screen.name" 
+                    name="screen" [value]="screen" />
+                <div class="flex items-center gap-4">
+                    <p class="text-base font-semibold mt-2">{{ screen.name }}</p>
+                    <div class="flex items-center" [pTooltip]="utils.toTitleCase(screen.type)" tooltipPosition="bottom">
+                        @switch (screen.type) {
+                            @case('desktop') { <i class="pi pi-desktop !font-black !text-lg !text-blue-500"></i> }
+                            @case('android') { <i class="pi pi-android !text-lg !text-lime-500"></i> }
+                            @default { <i class="pi pi-globe !text-lg"></i> }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="ml-auto">
+                <p-tag [value]="screen.screenStatus?.toUpperCase()" [severity]="utils.getStatus(screen.screenStatus ?? '')" [icon]="'pi ' + utils.getIcon(screen.screenStatus ?? '')" />
+            </div>
+        </div>
+    </ng-template>
+    <div class="flex flex-col my-5 gap-5">
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Last Online:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                <i class="pi pi-clock" [style]="{ 'font-size': '0.75rem'}"></i>
+                <p class="text-sm italic">{{ utils.onGetLastUpdatedLabel(screen.onlineOn ?? '') }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Last Screenshot:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                <i class="pi pi-clock" [style]="{ 'font-size': '0.75rem'}"></i>
+                <p class="text-sm italic">{{ utils.onGetLastUpdatedLabel(screen.screenshotOn ?? '') }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Last Update:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                <i class="pi pi-clock" [style]="{ 'font-size': '0.75rem'}"></i>
+                <p class="text-sm italic">{{ utils.onGetLastUpdatedLabel(screen.updatedAt) }}</p>
+            </div>
+        </div>
+    </div>
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: screen }"></ng-container>
+        </div>
+    </ng-template>
+</p-card>

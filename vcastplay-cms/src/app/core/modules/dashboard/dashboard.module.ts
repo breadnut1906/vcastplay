@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ScreenStatusComponent } from '../../../components/dashboard/screen-status/screen-status.component';
-import { SubscriptionPlanComponent } from '../../../components/dashboard/subscription-plan/subscription-plan.component';
-import { ScreenListsComponent } from '../../../components/dashboard/screen-lists/screen-lists.component';
-import { ScreenMapComponent } from '../../../components/dashboard/screen-map/screen-map.component';
-import { StorageUsedComponent } from '../../../components/dashboard/storage-used/storage-used.component';
+import { ScreenStatusComponent } from '../../../shared/components/dashboard/screen-status/screen-status.component';
+import { ScreenListsComponent } from '../../../shared/components/dashboard/screen-lists/screen-lists.component';
+import { ScreenMapComponent } from '../../../shared/components/dashboard/screen-map/screen-map.component';
+import { SubscriptionPlanComponent } from '../../../shared/components/dashboard/subscription-plan/subscription-plan.component';
+import { StorageUsedComponent } from '../../../shared/components/dashboard/storage-used/storage-used.component';
 
 const DASHBOARD_MODULES = [
   CommonModule,

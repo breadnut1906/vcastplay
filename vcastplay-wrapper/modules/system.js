@@ -1,5 +1,5 @@
 const { app, screen, nativeImage, Tray, Menu } = require('electron')
-const { exec } = require('child_process')
+const { exec, spawn } = require('child_process')
 
 const os = require('os')
 const si = require('systeminformation')
@@ -11,17 +11,18 @@ const logDir = path.join(app.getPath('userData'), 'logs')
 const logFile = path.join(logDir, 'content.log')
 
 async function onGetSystemInfo() {
+
   const hostname = os.hostname()
   const net = os.networkInterfaces()
   const cpu = await si.cpu()
-  const temp = await si.cpuTemperature()
+  const temp = await onGetCPUTemperature(); //await si.cpuTemperature()
   const mem = await si.mem()
   const disk = await si.fsSize()
   const osInfo = await si.osInfo()
   const system = await si.system()
   const display = screen.getPrimaryDisplay()
   const graphics = await si.graphics()
-
+  
   return {
     hostname,
     ip:
@@ -29,7 +30,7 @@ async function onGetSystemInfo() {
         .flat()
         .filter((i) => i.family === 'IPv4' && !i.internal)[0]?.address || 'N/A',
     cpu: cpu.manufacturer + ' ' + cpu.brand,
-    cpuTemp: temp.main,
+    cpuTemp: temp,
     ram: (mem.total / 1e9).toFixed(2) + ' GB',
     disk: disk.map((d) => ({ mount: d.mount, size: (d.size / 1e9).toFixed(1) + ' GB' })),
     os: osInfo.distro + ' ' + osInfo.release,
@@ -46,13 +47,16 @@ async function onSystemCommand(action, appName) {
   const commands = {
     shutdown: 'shutdown -s -t 0',
     restart: 'shutdown -r -t 0',
-    open: `start ${appName}`,
-    close: `taskkill /IM ${appName}.exe /F`,
+    // open: `start ${appName}`,
+    // open: `cmd /c start "" /min "${appName}" --tray`,
+    open: `${process.env.COMSPEC} /c start "" /min "${appName}" --tray`,
+    close: `taskkill /IM ${appName} /T /F`,
+    find: `tasklist /FI "IMAGENAME eq ${appName}"`,
   }
   return new Promise((resolve, reject) => {
-    exec(commands[action], (err) => {
+    exec(commands[action], (err, stdout) => {
       if (err) reject('Failed')
-      else resolve('OK')
+      else resolve(Boolean(stdout) && stdout.includes(appName))
     })
   })
 }
@@ -213,6 +217,37 @@ async function onGetDisplays() {
       reject(error)
     }
   })
+}
+
+async function onGetCPUTemperature() {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    const res = await fetch('http://localhost:8085/data.json');
+    const data = await res.json();
+
+    if (!data) return null;
+
+    const temp = onGetCPUPackageTemp(data);
+    return temp;
+  } catch (error) {
+    console.error('onGetCPUTemperature', error);
+    return null;
+  }
+}
+
+function onGetCPUPackageTemp(node, sensorName = 'CPU Package') {
+  if (!node) return null;
+  
+  if (node.Text === sensorName && node.Value.includes('°C')) return node.Value;
+
+  if (node.Children) {
+    for (let child of node.Children) {
+      let result = onGetCPUPackageTemp(child, sensorName);
+      if (result) return result;
+    }
+  }
+
+  return null;
 }
 
 module.exports = {

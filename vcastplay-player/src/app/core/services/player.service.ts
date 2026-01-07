@@ -4,6 +4,7 @@ import { PlatformService } from './platform.service';
 import { environment } from '../../../environments/environment.development';
 import { Assets } from '../interfaces/assets';
 import { DesignLayout } from '../interfaces/design-layout';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -11,11 +12,14 @@ import { DesignLayout } from '../interfaces/design-layout';
 export class PlayerService {
 
     platform = inject(PlatformService);
+    http = inject(HttpClient);
+
+    api: string = environment.api;
+    apiKey: string = environment.apiKey;
 
     private contentSignal = signal<Assets | DesignLayout | Playlists | any>(null);
     playerContent: Assets | DesignLayout | Playlists | any = computed(() => this.contentSignal());
 
-    androidPath: string = environment.androidFilePath;
     systemInfo = signal<any>(null);
     playerCode = signal<string>('');
 
@@ -23,6 +27,8 @@ export class PlayerService {
     dataFromAndroid = signal<any>(null);
     isContentLogs = signal<any>(null);
     showTenantDIalog = signal<any>(null);
+
+    playerLoading = signal<boolean>(false);
 
     constructor() { }
 
@@ -62,20 +68,26 @@ export class PlayerService {
     }
 
     onGetDesktopInformation() {
-        window.system.getSystemInfo()
-        .then((response: any) => {        
-            console.log(response);
-            console.log(this.systemInfo());
-            // this.requestLocation();
-        })
-        .catch(err => console.error(err));
+        this.playerLoading.set(true);
+        return new Promise((resolve, reject) => {
+            window.system.getSystemInfo()
+            .then((response: any) => {
+                this.playerLoading.set(false);
+                resolve(response);
+            })
+            .catch(err => {
+                this.playerLoading.set(false);
+                console.error('Error getting desktop system info:', err);
+                reject(err);
+            });
+        });
     }
     
     onGetAndroidInformation() {
         window.getDeviceDetails = (data: any) => {
-        console.log('Received from android device details:', data);
-        // You can update Angular state here if needed
-        this.androidData.set(data);
+            console.log('Received from android device details:', data);
+            // You can update Angular state here if needed
+            this.androidData.set(data);
         };
     }
     
@@ -83,8 +95,8 @@ export class PlayerService {
         const { appVersion, appName, platform, userAgent }: any = navigator;
         const height = screen.height;
         const width = screen.width;
-        const orientation = screen.orientation;
-        console.log({ appVersion, appName, platform, userAgent, height, width, orientation });
+        const orientation = height < width ? 'landscape' : 'portrait';
+        return { appVersion, appName, platform, userAgent, height, width, orientation };
     }
 
     onSendDataToAndroid(data: any) {
@@ -99,5 +111,10 @@ export class PlayerService {
     
     onSendDataToDesktop(data: any) {
         window.system.onSendContentLogs(JSON.stringify(data));
+    }
+
+    onRegisterPlayer(body: any) {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/json', 'x-api-key': this.apiKey });
+        return this.http.post(`${this.api}admin/screens`, body, { headers });
     }
 }

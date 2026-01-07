@@ -1,0 +1,23 @@
+<div class="flex flex-col items-start gap-5">
+    <!-- <p-inputgroup>
+        <input type="text" pInputText [(ngModel)]="keywords" placeholder="Search" />
+        <p-inputgroup-addon>
+            <p-button (onClick)="keywords.set('')" [icon]="'pi ' + (keywords() != '' ? 'pi-times' : 'pi-search')" />
+        </p-inputgroup-addon>
+    </p-inputgroup> -->
+    
+    <p-selectbutton [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" aria-labelledby="basic" />
+</div>
+<div class="mt-5">
+    <p-scroll-panel [style]="{ 'max-height': '300px' }">
+        @for (item of filterScreens(); track $index) {
+            <div class="flex justify-between items-center border-b-1 p-2 border-gray-200">
+                <div class="flex flex-col gap-1">
+                    <div class="font-semibold">{{ item.name }}</div>
+                    <p class="text-sm italic">{{ item.resolution }}</p>
+                </div>
+                <p-tag [value]="item.status.toUpperCase()" [severity]="utils.getStatus(item.status)" />
+            </div>
+        }
+    </p-scroll-panel>
+</div>

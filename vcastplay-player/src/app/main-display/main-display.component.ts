@@ -95,114 +95,72 @@ export class MainDisplayComponent {
     this.cdr.detectChanges();
   }
 
-  onClikcStopPreview() {
-    this.player.onSetContent('stop');
-    if (this.platform == 'desktop') this.utils.onDeleteFolder('vcastplay');
-    this.indexedDB.clearItems();
-    this.storage.remove('currentContent');
-    this.storage.remove('type');
-    this.currentContent = null;
-    this.isPlay.set(false)
-  }
+  // onClikcStopPreview() {
+  //   this.player.onSetContent('stop');
+  //   if (this.platform == 'desktop') this.utils.onDeleteFolder('vcastplay');
+  //   this.indexedDB.clearItems();
+  //   this.storage.remove('currentContent');
+  //   this.storage.remove('type');
+  //   this.currentContent = null;
+  //   this.isPlay.set(false)
+  // }
 
-  async onClickSetContent(type: string) {
-    this.loadingProgress.set(0);
-    this.isLoading.set(true);
+  // async onClickSetContent(type: string) {
+  //   this.loadingProgress.set(0);
+  //   this.isLoading.set(true);
 
-    if (this.currentContent && !['design', 'design2'].includes(type)) this.nextCurrent = this.currentContent
-    else this.currentContent = null;
+  //   if (this.currentContent && !['design', 'design2'].includes(type)) this.nextCurrent = this.currentContent
+  //   else this.currentContent = null;
 
-    const content: any = this.player.onSetContent(type);
-    console.log('🧭 New Content detected:', content);
+  //   const content: any = this.player.onSetContent(type);
+  //   console.log('🧭 New Content detected:', content);
     
-    const files: any[] = !['playlist', 'playlist2', 'design', 'design2'].includes(type) ? [ content ] : content.files;
+  //   const files: any[] = !['playlist', 'playlist2', 'design', 'design2'].includes(type) ? [ content ] : content.files;
 
-    await this.indexedDB.clearItems();
+  //   await this.indexedDB.clearItems();
 
-    const totalFiles = files.length;
-    await Promise.all(files.map(async (file: any) => {
-      // console.log('🧭 Downloading File:', file);
-      // this.loadingProgress.set(this.loadingProgress()+1)
-      if (!['facebook', 'youtube', 'web'].includes(file.type)) {
-        try {
-          const res = await fetch(file.link);
-          const blob = await res.blob();
-          await this.indexedDB.addItem({ file, blob });
-        } catch (error: any) {
-          console.log('🧭 Error downloading file:', error);
-        }
-      }
-      this.loadingProgress.set(this.loadingProgress() + (100 / totalFiles));
-    }));
+  //   const totalFiles = files.length;
+  //   await Promise.all(files.map(async (file: any) => {
+  //     // console.log('🧭 Downloading File:', file);
+  //     // this.loadingProgress.set(this.loadingProgress()+1)
+  //     if (!['facebook', 'youtube', 'web'].includes(file.type)) {
+  //       try {
+  //         const res = await fetch(file.link);
+  //         const blob = await res.blob();
+  //         await this.indexedDB.addItem({ file, blob });
+  //       } catch (error: any) {
+  //         console.log('🧭 Error downloading file:', error);
+  //       }
+  //     }
+  //     this.loadingProgress.set(this.loadingProgress() + (100 / totalFiles));
+  //   }));
 
-    const timerDuration = ['facebook', 'youtube', 'design', 'design2'].includes(type) ? 800 : 0;
+  //   const timerDuration = ['facebook', 'youtube', 'design', 'design2'].includes(type) ? 800 : 0;
 
-    setTimeout(() => {
-      this.currentContent = content;
+  //   setTimeout(() => {
+  //     this.currentContent = content;
 
-      // const currentContent = this.utils.encrypt(JSON.stringify(content));
-      // this.storage.set('type', type);
-      // this.storage.set('currentContent', currentContent);
+  //     // const currentContent = this.utils.encrypt(JSON.stringify(content));
+  //     // this.storage.set('type', type);
+  //     // this.storage.set('currentContent', currentContent);
       
-      this.isPlay.set(true);
-      this.isLoading.set(false);
-      this.nextCurrent = null;
-    }, timerDuration);
-    // console.log('🧭 Content set:', content);
-  }
+  //     this.isPlay.set(true);
+  //     this.isLoading.set(false);
+  //     this.nextCurrent = null;
+  //   }, timerDuration);
+  //   // console.log('🧭 Content set:', content);
+  // }
 
-  onClickNotepad() {
-    this.player.sendApp('notepad')
-  }
+  // onClickNotepad() {
+  //   this.player.sendApp('notepad')
+  // }
 
-  onGetPlayerInformation() {
+  async onGetPlayerInformation() {
     const platform = this.storage.get('platform');
+    const uniqueId = this.storage.get('uniqueId');
     const code = this.storage.get('code');
-    const playerCode = this.storage.get('playerCode');
     const appVersion = this.storage.get('appVersion');
-    this.systemInfo.set({ code, platform, playerCode, appVersion })   
-   
-    switch (platform) {
-      case 'android':
-        this.player.onSendDataToAndroid({ code, platform, playerCode, appVersion });
-        this.player.onGetAndroidInformation();
-        console.log(this.androidData());
-        break;
-      case 'desktop':
-        this.player.onGetDesktopInformation();
-        break;
-      default:
-        this.player.onGetBrowserInformation();
-        break;
-    }
-  }
-
-  onClickAndroidBtn(data: string) {
-    this.player.onSendDataToAndroid({ data });
-  }
-
-  onClickApplySettings() {
-    const platform = this.storage.get('platform');
-    const { contentLogs } = this.settingsForm.value;
-    this.isContentLogs.set(contentLogs);
-    if (['android'].includes(platform)) this.player.onSendDataToAndroid(this.settingsForm.value);
-    if (['desktop'].includes(platform)) window.system.onSendWindowData(this.settingsForm.value);
-  }
-
-  onClickClearLogs() {
-    const platform = this.storage.get('platform');
-    if (['android'].includes(platform)) this.player.onSendDataToAndroid({ clearLogs: true });
-    if (['desktop'].includes(platform)) {
-      window.system.onDeleteContentLogs()
-        .then((res) => this.message.add({ severity:'success', summary: 'Success', detail: res }))
-    }
-  }
-
-  onShowSettings() {
-    window.system.onGetDisplays()
-      .then((displays) => {
-        this.displayOptions = displays;
-      })
+    this.systemInfo.set({ uniqueId, platform, code, appVersion });
   }
   
   trackById(index: number, item: any): any {

@@ -1,0 +1,83 @@
+<p-drawer [(visible)]="isShowInfo" styleClass="!w-full md:!w-90 lg:!w-[25rem]" position="right" appendTo="body" (onHide)="isShowInfoChange.emit($event)">
+    <ng-template #header>
+        <p class="text-xl font-semibold">Details</p>
+    </ng-template>
+    <ng-template #content>
+        <div class="flex flex-col gap-4">
+            <ng-container *ngIf="screen.info as info">
+                @switch (screen.type) {
+                    @case ('web') {
+                        <p class="text-sm"><span class="font-semibold">Browser Type: </span>{{ info.userAgent }}</p>
+                        <p class="text-sm"><span class="font-semibold">Platform: </span>{{ info.platform }}</p>
+                        <p class="text-sm"><span class="font-semibold">Version: </span>{{ info.appVersion }}</p>
+                    }
+                    @case ('desktop') {
+                        <p class="text-sm"><span class="font-semibold">IP Address: </span>{{ info.ip }}</p>
+                        <p class="text-sm"><span class="font-semibold">Operating System: </span>{{ info.os }}</p>
+                        <p class="text-sm"><span class="font-semibold">CPU: </span>{{ info.cpu }} <span class="font-bold">({{ info.cpuTemp }})</span></p>
+                        <p class="text-sm"><span class="font-semibold">Memory (RAM): </span>{{ info.ram }}</p>
+                        <ng-container *ngIf="info.graphics as gpu">
+                            <p class="text-sm"><span class="font-semibold">Graphics Card: </span>{{ gpu.controllers[0].model }}</p>
+                        </ng-container>
+                        <ng-container *ngIf="info.disk as disks">
+                            <div class="flex items-center text-sm justify-between gap-3 select-none">
+                                <span class="font-semibold">Disks:</span>
+                                @for (disk of disks; track $index) {
+                                    <div class="text-center border border-[var(--p-surface-300)] w-full p-2 hover:bg-[var(--p-surface-100)] rounded-lg">
+                                        {{ disk.mount }} ({{ disk.size }})
+                                    </div>
+                                }
+                            </div>
+                        </ng-container>
+                    }
+                }
+            </ng-container>
+            @if (!isAdmin) {
+                <p-divider [align]="'left'"><span class="font-semibold">Operational Schedules</span></p-divider>
+                <div class="flex flex-col gap-4">
+                    @if (screen.isALLDay) {
+                        <p class="text-sm font-semibold">All Day</p>
+                    } @else {
+                        <div class="flex flex-col gap-5">
+                            <div class="flex flex-col gap-4">
+                                <p class="text-xs italic">Weekdays:</p>
+                                <div class="flex flex-wrap gap-3">
+                                    @for (days of screen.weekdays; track $index) {
+                                        <p-chip [label]="days" class="text-sm" />
+                                    }
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <p class="text-xs italic">Hours:</p>
+                                <div class="flex whitespace-nowrap gap-3 w-full overflow-x-auto min-w-full">
+                                    @for (hour of screen.hours; track $index) {
+                                        <p-chip [label]="hourFormat(hour)" class="text-sm" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <p-divider [align]="'left'"><span class="font-semibold">Geographic</span></p-divider>
+                <div class="flex flex-col gap-6">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-semibold">Location:</p>
+                        <p class="text-sm font-normal">{{ screen.location || '-' }}</p>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-semibold">Landmarks:</p>
+                        <p class="text-sm font-normal">{{ screen.landmark || '-' }}</p>
+                    </div>
+                </div>
+                <p-divider [align]="'left'"><span class="font-semibold">Address</span></p-divider>
+                <div class="flex flex-col gap-3">
+                    <div class="flex gap-3">
+                        <i class="pi pi-map-marker"></i>
+                        <p class="text-sm font-semibold">{{ screen.fullAddress || '-' }}</p>
+                    </div>
+                    <app-mapmarkers [markers]="[ screen ]" [readOnly]="true" [zoom]="3" />
+                </div>
+            }
+        </div>
+    </ng-template>
+</p-drawer>

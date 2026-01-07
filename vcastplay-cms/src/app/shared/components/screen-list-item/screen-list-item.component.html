@@ -1,0 +1,76 @@
+<p-card>
+    <ng-template #title>
+        <div class="flex gap-2">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4" [pTooltip]="utils.toTitleCase(screen.type)" tooltipPosition="bottom">
+                    @switch (screen.type) {
+                        @case('desktop') { <i class="pi pi-desktop !font-black !text-3xl !text-blue-500"></i> }
+                        @case('android') { <i class="pi pi-android !text-3xl !text-lime-500"></i> }
+                        @default { <i class="pi pi-globe !text-3xl"></i> }
+                    }
+                </div>
+
+                <div class="flex flex-col">
+                    <p class="text-sm md:text-lg font-semibold">
+                        {{ screen.name || screen.info.hostname || 'BROWSER' }}
+                    </p>
+                    <p class="text-xs md:text-sm line-clamp-1">{{ screen.code }}</p>
+                </div>
+            </div>
+            <div class="ml-auto">
+                <p-tag [value]="screen.status || 'active'" 
+                    [severity]="utils.getStatus(screen.status || 'active')" [icon]="'pi ' + utils.getIcon(screen.status || 'active')" />
+            </div>
+        </div>
+    </ng-template>
+    <div class="flex flex-col my-5 gap-5">
+        @if (!isAdmin) {
+            <div class="flex gap-2 items-center">
+                <p class="font-semibold">Group:</p>
+                <div class="flex gap-2 items-center ml-auto">
+                    <p class="text-sm italic">{{ screen.groupId ?? '-' }}</p>
+                </div>
+            </div>
+            <div class="flex gap-2 items-center">
+                <p class="font-semibold">Sub-Group:</p>
+                <div class="flex gap-2 items-center ml-auto">
+                    <p class="text-sm italic">{{ screen.subGroupId ?? '-' }}</p>
+                </div>
+            </div>
+        }
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Orientation:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                <p class="text-sm font-semibold">{{ screen.orientation.toUpperCase() || '-' }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Resolution:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                <p class="text-sm font-semibold">{{ screen.resolution || '-' }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Last Update:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                <i class="pi pi-clock" [style]="{ 'font-size': '0.75rem'}"></i>
+                <p class="text-sm italic">{{ utils.onGetLastUpdatedLabel(screen.updatedAt) }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center">
+            <p class="font-semibold">Tags:</p>
+            <div class="flex gap-2 items-center ml-auto">
+                @for (item of screen.tags; track $index) {
+                    <p-chip [label]="item" />
+                } @empty {
+                    <p class="text-sm italic">-</p>
+                }
+            </div>
+        </div>
+    </div>
+    <ng-template #footer>
+        <div class="flex justify-end gap-2">
+            <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: screen }"></ng-container>
+        </div>
+    </ng-template>
+</p-card>

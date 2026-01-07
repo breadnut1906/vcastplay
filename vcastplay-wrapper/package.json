@@ -5,12 +5,21 @@
   "main": "main.js",
   "build": {
     "appId": "com.vcastplay.player",
-    "productName": "VcastplayPlayer",
+    "productName": "Calton Player",
+    "artifactName": "Calton Player.exe",
     "files": [
       "main.js",
       "preload.js",
       "assets/",
+      "modules/",
       "dist/player/**/*"
+    ],
+    "asar": true,
+    "extraResources": [
+      {
+        "from": "lhm",
+        "to": "lhm"
+      }
     ],
     "directories": {
       "buildResources": "assets",
@@ -25,6 +34,7 @@
       }
     ],
     "win": {
+      "requestedExecutionLevel": "requireAdministrator",
       "icon": "assets/favicon.ico",
       "target": [
         {

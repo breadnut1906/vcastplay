@@ -1,0 +1,151 @@
+<div class="flex flex-col gap-1 h-full">
+    <app-breadcrumbs [menu]="pageInfo"></app-breadcrumbs>
+    <div class="flex-1">
+        <p-card styleClass="h-full">
+            <ng-template #header>
+                <div class="mt-4 px-6">
+                    <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
+                </div>
+            </ng-template>
+            <ng-template #title>
+                <div class="flex gap-4 items-center">
+                    <app-screen-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" [showOrientation]="true" />
+                    <div class="gap-3 ml-auto hidden md:flex">
+                        <p-button (onClick)="showOTP.set(true)" label="Register" icon="pi pi-plus" [text]="false" outlined />
+                        <p-button (onClick)="showDownload.set(true)" label="Download" icon="pi pi-download" [text]="false" />
+                    </div>
+                    <div class="flex gap-2 ml-auto md:hidden">
+                        <p-button (onClick)="showDownload.set(true)" icon="pi pi-download" 
+                            [text]="false" pTooltip="Download" tooltipPosition="bottom" />
+                    </div>
+                </div>
+            </ng-template>
+            <div class="flex-1 md:h-full">
+                <p-table
+                    class="hidden lg:block" 
+                    [value]="screenService.screens()" 
+                    [loading]="screenService.loadingSignal()"
+                    selectionMode="single"
+                    [scrollable]="true" 
+                    size="small"
+                    stripedRows
+                >
+                    <ng-template #header>
+                        <tr>
+                            <th>Screen</th>
+                            <th>Orientation</th>
+                            <th>Resolution</th>
+                            <th>Groups</th>
+                            <th>Registered On</th>
+                            <th>Last Update</th>
+                            <th>Status</th>
+                            <th>
+                                <div class="text-center">Actions</div>
+                            </th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-item>
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center" [pTooltip]="utils.toTitleCase(item.type)" tooltipPosition="bottom">
+                                        @switch (item.type) {
+                                            @case('desktop') { <i class="pi pi-desktop !font-black !text-2xl !text-blue-500"></i> }
+                                            @case('android') { <i class="pi pi-android !text-2xl !text-lime-500"></i> }
+                                            @default { <i class="pi pi-globe !text-2xl"></i> }
+                                        }
+                                    </div>
+
+                                    <div class="flex flex-col">
+                                        <p class="text-base font-semibold">{{ item.name }}</p>
+                                        <p class="text-sm">{{ item.code }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><p class="text-sm font-semibold">{{ item.orientation.toUpperCase() ?? '-' }}</p></td>
+                            <td><p class="text-sm">{{ item.resolution }}</p></td>
+                            <td>
+                                <div class="text-sm">
+                                    @if (!item.groupId || !item.subGroupId) {
+                                        <p class="text-red-500 italic">No group available</p>
+                                    } @else {
+                                        <p>{{ item.groupId }} & {{ item.subGroupId }}</p>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.registeredDate) {
+                                    <p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.registeredDate) }}</p>
+                                } @else {
+                                    <p class="text-sm text-red-500 italic">Not Registered</p>
+                                }
+                            </td>
+                            <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
+                            <td><p-tag [value]="item.status || 'active'" [icon]="'pi ' + utils.getIcon(item?.status || 'active')"
+                                [severity]="utils.getStatus(item?.status || 'active')" /></td>
+                            <td>
+                                <div class="flex flex-row justify-center gap-2">
+                                    <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
+                                </div> 
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #emptymessage>
+                        <tr>
+                            <td colspan="9" [height]="20">
+                                <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+                <div class="block lg:hidden flex flex-col gap-4">
+                    @if (!screenService.loadingSignal()) {
+                        @for (item of screenService.screens(); track $index) {
+                            <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
+                        } @empty {
+                            <div class="flex justify-center items-center p-5 h-100">
+                                <p>No screens found</p>
+                            </div>
+                        }
+                    } @else {
+                        @for (item of utils.tableSkeletonRows; track $index) {
+                            <p-skeleton height="5rem" />
+                        }
+                    }
+                </div>
+            </div>
+            <ng-template #footer>
+                <p-paginator [rows]="rows" [totalRecords]="totalRecords"></p-paginator>
+            </ng-template>
+        </p-card>
+    </div>
+</div>
+
+<ng-template #actionBtn let-item>
+    <p-button (onClick)="onClickEdit(item)" pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="success" size="small"/>
+    <p-button (onClick)="onClickView(item)" pTooltip="View" tooltipPosition="bottom" icon="pi pi-eye" severity="info" size="small" />
+    <p-button (onClick)="onClickDelete(item, $event)" pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
+</ng-template>
+
+<p-dialog header="Enter Screen Code" [(visible)]="showOTP" styleClass="w-[30rem] h-auto" (onHide)="screenForm.reset()" appendTo="body" modal>
+    <div class="flex items-center justify-center gap-4 w-full py-5" [formGroup]="screenForm">
+        <p-inputotp styleClass="uppercase" formControlName="code" [length]="6" size="large" 
+            (keydown.enter)="onClickVerify()" [pAutoFocus]="true" autofocus />
+    </div>
+    <ng-template #footer>
+        <p-button class="w-full" label="Register" [disabled]="formControl('code').invalid || formControl('code').value.length < 6"
+            (onClick)="onClickVerify()" fluid />
+    </ng-template>
+</p-dialog>
+
+
+<p-dialog [(visible)]="isVerifyOTP" styleClass="w-[30rem] h-auto" [draggable]="false" [closable]="false" modal>
+    <div class="flex flex-col items-center justify-center gap-4 w-full py-5">
+        <i class="pi pi-spin pi-spinner !text-4xl text-blue-500"></i>
+        <p class="text-lg font-semibold">Verifying...</p>
+    </div>
+</p-dialog>
+
+<app-screen-download [showDownload]="showDownload" />
+
+<app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="screenService.selectedScreen.set(null)" />

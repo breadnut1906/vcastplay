@@ -1,0 +1,93 @@
+<div class="grid grid-cols-12 gap-4 mt-1" [formGroup]="userForm">
+    <div class="col-span-12">
+        <p-floatlabel variant="on">
+            <input id="firstName" pInputText formControlName="firstName" 
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('firstName')?.invalid && formControl('firstName')?.touched }" fluid />
+            <label for="firstName">First Name</label>
+        </p-floatlabel>
+        @if (formControl('firstName')?.touched && (formControl('firstName')?.dirty || formControl('firstName')?.invalid)) {
+            @if (formControl('firstName')?.invalid) {
+                <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                    <i class="pi pi-exclamation-circle"></i>
+                    @if (formControl('firstName')?.errors?.['required']) { This field is required }
+                </div>
+            }
+        }
+    </div>
+    <div class="col-span-12">
+        <p-floatlabel variant="on">
+            <input id="middleName" pInputText formControlName="middleName" fluid />
+            <label for="middleName">Middle Name</label>
+        </p-floatlabel>
+    </div>
+    <div class="col-span-12">
+        <p-floatlabel variant="on">
+            <input id="lastName" pInputText formControlName="lastName" 
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('lastName')?.invalid && formControl('lastName')?.touched }" fluid />
+            <label for="lastName">Last Name</label>
+        </p-floatlabel>
+        @if (formControl('lastName')?.touched && (formControl('lastName')?.dirty || formControl('lastName')?.invalid)) {
+            @if (formControl('lastName')?.invalid) {
+                <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                    <i class="pi pi-exclamation-circle"></i>
+                    @if (formControl('lastName')?.errors?.['required']) { This field is required }
+                </div>
+            }
+        }
+    </div>
+    <div class="col-span-12">
+        <p-floatlabel variant="on" class="md:col-span-12">
+            <input id="email" pInputText formControlName="email" type="email" 
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('email')?.invalid && formControl('email')?.touched }" fluid />
+            <label for="email">Email</label>
+        </p-floatlabel>
+        @if (formControl('email')?.touched && (formControl('email')?.dirty || formControl('email')?.invalid)) {
+            @if (formControl('email')?.invalid) {
+                <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                    <i class="pi pi-exclamation-circle"></i>
+                    @if (formControl('email')?.errors?.['required']) { This field is required }
+                    @if (formControl('email')?.errors?.['email']) { Invalid email }
+                </div>
+            }
+        }
+    </div>
+    <div class="col-span-12">
+        <p-floatlabel variant="on">
+            <p-inputnumber inputId="integeronly" formControlName="mobileNo" [useGrouping]="false" [prefix]="'(+63)'"
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('mobileNo')?.invalid && formControl('mobileNo')?.touched }" fluid />
+            <!-- <p-inputmask mask="999-999-9999" formControlName="mobile" styleClass="w-full" /> -->
+            <label for="mobileNo">Mobile Number</label>
+        </p-floatlabel>
+        @if (formControl('mobileNo')?.touched && (formControl('mobileNo')?.dirty || formControl('mobileNo')?.invalid)) {
+            @if (formControl('mobileNo')?.invalid) {
+                <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                    <i class="pi pi-exclamation-circle"></i>
+                    @if (formControl('mobileNo')?.errors?.['required']) { This field is required }
+                </div>
+            }
+        }
+    </div>
+    @if (!isEdit()) {
+        <div class="col-span-12">
+            <p-floatlabel variant="on">
+                <p-password formControlName="password" [feedback]="false" toggleMask fluid />
+                <label for="password">Password</label>
+            </p-floatlabel>
+        </div>
+    }
+    <!-- <div class="col-span-12">
+        <p-floatlabel variant="on">
+            <p-select formControlName="role" inputId="role" [options]="roleService.roles()" appendTo="body" optionLabel="name" optionValue="id" 
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('role')?.invalid && formControl('role')?.touched }" fluid />
+            <label for="role">Roles</label>
+        </p-floatlabel>
+        @if (formControl('role')?.touched && (formControl('role')?.dirty || formControl('role')?.invalid)) {
+            @if (formControl('role')?.invalid) {
+                <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                    <i class="pi pi-exclamation-circle"></i>
+                    @if (formControl('role')?.errors?.['required']) { This field is required }
+                </div>
+            }
+        }
+    </div> -->
+</div>

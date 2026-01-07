@@ -1,0 +1,30 @@
+<div id="toolbar" class="toolbar-container justify-between h-20">
+  <a class="w-[10rem]" [href]="isAdmin() ? '/admin' : '/dashboard'">
+    <img src="assets/vcastplay.png" alt="app logo" />
+  </a>
+  <div class="flex items-center cursor-pointer text-white md:mx-2 gap-3">
+    <p-button
+      (onClick)="onClickToggleDarkTheme()"
+      [pTooltip]="utils.isDarkTheme() ? 'Light Theme' : 'Dark Theme'"
+      tooltipPosition="bottom"
+      [icon]="utils.isDarkTheme() ? 'pi pi-sun' : 'pi pi-moon'"
+      rounded
+    />
+    <div class="flex items-center">
+      <p-avatar
+        label="N"
+        shape="circle"
+        size="large"
+        [routerLink]="['/settings/profile']"
+      ></p-avatar>
+      <div class="flex flex-col ms-1 md:ms-3 ps-1 hidden md:block me-6">
+        <h6 class="font-bold !select-none">Nyxsys PH</h6>
+        <p class="text-sm !select-none">Administrator</p>
+      </div>
+      <div class="hidden md:block">
+        <!-- <i class="pi pi-sign-out" (click)="onClickLogout()" pTooltip="Logout"></i> -->
+          <p-button (onClick)="onClickLogout()" icon="pi pi-sign-out" />
+      </div>
+    </div>
+  </div>
+</div>

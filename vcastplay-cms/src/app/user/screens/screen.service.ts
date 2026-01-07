@@ -1,0 +1,248 @@
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { SelectOption } from '../../shared/interfaces/general';
+import { MenuItem } from 'primeng/api';
+import { environment } from '../../../environments/environment.development';
+import { StorageService } from '../../core/services/storage.service';
+import { UtilityService } from '../../core/services/utility.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Screen, ScreenMessage } from './screen';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ScreenService {
+
+  api: string = environment.api;
+  storage = inject(StorageService);
+  utils = inject(UtilityService);
+  http = inject(HttpClient);
+
+  isEditMode = signal<boolean>(false);
+
+  private screenSignal = signal<Screen[]>([]);
+  screens = computed(() => this.screenSignal());
+
+  selectionContent = signal<any>(null);
+
+  loadingSignal = signal<boolean>(false);
+  loadingAddressSignal = signal<boolean>(false);
+
+  showDownload = signal<boolean>(false);
+  showOTP = signal<boolean>(false);
+  showBroadcast = signal<boolean>(false);
+  toggleControls = signal<boolean>(false);
+  showSettings = signal<boolean>(false);
+  showContents = signal<boolean>(false);
+  showScreenDetails = signal<boolean>(false);
+
+  selectedScreen = signal<Screen | null>(null);
+  selectMultipleScreens = signal<Screen[]>([]);
+
+  contentType = signal<string>('asset');
+  selectedContentForm: FormGroup = new FormGroup({
+    id: new FormControl(null),
+    name: new FormControl(null, [ Validators.required]),
+    type: new FormControl(null),
+  })
+  
+  rows = signal<number>(8);
+  totalRecords = signal<number>(0);
+
+  types = signal<SelectOption[]>([
+    { label: 'Desktop', value: 'desktop' },
+    { label: 'Android', value: 'android' },
+    { label: 'Web', value: 'web' },
+  ]);
+
+  screenStatus = signal<SelectOption[]>([
+    { label: 'Playing', value: 'playing' },
+    { label: 'Standby', value: 'Standby' },
+    { label: 'Disconnected', value: 'disconnected' },
+  ]);
+  
+  contentStatus = signal<SelectOption[]>([
+    { label: 'Approved', value: 'approved' },
+    { label: 'Disapproved', value: 'disapproved' },
+    { label: 'Pending', value: 'pending' },
+  ])
+
+  locations = signal<SelectOption[]>([
+    { label: 'Local', value: 'local' },
+    { label: 'Global', value: 'global' },
+    { label: 'National', value: 'national' },
+    { label: 'International', value: 'iInternational' },
+    { label: 'Regional', value: 'regional' },
+  ]);
+
+  landmarks = signal<SelectOption[]>([
+    { label: 'Mountains', value: 'mountains' },
+    { label: 'Rivers', value: 'rivers' },
+    { label: 'Ancient Ruins', value: 'ancient Ruins' },
+    { label: 'Castles', value: 'castles' },
+    { label: 'Skyscrapers', value: 'skyscrapers' },
+  ]);
+
+  toggleOptions: MenuItem[] = [{ label: 'On', value: true, },{ label: 'Off', value: false }];
+
+  screenForm: FormGroup = new FormGroup({
+    id: new FormControl(0),
+    code: new FormControl(null, { length: 6, validators: Validators.required }),
+    uniqueId: new FormControl(null),
+    name: new FormControl(null, [ Validators.required ]),
+    type: new FormControl(null, [ Validators.required ]),
+    country: new FormControl('Philippines', [ Validators.required ]),
+    region: new FormControl(null),
+    city: new FormControl(null),
+    fullAddress: new FormControl(null),
+    latitude: new FormControl(0, { nonNullable: true }),
+    longitude: new FormControl(0, { nonNullable: true }),
+    zipCode: new FormControl(null),
+    groupId: new FormControl(null, [ Validators.required ]),
+    subGroupId: new FormControl(null, [ Validators.required ]),
+    orientation: new FormControl(null),
+    resolution: new FormControl(null),
+    isAllDay: new FormControl<boolean>(true, { nonNullable: true }),
+    isAllWeekdays: new FormControl<boolean>(false, { nonNullable: true }),
+    weekdays: new FormControl<string[]>([], { nonNullable: true }),
+    hours: new FormControl<{ id: number, start: Date, end: Date }[]>([], { nonNullable: true }),
+    location: new FormControl(null),
+    landmark: new FormControl(null),
+    tags: new FormControl([], { nonNullable: true }),
+    info: new FormControl(null),
+  });
+
+  screenFilterForm: FormGroup = new FormGroup({
+    dateRange: new FormControl(null),
+    type: new FormControl(null),
+    group: new FormControl(null),
+    subGroup: new FormControl(null),
+    orientation: new FormControl(null),
+    status: new FormControl(null),
+    location: new FormControl(null),
+    screenStatus: new FormControl(null),
+    contentStatus: new FormControl(null),
+    keywords: new FormControl(null),
+  });
+
+  screenConfigForm: FormGroup = new FormGroup({
+    display: new FormControl(false),
+    audio: new FormControl(false),
+    alwaysTop: new FormControl(false),
+    fullscreen: new FormControl(false),
+    syncTime: new FormControl(false),
+    playbackLogging: new FormControl(false),
+  })
+
+  tagControl: FormControl = new FormControl(null);
+  
+  onGetHTTPHeaders() {
+    const tenantId = this.storage.get('id');
+    const accessToken = `bearer ${this.storage.get('accessToken')}`;
+    const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'Authorization': accessToken });
+    return headers;
+  }  
+
+  onLoadScreens() {  
+    this.utils.onGETApi(`${this.api}tenants/screens`).subscribe((res: any) => {
+      const { items, meta } = res;
+      this.screenSignal.set(items);
+      this.totalRecords.set(meta.totalItems);
+    })
+  }
+
+  onGetScreens() {
+    if (this.screens().length === 0) this.onLoadScreens();
+    return this.screens();
+  }
+
+  onGetScreenByCode(code: string) {
+    /**Call GET screen by code or id API */
+    return this.http.post(`${this.api}tenants/screens/register`, { code }, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onRefreshScreens() {
+    this.screenSignal.set([]);
+    this.onLoadScreens();
+  }
+
+  onRemoveTag(tag: string) {
+    const tempData = this.tags?.value || [];
+    this.tags?.setValue(tempData.filter((t: any) => t !== tag));
+  }
+
+  onSaveScreen(id: number, screen: Screen, mode: string = 'create') {
+    if (mode === 'create') {
+      return this.http.post(`${this.api}tenants/screens`, screen, { headers: this.onGetHTTPHeaders() });
+    } else {
+      return this.http.patch(`${this.api}tenants/screens/${id}`, screen, { headers: this.onGetHTTPHeaders() })
+    }
+  }
+
+  onDeleteScreen(screen: Screen) {
+    return this.http.delete(`${this.api}tenants/screens/${screen.id}`, { headers: this.onGetHTTPHeaders() });
+  }
+
+  /** Screen Controls */
+  onDisplayScreen() {
+    /**Call POST display screen API */
+    console.log('Display screen');
+  }
+
+  onToggleAudio(value: boolean) {
+    /**Call POST toggle audio API */
+    console.log('Toggle audio', value); 
+  }
+
+  onToggleFullscreen(value: boolean) {
+    /**Call POST toggle fullscreen API */
+    console.log('Toggle fullscreen', value); 
+  }
+
+  onSyncTime() {
+    /**Call POST sync time API */
+    console.log('Sync time'); 
+  }
+
+  onGetPlaybackContentLogs(value: boolean) {
+    /**Call POST playback content API */
+    console.log('Playback content', value); 
+  }
+
+  onClickClear(value: boolean) {
+    /**Call POST clear API */
+    console.log('Clear All / Reset', value); 
+  }
+
+  onClickOpenScreen() {
+    /**Call POST open screen API */
+    console.log('Open screen');
+  }
+
+  onCloseScreen() {
+    /**Call POST close screen API */
+    console.log('Close screen');
+  }
+
+  onRestartScreen() {
+    /**Call POST restart API */
+    console.log('Restart screen');
+  }
+
+  onShutdownScreen() {
+    /**Call POST shutdown API */
+    console.log('Shutdown screen');
+  }
+
+  onBroadCastMessage(messages: ScreenMessage[]) {
+    /**Call POST broadcast message API */
+    console.log('Broadcast message', messages);
+  }
+
+  onAssignContents() {
+    /**Call POST assign contents API */
+    console.log('Assign contents', this.selectMultipleScreens());
+  }
+
+  get tags() { return this.screenForm.get('tags'); }
+}

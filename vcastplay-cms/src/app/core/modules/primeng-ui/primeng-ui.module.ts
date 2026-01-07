@@ -69,12 +69,14 @@ import { MenubarModule } from 'primeng/menubar';
 import { ColorPickerModule } from 'primeng/colorpicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ContextMenuModule } from 'primeng/contextmenu';
+import { FocusTrapModule } from 'primeng/focustrap';
 
 import { StyleClassModule } from 'primeng/styleclass';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
 
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 
 import { FullCalendarModule } from '@fullcalendar/angular';
 
@@ -151,9 +153,11 @@ const PRIMEUI_MODULES = [
   MenubarModule,
   ColorPickerModule,
   ToggleButtonModule,
+  FocusTrapModule,
   ContextMenuModule,
   AutoFocusModule,
   FullCalendarModule,
+  ClipboardModule
 ];
 
 @NgModule({

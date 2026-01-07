@@ -2,12 +2,12 @@ import { inject, Injectable, signal } from '@angular/core'
 import { map } from 'rxjs'
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout'
 import { toSignal } from '@angular/core/rxjs-interop'
-import { DrawerMenu } from '../interfaces/drawer-menu'
+import { DrawerMenu } from '../../shared/interfaces/drawer-menu'
 import { PrimeNG } from 'primeng/config'
 import { FormGroup } from '@angular/forms'
 import moment from 'moment'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
-import { SelectOption } from '../interfaces/general'
+import { SelectOption } from '../../shared/interfaces/general'
 import _ from 'lodash'
 import { StorageService } from './storage.service'
 
@@ -99,8 +99,8 @@ export class UtilityService {
 
   adminModules = signal<DrawerMenu[]>([
     { label: 'Summary', icon: 'pi pi-chart-line', routerLink: '/admin/summary' },
-    { label: 'Users', icon: 'pi pi-users', routerLink: '/admin/user-management' },
-    { label: 'Screens', icon: 'pi pi-desktop', routerLink: '/admin/screens/screen-registration' },
+    { label: 'Screens', icon: 'pi pi-desktop', routerLink: '/admin/screens' },
+    { label: 'Accounts', icon: 'pi pi-users', routerLink: '/admin/users' },
   ])
 
   status: any[] = [
@@ -451,7 +451,7 @@ export class UtilityService {
     return match ? match[1] : '';
   }
 
-  onGETApi(url: string) {
+  onGETApi(url: string, isAdmin: boolean = false) {
     const tenantId = this.storage.get('id');
     const accessToken = `Bearer ${this.storage.get('accessToken')}`;
 
@@ -459,7 +459,10 @@ export class UtilityService {
       'x-tenant-id': tenantId,
       'Authorization': accessToken
     });
-    return this.http.get(url, { headers }); 
+
+    const adminHeaders = new HttpHeaders({ 'Authorization': accessToken });
+
+    return this.http.get(url, isAdmin ? { headers: adminHeaders } : { headers }); 
   }
 
   onPOSTApi(url: string, body: any) {
@@ -496,6 +499,10 @@ export class UtilityService {
   }
 
   // Public API
+  getPublicApi() {
+    return this.http.get('https://ipapi.co/json/');
+  }
+  
   getWeatherData(lat: number, lng: number) {
     return this.http.get(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`

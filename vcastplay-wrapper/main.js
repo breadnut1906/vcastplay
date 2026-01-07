@@ -1,4 +1,4 @@
-const { app, screen, BrowserWindow, ipcMain, Menu, session } = require('electron');
+const { app, screen, BrowserWindow, ipcMain, Menu, session, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 const path = require('path');
@@ -18,63 +18,81 @@ let win;
  * In development, it connects to the Angular live server at localhost:4200.
  */
 
-function createWindow() {
-  const display = screen.getPrimaryDisplay();
+async function createWindow() {
+  try {
+    await session.defaultSession.setProxy({ mode: "system" });
 
-  win = new BrowserWindow({
-    fullscreenable: true,
-    // fullscreen: !isDev,
-    contextIsolation: false,
-    autoHideMenuBar: true,
-    width: display.size.width,
-    height: display.size.height,
-    // width: 1000,         // custom width
-    // height: 700,         // custom height
-    // x: 0,              // position from left
-    // y: 0,              // position from top
-    frame: false,        // remove default OS window frame
-    // resizable: false,    // disable resizing (optional)
-    transparent: false,  // set to true if you want transparent background
-    hasShadow: false,    // set to true if you want a shadow
-    icon: path.join(__dirname, 'assets/favicon.png'),
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
-    }
-  });
+    const display = screen.getPrimaryDisplay();
 
-  if (isDev) {
-    // 🟢 DEV: Use Angular live server
-    win.loadURL('http://localhost:4200');
-    win.webContents.openDevTools();
-  } else {
-    // 🟢 PROD: Use built Angular app
-    win.loadFile('dist/player/browser/index.html');
-    
-    // Disable dev tools
-    win.webContents.on('devtools-opened', () => {
-      win.webContents.closeDevTools();
+    win = new BrowserWindow({
+      alwaysOnTop: true,
+      fullscreenable: true,
+      fullscreen: !isDev,
+      autoHideMenuBar: true,
+      width: display.size.width,
+      height: display.size.height,
+      // width: 1000,         // custom width
+      // height: 700,         // custom height
+      // x: 0,              // position from left
+      // y: 0,              // position from top
+      frame: false,        // remove default OS window frame
+      // resizable: false,    // disable resizing (optional)
+      transparent: false,  // set to true if you want transparent background
+      hasShadow: false,    // set to true if you want a shadow
+      icon: path.join(__dirname, 'assets/favicon.png'),
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js')
+      }
+    });  
+
+    win.on('close', (event) => {
+      if (!app.isQuiting) {
+        event.preventDefault();
+        win.hide();
+      }
+    })
+
+    await systemFunc.onCreateTray(win).then(tray => {
+      tray.on('click', () => {
+        win.isVisible() ? win.hide() : win.show();
+      });
     });
 
-    // Disable menu
-    Menu.setApplicationMenu(null);
+    if (isDev) {
+      // 🟢 DEV: Use Angular live server
+      win.loadURL('http://localhost:4200');
+      win.webContents.openDevTools();
+    } else {
+      // 🟢 PROD: Use built Angular app
+      win.loadFile('dist/player/browser/index.html');
+      
+      // Disable dev tools
+      win.webContents.on('devtools-opened', () => {
+        win.webContents.closeDevTools();
+      });
 
-    updater.onSetupAutoUpdate();
+      // Disable menu
+      Menu.setApplicationMenu(null);
+
+      updater.onSetupAutoUpdate();
+    }
+  } catch (error) {
+    dialog.showErrorBox('Error', error);
   }
+}
 
-  win.on('close', (event) => {
-    if (!app.isQuiting) {
-      event.preventDefault();
-      win.hide();
-    }
-  })
+async function onOpenLibreHardwareMonitor() {
+  const lhm = !isDev
+    ? path.join(process.resourcesPath, 'lhm', 'LibreHardwareMonitor.exe')
+    : path.join(__dirname, 'lhm', 'LibreHardwareMonitor.exe');
 
-  systemFunc.onCreateTray(win).then(tray => {
-    tray.on('click', () => {
-      win.isVisible() ? win.hide() : win.show();
-    });
-  });
+  const isRunning = await systemFunc.onSystemCommand('find', 'LibreHardwareMonitor.exe');
+
+  if (!isRunning) systemFunc.onSystemCommand('open', lhm);
+
+  return true; // ✅ always return something
 }
 
 ipcMain.handle('control', async (_event, action, appName) => {
@@ -128,8 +146,12 @@ ipcMain.handle('onGetDisplays', async () => {
 });
 
 app.whenReady().then(async () => {
-  await session.defaultSession.setProxy({ mode: "system" });
-  createWindow();
+  await onOpenLibreHardwareMonitor();
+  await createWindow();
 });
 
 app.on('window-all-closed', () => app.quit());
+
+app.on('before-quit', async () => {
+  await systemFunc.onSystemCommand('close', 'LibreHardwareMonitor.exe')
+})
