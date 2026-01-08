@@ -19,5 +19,16 @@
                 <p class="font-semibold">Browser</p>
             </div>
         </p-card>
+        @if (showLink()) {
+            <div class="col-span-3">
+                <p-inputgroup>
+                    <input type="text" [formControl]="link" readonly pInputText fluid>
+                    <p-inputgroup-addon>
+                        <p-button icon="pi pi-copy" pTooltip="Copy" tooltipPosition="bottom" (onClick)="onCopyToClipboard()" text />
+                        <p-button icon="pi pi-link" pTooltip="Open" tooltipPosition="bottom" (onClick)="onClickOpenLink()" text />
+                    </p-inputgroup-addon>
+                </p-inputgroup>
+            </div>
+        }
     </div>
 </p-dialog>

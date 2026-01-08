@@ -14,7 +14,7 @@
                     @case ('desktop') {
                         <p class="text-sm"><span class="font-semibold">IP Address: </span>{{ info.ip }}</p>
                         <p class="text-sm"><span class="font-semibold">Operating System: </span>{{ info.os }}</p>
-                        <p class="text-sm"><span class="font-semibold">CPU: </span>{{ info.cpu }} <span class="font-bold">({{ info.cpuTemp }})</span></p>
+                        <p class="text-sm"><span class="font-semibold">CPU: </span>{{ info.cpu }} <span class="font-bold">({{ info.cpuTemp || '-' }})</span></p>
                         <p class="text-sm"><span class="font-semibold">Memory (RAM): </span>{{ info.ram }}</p>
                         <ng-container *ngIf="info.graphics as gpu">
                             <p class="text-sm"><span class="font-semibold">Graphics Card: </span>{{ gpu.controllers[0].model }}</p>
