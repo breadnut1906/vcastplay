@@ -1,4 +1,4 @@
-<p-card>
+<p-card styleClass="dark:shadow-2xl dark:border border-gray-500">
     <ng-template #title>
         <div class="flex gap-2">
             <div class="flex items-center gap-4">
@@ -23,18 +23,18 @@
             </div>
         </div>
     </ng-template>
-    <div class="flex flex-col my-5 gap-5">
+    <div class="flex flex-col my-5 gap-2">
         @if (!isAdmin) {
             <div class="flex gap-2 items-center">
                 <p class="font-semibold">Group:</p>
                 <div class="flex gap-2 items-center ml-auto">
-                    <p class="text-sm italic">{{ screen.groupId ?? '-' }}</p>
+                    <p class="text-sm italic">{{ screen.group.name ?? '-' }}</p>
                 </div>
             </div>
             <div class="flex gap-2 items-center">
                 <p class="font-semibold">Sub-Group:</p>
                 <div class="flex gap-2 items-center ml-auto">
-                    <p class="text-sm italic">{{ screen.subGroupId ?? '-' }}</p>
+                    <p class="text-sm italic">{{ screen.subGroup.name ?? '-' }}</p>
                 </div>
             </div>
         }

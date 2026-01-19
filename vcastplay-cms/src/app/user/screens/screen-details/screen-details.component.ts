@@ -5,9 +5,11 @@ import { UtilityService } from '../../../core/services/utility.service';
 import { ConfirmationService, LazyLoadEvent, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { GroupService } from '../../settings/groups/group.service';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { Group } from '../../settings/groups/group';
+import { Pagination } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-screen-details',
@@ -24,7 +26,7 @@ export class ScreenDetailsComponent {
   utils = inject(UtilityService);
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
-  grouService = inject(GroupService);
+  groupService = inject(GroupService);
   route = inject(ActivatedRoute);
   router = inject(Router);
   clipboard = inject(Clipboard);
@@ -40,45 +42,91 @@ export class ScreenDetailsComponent {
     name: new FormControl(null),
     description: new FormControl(null)
   })
-  groupOptions: ScrollerOptions = {
-    delay: 250,
-    showLoader: true,
-    lazy: true,
-    onLazyLoad: this.onLazyLoadGroups.bind(this)
+  
+  showScheduler = signal<boolean>(false);  
+
+  groupOptions = {
+    items: signal<Group[]>([]),
+    loader: false,
+    meta: signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 }),
+    loadedPage: new Set<number>()
   }
-  subGroupOptions: ScrollerOptions = {
-    delay: 250,
-    showLoader: true,
-    lazy: true,
-    onLazyLoad: this.onLazyLoadSubGroups.bind(this)
+  
+  subGroupOptions = {
+    groupId: 0,
+    items: signal<Group[]>([]),
+    loader: false,
+    meta: signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 }),
+    loadedPage: new Set<number>()
   }
 
+  formBuilder = inject(FormBuilder);
+  screenForm = this.formBuilder.group({
+    id: [null],
+    code: [null],
+    uniqueId: [null],
+    name: [null, Validators.required],
+    type: [null, Validators.required],
+    country: ['Philippines', Validators.required],
+    region: [null],
+    city: [null],
+    fullAddress: [null, Validators.required],
+    latitude: [0],
+    longitude: [0],
+    zipCode: [null],
+    groupId: [null, Validators.required],
+    subGroupId: [null, Validators.required],
+    orientation: [null],
+    resolution: [null],
+    isAllDay: [true],
+    isAllWeekdays: [false],
+    weekdays: [[]],
+    hours: [[]],
+    location: [null],
+    landmark: [null],
+    tags: [[]],
+    info: [null]
+  })
+
   ngOnInit() {
-    const screen: any = this.selectedScreen();     
-    if (screen) {
-      // format hours date objects
-      const hours = screen.hours?.map((hour: any) => ({ 
-        ...hour,
-        start: new Date(hour.start),
-        end: new Date(hour.end),
-        oldEnd: hour.end
-      })) || [];
-      this.screenForm.patchValue({ ...screen, hours });
-      const { latitude, longitude } = screen;
-      this.onGetLocation({ latitude, longitude });
-    } else {
-      this.router.navigate([ '/screens/screen-registration' ]);
-    }
     this.onLoadGroups();
+    this.route.queryParams.subscribe(params => {
+      const { id } = params;
+      if (this.selectedScreen()) {
+        this.screenForm.patchValue(this.selectedScreen());
+      } else {
+        if (id) {
+          this.isEditMode.set(true);
+          this.onLoadScreenById(id);
+        } else {
+          this.router.navigate([ '/screens/screen-registration' ]);
+        }
+      }
+    })
   }
 
   ngAfterViewInit() { }
-
 
   ngOnDestroy() {
     this.selectedScreen.set(null);
     this.screenForm.reset();
     this.isEditMode.set(false);
+  }
+
+  onLoadScreenById(id: number) {
+    this.screenService.onGetScreenById(id).subscribe({
+      next: (res: any) => {
+        if (!res) this.router.navigate([ '/screens/screen-registration' ]);
+        
+        const { latitude, longitude, hours, groupId }: any = res || {};
+        const hour = hours?.map((hour: any) => ({ ...hour, start: new Date(hour.start), end: new Date(hour.end), oldEnd: hour.end })) || [];
+        this.screenForm.patchValue({ ...res, hours: hour });
+        this.onLoadSubGroups(groupId);
+        this.onGetLocation({ latitude, longitude });
+      },
+      error: (err: any) => this.message.add({ severity: 'error', summary: 'Error', detail: err.error.message || 'Failed to load screen!' }),
+      
+    });
   }
 
   onClickAddTag() {
@@ -120,14 +168,10 @@ export class ScreenDetailsComponent {
         const mode = this.isEditMode() ? 'edit' : 'create';
         const { id, uniqueId, ...info } = this.screenForm.value;
         this.screenService.onSaveScreen(id, info, mode).subscribe({
-          next: (res: any) => {
-            this.message.add({ severity:'success', summary: 'Success', detail: 'Screen saved successfully!' });
-            this.router.navigate([ '/screens/screen-registration' ]);
-          },
-          error: (err: any) => {
-            this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to save screen!' });
-          },
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Screen saved successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to save screen!' }),
           complete: () => {
+            this.router.navigate([ '/screens/screen-registration' ]);
             this.isEditMode.set(false);
             this.screenForm.reset();
           }
@@ -137,7 +181,7 @@ export class ScreenDetailsComponent {
   }
 
   onClickCancel() {
-    this.selectedScreen.set(null);
+    // this.selectedScreen.set(null);
     this.screenForm.reset();
     this.router.navigate([ '/screens/screen-registration' ]);
   }
@@ -171,68 +215,70 @@ export class ScreenDetailsComponent {
     });
   }
   
-  onLoadGroups() {
-    this.grouService.onLoadGroups(1, 10).then((result: any) => {
-      this.loadedGroups.add(1);
-      this.groups.set(result);
-      const { groupId } = this.screenForm.value;
-      if (groupId) this.onLoadSubGroupsById(groupId);
-      this.cdr.detectChanges();
-    });
+  onLoadGroups(page: number = 1, limit: number = 10) {
+    this.groupOptions.loader = true;
+    this.groupService.onLoadGroup(page, limit).subscribe({
+      next: (res: any) =>  {
+        this.groupOptions.meta.set(res.meta);
+        this.groupOptions.items.set(this.utils.onMergeVirtualPage(
+          this.groupOptions.items(),
+          page,
+          limit,
+          res.meta.itemCount,
+          res.items
+        ));
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.groupOptions.loader = false
+    })
   }
 
-  onLoadSubGroupsById(groupId: number) {
-    this.grouService.onLoadSubGroupsById(groupId, 1, 10).then((result: any) => {
-      this.loadedSubGroups.add(1);
-      this.subGroups.set(result);
-      this.cdr.detectChanges();
-    });
-  }
+  onLazyLoadGroups(event: LazyLoadEvent | any) {
+    this.subGroupOptions.loadedPage.clear();
+    this.subGroupOptions.items.set([]);
 
-  onLazyLoadGroups(event: LazyLoadEvent | any) {    
-    const { itemsPerPage } = this.grouService.paginatedGroups();
-    const threshold = 5;
-    const loaded = this.groups().length;
-    const visibleEnd = (event.first ?? 0) + itemsPerPage;
-
-    // user scrolled near the end of loaded data
-    if (visibleEnd < loaded - threshold) return;
-
-    const page = Math.floor(loaded / itemsPerPage) + 1;    
+    const total = this.groupOptions.meta()?.itemsPerPage;
+    const page = event.first + 1;    
     
-    if (this.loadedGroups.has(page)) return;
-    this.loadedGroups.add(page);
-    this.grouService.onLoadGroups(page, itemsPerPage).then((result: any) => {
-      this.groups.update(current => [ ...current, ...result ]);      
-      this.cdr.detectChanges();
-    });
+    if (this.groupOptions.loadedPage.has(page)) return;
+    this.groupOptions.loadedPage.add(page);
+    this.onLoadGroups(page, total);
   }
 
-  onLazyLoadSubGroups(event: LazyLoadEvent | any) {
-    const { itemsPerPage } = this.grouService.paginatedSubGroups();
-
-    const threshold = 5;
-    const loaded = this.subGroups().length;
-    const visibleEnd = (event.first ?? 0) + itemsPerPage;
-
-    // user scrolled near the end of loaded data
-    if (visibleEnd < loaded - threshold) return;
-    const page = Math.floor(loaded / itemsPerPage) + 1;
+  onLoadSubGroups(groupId: number, page: number = 1, limit: number = 10) {
+    this.subGroupOptions.loader = true;
+    this.subGroupOptions.groupId = groupId;    
+    // this.screenForm.get('subGroupId')?.reset();
+    this.groupService.onLoadSubGroupById(groupId, page, limit).subscribe({
+      next: (res: any) =>  {
+        this.subGroupOptions.meta.set(res.meta);
+        this.subGroupOptions.items.set(this.utils.onMergeVirtualPage(
+          this.subGroupOptions.items(),
+          page,
+          limit,
+          res.meta.itemCount,
+          res.items
+        ));
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.subGroupOptions.loader = false
+    })
+  }
+  
+  onLazyLoadSubGroups(event: any) {
+    const { groupId, meta } = this.subGroupOptions;
+    const total = meta()?.itemsPerPage;
+    const page = event.first + 1;    
     
-    if (this.loadedSubGroups.has(page)) this.loadedSubGroups.delete(page);
-    this.loadedSubGroups.add(page);
-
-    const groupId = this.formControl('groupId').value;
-    this.grouService.onLoadSubGroupsById(groupId, page, itemsPerPage).then((result: any) => {
-      this.subGroups.set(result);    
-    });  
-      this.cdr.detectChanges();
+    if (this.subGroupOptions.loadedPage.has(page)) return;
+    this.subGroupOptions.loadedPage.add(page);
+    this.onLoadSubGroups(groupId, page, total);
   }
 
   onSaveGroup(type: string) {
     const groupId = this.formControl('groupId').value;
     if (type == 'group') {
-      this.grouService.onSaveGroups(groupId, this.groupForm.value).subscribe({
+      this.groupService.onSaveGroups(groupId, this.groupForm.value).subscribe({
         next: (res: any) => {
           this.message.add({ severity:'success', summary: 'Success', detail: 'Group updated successfully!' }),
           this.groups().push(res);
@@ -244,7 +290,7 @@ export class ScreenDetailsComponent {
         }
       });
     } else {
-      this.grouService.onSaveSubGroups(groupId, 0, this.groupForm.value).subscribe({
+      this.groupService.onSaveSubGroups(groupId, 0, this.groupForm.value).subscribe({
         next: (res: any) => {
           this.message.add({severity:'success', summary: 'Success', detail: 'Sub Group updated successfully!' }),
           this.subGroups().push(res);
@@ -268,16 +314,12 @@ export class ScreenDetailsComponent {
     return this.utils.getFormControl(this.screenForm, fieldName);
   }
 
-  get orientations() { return this.utils.orientations; }
-  get resolutions() { return this.utils.resolutions; }
 
-  get locations () { return this.screenService.locations; }
-  get landmarks () { return this.screenService.landmarks; }
-  get selectedScreen() { return this.screenService.selectedScreen; }
-  get screenForm() { return this.screenService.screenForm; }
   get isEditMode() { return this.screenService.isEditMode; }
   get types() { return this.screenService.types; }
   get tagControl() { return this.screenService.tagControl; }
   get loadingAddressSignal() { return this.screenService.loadingAddressSignal; }
   
+  get screen() { return this.screenForm.value as Screen | any }
+  get selectedScreen() { return this.screenService.selectedScreen; }
 }

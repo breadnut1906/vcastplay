@@ -1,39 +1,46 @@
+import { Subscription } from "rxjs";
+
 export interface Assets {
-    id: number;
-    code: string;
+    id?: any;
     name: string;
     type: string;
-    url: string;
+    link: string;
     category?: string;
     subCategory?: string;
     thumbnail?: string
     duration: number;
-    size?: number;
+    sizeKb?: number;
     orientation?: string;
-    dimensions?: string;
+    dimension?: string;
 
     // Availability
-    availability: boolean;
-    start: Date | null;
-    end: Date | null;
-    allDay: boolean;
-    allWeekdays: boolean;
+    availability?: boolean;
+    start?: Date | null;
+    end?: Date | null;
+    allDay?: boolean;
+    allWeekdays?: boolean;
     weekdays?: string[];
     hours?: string[];
 
     // Audience Tagging
-    audienceTag: any;
+    audienceTag?: any;
 
     // content id for playlist
     contentId?: any;
-
-    createdAt: Date;
-    updatedAt: Date;
-    deletedAt: Date | null;
 }
 
 export interface UploadResults {
     name: string;
     status: 'success' | 'error';
     message?: string;
+}
+
+export interface UploadItem {
+    id: string;
+    file: File;
+    progress: number;
+    status: 'pending' | 'uploading' | 'success' | 'error' | 'cancel';
+    error?: any;
+    sub?: Subscription;
+    body?: any;
 }

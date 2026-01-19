@@ -57,6 +57,11 @@ export class AudienceTagFiltersComponent {
     this.onLoadTagValuesById(groupId);
   }
 
+  onHideAudienceTag() {
+    this.audienceTagInputForm.reset(); 
+    this.audienceTags = [];
+  }
+
   onClickAddTag() {
     if (this.audienceTagInputForm.invalid) return;
 

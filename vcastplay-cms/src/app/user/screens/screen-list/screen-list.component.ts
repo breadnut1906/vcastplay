@@ -48,8 +48,7 @@ export class ScreenListComponent {
 
   onClickEdit(item: any) {
     this.isEditMode.set(true);
-    this.selectedScreen.set(item);
-    this.router.navigate([ '/screens/screen-details' ]);
+    this.router.navigate([ '/screens/screen-details' ], { queryParams: { id: item.id } });
   }
 
   onClickView(item: any) {
@@ -101,7 +100,7 @@ export class ScreenListComponent {
       this.screenService.onGetScreenByCode(code).subscribe({
         next: (res: any) => {
           this.selectedScreen.set({ ...res, latitude, longitude });
-          this.router.navigate([ '/screens/screen-details' ]);
+          this.router.navigate([ '/screens/screen-details' ], { queryParams: { id: res.id } });
         },
         error: (err: any) => {
           this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to verify screen code!' });

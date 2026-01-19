@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core'
+import { computed, inject, Injectable, signal } from '@angular/core'
 import {
   AbstractControl,
   FormControl,
@@ -8,13 +8,23 @@ import {
   Validators,
 } from '@angular/forms'
 import { Assets } from './assets'
-import heic2any from 'heic2any';
 import { SelectOption } from '../../shared/interfaces/general';
+import { environment } from '../../../environments/environment.development';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { StorageService } from '../../core/services/storage.service';
+import { UtilityService } from '../../core/services/utility.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AssetsService {
+
+  api: string = environment.api;
+
+  http = inject(HttpClient)
+  storage = inject(StorageService)
+  utils = inject(UtilityService)
+
   private assetSignal = signal<Assets[]>([])
   assets = computed(() => this.assetSignal())
 
@@ -53,18 +63,18 @@ export class AssetsService {
     name: new FormControl(null, [Validators.required]),
     type: new FormControl(null),
     url: new FormControl(null),
-    category: new FormControl(null, [Validators.required]),
-    subCategory: new FormControl(null, [Validators.required]),
+    categoryId: new FormControl(null, [Validators.required]),
+    subCategoryId: new FormControl(null, [Validators.required]),
     thumbnail: new FormControl(null),
     duration: new FormControl(10, { nonNullable: true }),
-    size: new FormControl(null),
+    sizeKb: new FormControl(null),
     orientation: new FormControl(null),
-    dimensions: new FormControl(null),
+    dimension: new FormControl(null),
     availability: new FormControl<boolean>(false),
     start: new FormControl(null),
     end: new FormControl(null),
-    allDay: new FormControl<boolean>(false, { nonNullable: true }),
-    allWeekdays: new FormControl<boolean>(false, { nonNullable: true }),
+    isAllDay: new FormControl<boolean>(false, { nonNullable: true }),
+    isAllWeekdays: new FormControl<boolean>(false, { nonNullable: true }),
     weekdays: new FormControl<string[]>([], { nonNullable: true }),
     hours: new FormControl<string[]>([], { nonNullable: true }),
     audienceTag: new FormControl(null),
@@ -79,6 +89,9 @@ export class AssetsService {
     keywords: new FormControl(null),
   })
 
+  
+  MAX_SIZE: number = 300 * 1024 * 1024; // 300MB
+
   constructor() {}
 
   dateRangeValidator(): ValidatorFn {
@@ -92,11 +105,26 @@ export class AssetsService {
     }
   }
 
-  onLoadAssets() {
-    /** Get API */
-    // this.loadingSignal.set(true);
-    // this.totalRecords.set(this.assets().length)
-    // this.loadingSignal.set(false);
+  onGetHTTPHeaders() {
+    const tenantId = this.storage.get('id');
+    const accessToken = `bearer ${this.storage.get('accessToken')}`;
+    const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'Authorization': accessToken });
+    return headers;
+  }  
+
+  onLoadAssets(page: number = 1, limit: number = 8) {
+    return this.http.get(`${this.api}tenants/assets?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onGetAssetById(id: number) {
+    return this.http.get(`${this.api}tenants/assets/${id}`, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onUploadAssets(file: File) {
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+
+    return this.http.post(`${this.api}tenants/assets/upload`, formData, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
   }
 
   onGetAssets() {
@@ -114,14 +142,16 @@ export class AssetsService {
     this.rows.set(event.rows)
   }
 
-  onSaveAssets(assets: Assets) {
-    console.log(assets);
-    /**Call POST/PATCH user API */
+  onSaveAssets(assets: Assets | any) {
+    return this.http.post(`${this.api}tenants/assets`, assets, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onUpdateAssets(assets: Assets) {
+    return this.http.patch(`${this.api}tenants/assets/${assets.id}`, assets, { headers: this.onGetHTTPHeaders() });
   }
 
   onDeleteAssets(assets: Assets) {
-    console.log(assets);
-    /**Call DELETE user API */
+    return this.http.delete(`${this.api}tenants/assets/${assets.id}`, { headers: this.onGetHTTPHeaders() });
   }
 
   onDuplicateAssets(assets: Assets) {
@@ -137,15 +167,17 @@ export class AssetsService {
     if (!file) return null;
     
     const name = file.name;
-    const size = file.size;
-    const fileType = file.type.split('/')[0];
+    const sizeKb = file.size;
+    const type = file.type.split('/')[0];
 
     if (file.type.startsWith('image/')) {
       const metaData: any = await this.getImageMetaData(file);
-      return { name, size, type: fileType, duration: 10, ...metaData };
-    } else {
+      return { name, sizeKb, type, duration: 10, ...metaData };
+    } else if (file.type.startsWith('video/') || file.type.startsWith('webm/')) {
       const metaData: any = await this.getVideoMetaData(file);
-      return { name, size, type: fileType, ...metaData };
+      return { name, sizeKb, type, ...metaData };
+    } else {
+      return { name, sizeKb, type };
     }
   }
 
@@ -158,7 +190,7 @@ export class AssetsService {
         const height = img.height;
         const orientation = width > height ? 'landscape' : height > width ? 'portrait' : 'square';
 
-        resolve({ dimensions: `${width}x${height}`, orientation });
+        resolve({ dimension: `${width}x${height}`, orientation });
       }
 
       img.onerror = () => {
@@ -177,10 +209,10 @@ export class AssetsService {
       video.preload = 'metadata';
       video.onloadedmetadata = () => {
         const duration = Math.floor(video.duration);        
-        const dimensions = `${video.videoWidth}x${video.videoHeight}`;
+        const dimension = `${video.videoWidth}x${video.videoHeight}`;
         const orientation = video.videoWidth > video.videoHeight ? 'landscape' : video.videoHeight > video.videoWidth ? 'portrait' : 'square';
 
-        resolve({ duration, dimensions, orientation });
+        resolve({ duration, dimension, orientation });
         URL.revokeObjectURL(video.src);
       }
       video.onerror = () => {

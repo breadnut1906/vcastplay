@@ -45,6 +45,10 @@ export class ScreensComponent {
       complete: () => this.isLoading.set(false)
     });
   }
+
+  onFilterChange(event: any) {
+    
+  }
   
   onPageChange(event: any) {
     const rows = event.rows;

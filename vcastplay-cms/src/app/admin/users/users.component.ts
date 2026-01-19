@@ -6,6 +6,7 @@ import { Pagination } from '../../shared/interfaces/general';
 import { UserService } from './user.service';
 import { ComponentsModule } from '../../core/modules/components/components.module';
 import { UtilityService } from '../../core/services/utility.service';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-users',
@@ -25,6 +26,21 @@ export class UsersComponent {
   pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
   isLoading = signal<boolean>(false);
   showDialog = signal<boolean>(false);
+  isEdit = signal<boolean>(false);
+
+  userForm: FormGroup = new FormGroup({
+    id: new FormControl(''),
+    // code: new FormControl(''),
+    firstName: new FormControl('', [ Validators.required ]),
+    middleName: new FormControl(''),
+    lastName: new FormControl('', [ Validators.required ]),
+    email: new FormControl('', [ Validators.required, Validators.email ]),
+    password: new FormControl('', [ Validators.required ]),
+    mobileNo: new FormControl('', [ Validators.required ]),
+    // role: new FormControl('', [ Validators.required ]),
+    // status: new FormControl(''),
+    // expiredAt: new FormControl(''),
+  })
 
   constructor() { }
 
@@ -53,7 +69,13 @@ export class UsersComponent {
     this.onLoadUsers(pageNumber, event.rows);
   }
 
-  onClickEdit(user: User) {}
+  onClickEdit(user: User) {
+    this.isEdit.set(true);
+    this.userForm.patchValue(user);
+    this.showDialog.set(true);
+  }
+
+  onClickSave(event: Event) { }
 
   onClickDelete(user: User, event: Event) { }
 }

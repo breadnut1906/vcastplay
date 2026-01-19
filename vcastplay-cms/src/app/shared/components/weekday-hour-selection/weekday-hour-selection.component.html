@@ -46,14 +46,14 @@
         />
       </div>
     </div>
-    <p-table [value]="hoursControl?.value" scrollHeight="240px" showGridlines scrollable>
+    <p-table [value]="hoursControl.value" scrollHeight="240px" showGridlines scrollable>
       <ng-template #header>
         <tr>
           <th>Start Time</th>
           <th>End Time</th>
           <th>
-            @if (hoursControl?.value.length > 0) {
-              <p-button icon="pi pi-trash" severity="danger" (onClick)="hoursControl?.reset()" text />
+            @if (hoursControl.value?.length > 0) {
+              <p-button icon="pi pi-trash" severity="danger" (onClick)="hoursControl.reset()" text />
             }
           </th>
         </tr>

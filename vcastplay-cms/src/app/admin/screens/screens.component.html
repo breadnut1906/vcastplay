@@ -7,28 +7,27 @@
                     <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
                 </div>
             </ng-template>
-            <!-- <ng-template #title>
+            <ng-template #title>
                 <div class="flex gap-4 items-center">
-                    <app-screen-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" [showOrientation]="true" />
+                    <app-screen-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" [showOrientation]="true" [isAdmin]="true" />
                     <div class="gap-3 ml-auto hidden md:flex">
-                        <p-button (onClick)="showOTP.set(true)" label="Register" icon="pi pi-plus" [text]="false" outlined />
-                        <p-button (onClick)="showDownload.set(true)" label="Download" icon="pi pi-download" [text]="false" />
+                        <p-button (onClick)="onLoadScreens()" label="Refresh" icon="pi pi-sync" [text]="false" outlined />
                     </div>
                     <div class="flex gap-2 ml-auto md:hidden">
-                        <p-button (onClick)="showDownload.set(true)" icon="pi pi-download" 
-                            [text]="false" pTooltip="Download" tooltipPosition="bottom" />
+                        <p-button (onClick)="onLoadScreens()" icon="pi pi-sync" 
+                            [text]="false" pTooltip="Refresh" tooltipPosition="bottom" />
                     </div>
                 </div>
-            </ng-template> -->
-            <div class="flex-1 md:h-full">
+            </ng-template>
+            <div class="flex-1 min-h-[200px] overflow-y-auto">
                 <p-table
                     class="hidden lg:block" 
                     [value]="screens"
                     [loading]="isLoading()"
-                    [showLoader]="false"
+                    [showLoader]="true"
                     selectionMode="single"
                     [scrollable]="true" 
-                    scrollHeight="flex-1"
+                    scrollHeight="flex"
                     size="small"
                     stripedRows
                     lazy
@@ -119,7 +118,9 @@
 
 <ng-template #actionBtn let-item>
     <p-button (onClick)="onClickView(item)" pTooltip="View" tooltipPosition="bottom" icon="pi pi-eye" severity="info" size="small" />
-    <p-button (onClick)="onClickDelete(item, $event)" [disabled]="item.registeredAt"
+    <!-- <p-button (onClick)="onClickDelete(item, $event)" [disabled]="item.registeredAt"
+        pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" /> -->
+    <p-button (onClick)="onClickDelete(item, $event)"
         pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
 </ng-template>
 

@@ -565,7 +565,7 @@ export class DesignLayoutDetailsComponent {
     const { loop, type, ...info }: any = event
     const canvas = this.designLayoutService.getCanvas()
     const { files } = this.designForm.value
-    const fileExists = files.some((file: Assets) => file.id === event.id && file.url === event.url)
+    const fileExists = files.some((file: Assets) => file.id === event.id && file.link === event.url)
     switch (type) {
       case 'image':
       case 'clipart':

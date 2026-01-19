@@ -8,6 +8,9 @@ import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { PlaylistService } from '../../playlist/playlist.service';
 import { Assets, UploadResults } from '../assets';
+import { Pagination } from '../../../shared/interfaces/general';
+import { environment } from '../../../../environments/environment.development';
+import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
   selector: 'app-asset-list',
@@ -16,6 +19,16 @@ import { Assets, UploadResults } from '../assets';
   styleUrl: './asset-list.component.scss',
 })
 export class AssetListComponent {
+
+  publicApi: string = environment.public;
+
+  assetService = inject(AssetsService);
+  playlistService = inject(PlaylistService);
+  storage = inject(StorageService);
+  utils = inject(UtilityService);
+  confirmation = inject(ConfirmationService);
+  message = inject(MessageService);
+  router = inject(Router);
 
   pageInfo: MenuItem = [ { label: 'Assets' }, { label: 'Lists' } ];
   actionItems: MenuItem[] = [
@@ -30,125 +43,46 @@ export class AssetListComponent {
     }
   ];
 
-  assetService = inject(AssetsService);
-  playlistService = inject(PlaylistService);
-  utils = inject(UtilityService);
-  confirmation = inject(ConfirmationService);
-  message = inject(MessageService);
-  router = inject(Router);
+  assets = signal<Assets[]>([]);
+  selectedAsset = signal<Assets | any>(null);
+  isEdit = signal<boolean>(false);
+  isLoading = signal<boolean>(false);
+  isShowUpload = signal<boolean>(false);
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
 
   assetViewModeSignal = signal<string>('Grid');
   isShowPreview = signal<boolean>(false);
   isShowAddToPlaylist = signal<boolean>(false);
 
-  // upload file variables
-  isUploading = signal<boolean>(false);
-  isShowUploadResult = signal<boolean>(false);
-  fileIndex = signal<number>(0);
-  totalFiles = signal<number>(0);
-  uploadingProgress = signal<number>(0);
-  updatingProgress = computed(() => Math.floor((this.fileIndex() / this.totalFiles()) * 100));
-  uploadResults = signal<UploadResults[]>([]);
-
   assetViewModeCtrl: FormControl = new FormControl('Grid');
-
-  assetFilters = signal<any>(this.assetFilterForm.valueChanges);
-  audienceTagSignal = signal<any>({});
-  filteredAssets = computed(() => {
-    const { category, subCategory, type, keywords, orientation }: any = this.assetFilters();
-    const assets = this.assetService.assets();
-
-    const data = assets;    
-
-    const filteredAssets = data.filter(asset => {
-      const matchesCategory = category ? asset.category?.toLowerCase().includes(category.toLowerCase()) : true;
-      const matchesSubCategory = subCategory ? asset.subCategory?.toLowerCase().includes(subCategory.toLowerCase()) : true;
-      const matchesType = type ? asset.type?.toLowerCase().includes(type.toLowerCase()) : true;
-      const matchesKeywords = keywords ? asset.name?.toLowerCase().includes(keywords.toLowerCase()) : true;
-      // const matchesOrientation = orientation ? asset.fileDetails.orientation?.toLowerCase().includes(orientation.toLowerCase()) : true;
-
-      return matchesCategory && matchesSubCategory && matchesType && matchesKeywords //&& matchesOrientation;
-    });
-
-    return filteredAssets;
-  });
 
   constructor() {
     this.assetViewModeCtrl.valueChanges.subscribe(value => this.assetViewModeSignal.set(value));
   }
 
   ngOnInit() {
-    this.assetService.onGetAssets()
+    this.onInitializedAssets();
   }
 
-  async onFileSelectOrDrop(event: DragEvent | Event | any) {
-    this.isUploading.set(true);
-    this.uploadResults.set([]);
-    const files = event.dataTransfer?.files || event.target.files || [];
-    this.totalFiles.set(files.length);
-    for (const file of await files) {    
-      this.fileIndex.set(this.fileIndex() + 1);
-        
-      if (file.type && file.type.startsWith('audio/')) {
-        const allowedTypes = ['audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mpeg'];
-        if (!allowedTypes.includes(file.type)) {
-          this.uploadResults().push({ name: file.name, status: 'error', message: 'Only mp3/mpeg, wav and ogg files are allowed for audio files' });
-          continue;
-        }
-      }
-
-      if (file.type && file.type.startsWith('video/')) {
-        const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-        if (!allowedTypes.includes(file.type)) {
-          this.uploadResults().push({ name: file.name, status: 'error', message: 'Only mp4, webm and ogg files are allowed for video files' });
-          continue;
-        }
-      }
-
-      try {
-        const result = await this.assetService.processFile(file);        
-        if (result) {
-          this.assetForm.patchValue(result);
-          this.assetService.onSaveAssets(this.assetForm.value)
-          this.uploadResults().push({ name: file.name, status: 'success' });
-        } else {
-          this.uploadResults().push({ name: file.name, status: 'error' });
-        }
-      } catch (error: any) {
-        this.uploadResults().push({ name: file.name, status: 'error', message: error.message });
-      }
-    }
-
-    this.fileIndex.set(0);
-    this.isUploading.set(false);
-    this.assetForm.reset();
-    const successCount = this.uploadResults().filter(result => result.status === 'success').length;    
-    if (successCount === files.length) {
-      this.message.add({ severity: 'success', summary: 'Success', detail: `${files.length} file(s) uploaded successfully!` });
-    } else {
-      this.isShowUploadResult.set(true);
-      this.message.add({ severity: 'warn', summary: 'Warning', detail: `Some files are not uploaded due to an error.` });
-    }
-  }
-
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-  }
-
-  onDragLeave(event: DragEvent) {
-    event.preventDefault();
+  onInitializedAssets(page: number = 1, itemsPerPage: number = 10) {
+    this.isLoading.set(true);
+    this.assetService.onLoadAssets(page, itemsPerPage).subscribe({
+      next: (res: any) => {
+        const { items, meta } = res;
+        this.assets.set(items);
+        this.pagination.set(meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.isLoading.set(false)
+    });
   }
 
   onClickAddNew() {
-    this.assetForm.reset();
-    this.isEditMode.set(false);
-    this.router.navigate([ '/assets/asset-details' ]);
+    this.isShowUpload.set(true);
   }
 
   onClickEdit(asset: Assets) {
-    this.isEditMode.set(true);
-    this.assetForm.patchValue(asset);   
-    this.router.navigate([ '/assets/asset-details' ]);
+    this.router.navigate([ '/assets/asset-details' ], { queryParams: { id: asset.id } });
   }
 
   onClickDuplicate(item: any, event: Event) {
@@ -160,7 +94,7 @@ export class AssetListComponent {
   onClickAddToPlaylist(item: any, event: Event) {
     this.playlistService.onGetPlaylists();
     this.isShowAddToPlaylist.set(true);
-    this.assetForm.patchValue(item);
+    // this.assetForm.patchValue(item);
   }
 
   onClickDelete(item: any, event: Event) {
@@ -181,9 +115,11 @@ export class AssetListComponent {
         severity: 'danger',
       },
       accept: () => {
-        this.assetService.onDeleteAssets(item);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' });
-        this.selectedAsset.set(null);
+        this.assetService.onDeleteAssets(item).subscribe({
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete user!' }),
+          complete: () => this.onInitializedAssets()
+        });
       },
       reject: () => { }
     })
@@ -200,25 +136,34 @@ export class AssetListComponent {
     menu.toggle(event);
   }
 
-  onFilterChange(event: any) {
-    const { filters, audienceTag } = event
-    this.assetFilters.set(filters);
-    this.audienceTagSignal.set(audienceTag);
+  onFilterChange(event: any) { }
+
+  onPageChange(event: any) {
+    const rows = event.rows;
+    const pageNumber = event.first / event.rows + 1;
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.onInitializedAssets(pageNumber, event.rows);
+  }
+  isShowDialogChange(event: any) {
+    this.isEdit.set(false);
+    this.selectedAsset.set(null);
+    this.onInitializedAssets();
   }
 
   get isMobile() { return this.utils.isMobile(); }
   get isTablet() { return this.utils.isTablet(); }
 
-  get rows() { return this.assetService.rows; }
-  get first() { return this.assetService.first; }
-  get assetForm() { return this.assetService.assetForm; }
   get showPrompt() { return this.assetService.showPrompt; }
   get isEditMode() { return this.assetService.isEditMode; }
   get totalRecords() { return this.assetService.totalRecords; }
-  get selectedAsset() { return this.assetService.selectedAsset; }
   get assetViewModes() { return this.assetService.assetViewModes; }
   get assetFilterForm() { return this.assetService.assetFilterForm; }
   get selectedArrAssets() { return this.assetService.selectedArrAssets; }
 
   get selectedArrPlaylist() { return this.playlistService.selectedArrPlaylist; }
+
+  get tenantId() {
+    return this.storage.get('id');
+  }
 }

@@ -1,13 +1,17 @@
-import { ChangeDetectorRef, Component, computed, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
-import { ConfirmationService, LazyLoadEvent, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { UtilityService } from '../../../core/services/utility.service';
 import { AssetsService } from '../assets.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { FormControl, FormGroup } from '@angular/forms';
-import { TagService } from '../../settings/tags/tag.service';
-import { ComponentsModule } from '../../../core/modules/components/components.module';
 import { CategoryService } from '../../settings/categories/category.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ComponentsModule } from '../../../core/modules/components/components.module';
+import { FormBuilder, Validators } from '@angular/forms';
+import { environment } from '../../../../environments/environment.development';
+import { StorageService } from '../../../core/services/storage.service';
+import { Assets } from '../assets';
+import { Category, SubCategory } from '../../settings/categories/category';
+import { Pagination } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-asset-details',
@@ -20,169 +24,171 @@ export class AssetDetailsComponent {
   pageInfo: MenuItem = [ {label: 'Asset Library'}, {label: 'Lists', routerLink: '/assets/asset-library'}, {label: 'Details'} ];
 
   utils = inject(UtilityService);
-  tagService = inject(TagService);
   assetService = inject(AssetsService);
+  storage = inject(StorageService);
   categoryService = inject(CategoryService);
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
-  router = inject(Router);
   route = inject(ActivatedRoute);
-  cdr = inject(ChangeDetectorRef);
-  
-  files: any[] = [];
-  totalSize : number = 0;
-  totalSizePercent : number = 0;
+  router = inject(Router);
 
-  previewUrl = signal<string>('');
+  publicApi: string = environment.public;
 
-  isShowSchedule = signal<boolean>(false);
-  isShowAudienceTag = signal<boolean>(false);
-  isShowInfo = signal<boolean>(false);
+  showScheduler = signal<boolean>(false);
+  showAudienceTag = signal<boolean>(false);
+  formBuilder = inject(FormBuilder);
+  assetForm = this.formBuilder.group({
+    id: [null],
+    name: ['', Validators.required],
+    type: ['', Validators.required],
+    link: [''],
+    categoryId: ['', Validators.required],
+    subCategoryId: ['', Validators.required],
+    orientation: ['', Validators.required],
+    dimension: ['', Validators.required],
+    sizeKb: [0],
+    duration: [0],
+    availability: [false],
+    start: [null],
+    end: [null],
+    isAllDay: [false],
+    isAllWeekdays: [false],
+    weekdays: [[]],
+    hours: [[]],
+    audienceTag: ['']
+  }, { validators: this.assetService.dateRangeValidator() });
 
-  allowedLinks: string[] = [ 'web', 'widget', 'youtube', 'facebook' ];
-
-  categories = signal<any[]>([]);
-  subCategories = signal<any[]>([]);
-  loadedCategories = new Set<number>();
-  loadedSubCategories = new Set<number>();
-  isShowCategoryForm = signal<boolean>(false);
-  isShowSubCategoryForm = signal<boolean>(false);
-  categoryForm: FormGroup = new FormGroup({
-    name: new FormControl(null),
-    description: new FormControl(null)
-  })
-  categoryOptions: ScrollerOptions = {
-    delay: 250,
-    showLoader: true,
-    lazy: true,
-    onLazyLoad: this.onLazyLoadCategories.bind(this)
+  categoryOptions = {
+    items: signal<Category[]>([]),
+    loader: false,
+    meta: signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 }),
+    loadedPage: new Set<number>()
   }
-  subCategoryOptions: ScrollerOptions = {
-    delay: 250,
-    showLoader: true,
-    lazy: true,
-    onLazyLoad: this.onLazyLoadSubCategories.bind(this)
+
+  subCategoryOptions = {
+    categoryId: 0,
+    items: signal<SubCategory[]>([]),
+    loader: false,
+    meta: signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 }),
+    loadedPage: new Set<number>()
   }
-  
-  showLinkInput = () => {
-    const type = this.assetTypeControl.value;
-    return this.allowedLinks.includes(type);
-  }
-  
-  hasUnsavedChanges!: () => boolean;
 
   constructor() { }
   
   @HostListener('window:beforeunload', ['$event'])
   unloadNotification($event: any) {
-    if (this.hasUnsavedData()) {
-      $event.returnValue = true;
-    }
-  }
-  
-  ngOnInit() { 
-    if (!this.isEditMode()) this.assetTypeControl.enable();
-    const type = this.formControl('type').value;
-    this.assetTypeControl.patchValue(this.allowedLinks.includes(type) ? type : 'file');
-
-    this.onLoadCategories();
-  }
-
-  ngOnDestroy() {
-    this.assetForm.reset();
-    this.isEditMode.set(false);
-    this.selectedAsset.set(null);
-    this.assetTypeControl.reset();
+    if (this.hasUnsavedData()) $event.returnValue = true;
   }
   
   hasUnsavedData(): boolean {
-    return this.assetForm.invalid;
+    return this.assetForm.invalid && this.assetForm.dirty;
   }
 
-  onLoadCategories() {
-    this.categoryService.onLoadCategories(1, 10).then((result: any) => {
-      this.loadedCategories.add(1);
-      this.categories.set(result);
-      this.cdr.detectChanges();
-    });
+  ngOnInit() {    
+    this.route.queryParams.subscribe(params => {
+      const { id } = params;
+      this.onLoadAssetById(id);
+      this.onLoadCategories();
+    })
   }
 
-  onChangeType(event: any) {
-    const type = event.value;
-    if (this.allowedLinks.includes(type)) {
-      this.formControl('orientation').enable();
-      this.assetForm.patchValue({ type, name: null, link: null })
-    } else {
-      this.formControl('orientation').disable();
-      this.assetForm.reset();
-    }
+  onLoadAssetById(id: number) {
+    this.assetService.onGetAssetById(id).subscribe({
+      next: (res: any) => this.assetForm.patchValue(res),
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message })
+    })
+  }
+
+  onLoadCategories(page: number = 1, limit: number = 10) {
+    this.categoryOptions.loader = true;
+    this.categoryService.onLoadCategory(page, limit).subscribe({
+      next: (res: any) =>  {
+        this.categoryOptions.meta.set(res.meta);
+        this.categoryOptions.items.set(this.utils.onMergeVirtualPage(
+          this.categoryOptions.items(),
+          page,
+          limit,
+          res.meta.itemCount,
+          res.items
+        ));
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.categoryOptions.loader = false
+    })
+  }
+
+  onLazyLoadCategories(event: any) {
+
+    this.subCategoryOptions.loadedPage.clear();
+    this.subCategoryOptions.items.set([]);
+
+    const total = this.categoryOptions.meta()?.itemsPerPage;
+    const page = event.first + 1;    
+    
+    if (this.categoryOptions.loadedPage.has(page)) return;
+    this.categoryOptions.loadedPage.add(page);
+    this.onLoadCategories(page, total);
+  }
+
+  onLoadSubCategories(categoryId: number, page: number = 1, limit: number = 10) {
+    this.assetForm.get('subCategoryId')?.reset();
+    this.subCategoryOptions.loader = true;
+    this.subCategoryOptions.categoryId = categoryId;
+    this.categoryService.onLoadSubCategory(categoryId, page, limit).subscribe({
+      next: (res: any) =>  {
+        this.subCategoryOptions.meta.set(res.meta);
+        this.subCategoryOptions.items.set(this.utils.onMergeVirtualPage(
+          this.subCategoryOptions.items(),
+          page,
+          limit,
+          res.meta.itemCount,
+          res.items
+        ));
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.subCategoryOptions.loader = false
+    })
+  }
+
+  onLazyLoadSubCategories(event: any) {
+    const { categoryId, meta } = this.subCategoryOptions;
+    const total = meta()?.itemsPerPage;
+    const page = event.first + 1;    
+    
+    if (this.subCategoryOptions.loadedPage.has(page)) return;
+    this.subCategoryOptions.loadedPage.add(page);
+    this.onLoadSubCategories(categoryId, page, total);
+  }
+
+  onAudienceTagChange(event: any) {
+    this.assetForm.patchValue({ audienceTag: event });
   }
   
-  async onDropFile(event: DragEvent) {
-    event.preventDefault();
-    if (this.showLinkInput()) return;
-    try {
-      const files = Array.from(event.dataTransfer?.files || []);    
+  onChangeAvailability(event: any) {
+    const checked = event.checked;
+    if (!checked) {
+      this.assetForm.get('start')?.reset();
+      this.assetForm.get('end')?.reset();
+      this.assetForm.get('allWeekdays')?.reset();
+      this.assetForm.get('weekdays')?.reset();
+      this.assetForm.get('hours')?.reset();
+    }
+  }
 
-      const file = files[0];
-      const result = await this.assetService.processFile(file);
-      
-      if (result) {
-        this.assetForm.patchValue(result);
+  onCloseSchedulerDialog() {
+    const isAvailable = this.assetForm?.get('availability')?.value;
+    const weekdays = this.assetForm?.get('weekdays')?.value || [];
+    const hours = this.assetForm?.get('hours')?.value || [];
+    if (isAvailable) {
+      if (this.assetForm?.errors?.['startAfterEnd'] || weekdays.length === 0 || hours.length === 0) {
+        this.message.add({ severity: 'error', summary: 'Error', detail: 'Please input required fields (*)' });
+        return;
       }
-    } catch (error: any) {
-      this.message.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to process file' });
-      this.assetForm.reset();
-    }
+    } 
+    this.showScheduler.set(false);
   }
 
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-  }
-
-  onDragLeave(event: DragEvent) {
-    event.preventDefault();
-  }
-
-  async onFileSelected(event: Event) {
-    const MAX_SIZE = 300 * 1024 * 1024; // 300MB
-    const fileInput = event.target as HTMLInputElement;
-    const file = fileInput.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_SIZE) {
-      this.message.add({ severity: 'error', summary: 'Error', detail: 'File size should be less than 300MB' });
-      return;
-    }
-    
-    try {
-      const result = await this.assetService.processFile(file);      
-      
-      if (result) {
-        this.assetForm.patchValue(result);
-      }
-    } catch (error: any) {
-      this.message.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to process file' });
-      this.assetForm.reset();
-    }
-  }
-
-  async onPropertiesChange(event: any) {
-    if (!event) return;
-    const { title, width, height, orientation, duration, type } = event;
-    this.assetForm.patchValue({ 
-      duration, 
-      fileDetails: {
-        name: title ?? '',
-        size: 0,
-        type,
-        orientation,
-        resolution: { width, height }
-      } 
-    });
-  }
-
-  async onClickSave(event: Event) {
+  onClickSave(event: Event) {
     if (this.assetForm.invalid) {
       this.assetForm.markAllAsTouched();
       this.message.add({ severity: 'error', summary: 'Error', detail: 'Please input required fields (*)' });
@@ -195,7 +201,7 @@ export class AssetDetailsComponent {
       closable: true,
       closeOnEscape: true,
       header: 'Confirm Save',
-      icon: 'pi pi-question-circle',
+      icon: 'pi pi-info-circle',
       rejectButtonProps: {
         label: 'Cancel',
         severity: 'secondary',
@@ -205,15 +211,19 @@ export class AssetDetailsComponent {
         label: 'Save',
       },
       accept: () => {
-        console.log(this.assetForm.value);
-        this.message.add({ severity: 'success', summary: 'Success', detail: 'Assets upload successfully!' });
-        this.assetService.onSaveAssets(this.assetForm.value);
-        this.router.navigate(['/assets/asset-library']);
+        this.assetService.onUpdateAssets(this.asset).subscribe({
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to update asset!' }),
+          complete: () => {
+            this.router.navigate([ '/assets/asset-library' ]);
+            this.assetForm.reset();
+          }
+        });
       },
-    });
+    })
   }
 
-  onClickDelete(item: any, event: Event) {
+  onClickDelete(event: Event) {
     this.confirmation.confirm({
       target: event.target as EventTarget,
       message: 'Do you want to delete this asset?',
@@ -231,131 +241,28 @@ export class AssetDetailsComponent {
         severity: 'danger',
       },
       accept: () => {
-        this.assetService.onDeleteAssets(item);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' });
-        this.router.navigate([ '/assets/asset-library' ]);
+        this.assetService.onDeleteAssets(this.asset).subscribe({
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete user!' }),
+          complete: () => {
+            this.router.navigate([ '/assets/asset-library' ]);
+            this.assetForm.reset();
+          }
+        });
       },
       reject: () => { }
     })
   }
 
-  onSaveCategory(type: string) {
-    const categoryId = this.formControl('category').value;
-    if (type == 'category') {
-      this.categoryService.onSaveCategories(categoryId, this.categoryForm.value).subscribe({
-        next: (res: any) => {
-          this.message.add({ severity:'success', summary: 'Success', detail: 'Category updated successfully!' }),
-          this.categories().push(res);
-        },
-        error: () => this.message.add({ severity:'error', summary: 'Error', detail: 'Failed to update category!' }),
-        complete: () => {
-          this.isShowCategoryForm.set(false);
-          this.categoryForm.reset();
-        }
-      });
-    } else {
-      this.categoryService.onSaveSubCategories(categoryId, 0, this.categoryForm.value).subscribe({
-        next: (res: any) => {
-          this.message.add({ severity:'success', summary: 'Success', detail: 'Sub Category updated successfully!' }),
-          this.subCategories().push(res);
-        },
-        error: () => this.message.add({ severity:'error', summary: 'Error', detail: 'Failed to update sub category!' }),
-        complete: () => {
-          this.isShowSubCategoryForm.set(false);
-          this.categoryForm.reset();
-        }
-      });
-    }
-  }
-  
   onClickCancel() {
     this.router.navigate([ '/assets/asset-library' ]);
   }
 
-  onClickClear() {
-    this.assetForm.patchValue({ link: null, name: null, duration: 10 })
+  get asset() {
+    return this.assetForm.value as Assets;
   }
 
-  onClickCloseSchedule() {
-    const isAvailable = this.availability?.value;
-    const weekdays = this.weekdays?.value;
-    const hours = this.hours?.value;
-    if (isAvailable) {
-      if (this.assetForm?.errors?.['startAfterEnd'] || weekdays.length === 0 || hours.length === 0) {
-        this.message.add({ severity: 'error', summary: 'Error', detail: 'Please input required fields (*)' });
-        return;
-      }
-    } 
-    this.isShowSchedule.set(false);
+  get tenantId() {
+    return this.storage.get('id');
   }
-
-  onAudienceTagChange(event: any) {
-    this.assetForm.patchValue({ audienceTag: event });
-  }
-  
-  onChangeAvailability(event: any) {
-    const checked = event.checked;
-    if (!checked) {
-      this.formControl('start')?.reset();
-      this.formControl('end')?.reset();
-      this.formControl('allWeekdays')?.reset();
-      this.weekdays?.reset();
-      this.hours?.reset();
-    }
-  }
-
-  onLazyLoadCategories(event: LazyLoadEvent | any) {
-    const { itemsPerPage } = this.categoryService.paginatedCategories();
-    const threshold = 5;
-    const loaded = this.categories().length;
-    const visibleEnd = (event.first ?? 0) + itemsPerPage;
-
-    // user scrolled near the end of loaded data
-    if (visibleEnd < loaded - threshold) return;
-
-    const page = Math.floor(loaded / itemsPerPage) + 1;    
-    
-    if (this.loadedCategories.has(page)) return;
-    this.loadedCategories.add(page);
-    this.categoryService.onLoadCategories(page, itemsPerPage).then((result: any) => {
-      this.categories.update(current => [ ...current, ...result ]);      
-      this.cdr.detectChanges();
-    });
-  }
-
-  onLazyLoadSubCategories(event: LazyLoadEvent | any) {
-    const { itemsPerPage } = this.categoryService.paginatedSubCategories();
-    const threshold = 5;
-    const loaded = this.subCategories().length;
-    const visibleEnd = (event.first ?? 0) + itemsPerPage;
-    // user scrolled near the end of loaded data
-    if (visibleEnd < loaded - threshold) return;
-    const page = Math.floor(loaded / itemsPerPage) + 1;
-
-    if (this.loadedSubCategories.has(page)) this.loadedSubCategories.delete(page);
-    this.loadedSubCategories.add(page);
-    const categoryId = this.formControl('category').value;
-    this.categoryService.onLoadSubCategoriesById(categoryId, page, itemsPerPage).then((result: any) => {
-      this.subCategories.set(result)
-      this.cdr.detectChanges();
-    });
-  }
-
-  formControl(fieldName: string) {
-    return this.utils.getFormControl(this.assetForm, fieldName);
-  }
-
-  get orientations() { return this.utils.orientations; }
-
-  get isEditMode() { return this.assetService.isEditMode; }
-  get isLoading() { return this.assetService.isLoading; }
-  get selectedAsset() { return this.assetService.selectedAsset; }
-  get assetForm() { return this.assetService.assetForm; }
-  get assetTypes() { return this.assetService.assetType; }
-  get assetTypeControl() { return this.assetService.assetTypeControl; }
-
-  get type() { return this.assetForm.get('type'); }
-  get availability() { return this.assetForm.get('availability'); }
-  get weekdays() { return this.assetForm.get('weekdays'); }
-  get hours() { return this.assetForm.get('hours'); }
 }

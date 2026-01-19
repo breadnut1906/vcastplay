@@ -17,9 +17,10 @@ declare const YT: any;
 })
 export class AssetPreviewComponent {
 
-  @Input() asset!: Assets;
+  @Input() asset!: Assets | any;
   @Input() showControls: boolean = false;
   @Input() autoPlay: boolean = false;
+  @Input() link: string = '';
 
   @Output() onPropertiesChange = new EventEmitter<any>();
 
@@ -45,7 +46,7 @@ export class AssetPreviewComponent {
     await this.ytService.onLoadSDK()
     this.ytTimerId = setTimeout(async () => {
       const ytPlayer = this.ytPlayerRef?.nativeElement;
-      const { videoId } = this.utils.onGetEmbedUrl(this.asset.url);
+      const { videoId } = this.utils.onGetEmbedUrl(this.asset.link);
       if (!ytPlayer) return;
       
       try {
@@ -67,7 +68,7 @@ export class AssetPreviewComponent {
               const duration = event.target.getDuration();
               
               const orientation = width > height ? 'landscape' : 'portrait';
-              this.onPropertiesChange.emit({ duration, title, type: 'youtube', orientation });
+              this.onPropertiesChange.emit({ duration, name: title, type: 'youtube', orientation, dimension: `${width}x${height}` });
             },
             onStateChange: (event: any) => {
               if (this.autoPlay) {
@@ -115,8 +116,9 @@ export class AssetPreviewComponent {
             const width = iframe.offsetWidth;
             const height = iframe.offsetHeight;
             const orientation = width > height ? 'landscape' : 'portrait';
+            const dimension = `${width}x${height}`;
             const duration = Math.ceil(player.getDuration());
-            this.onPropertiesChange.emit({ width, height, orientation, duration, type: 'facebook' });
+            this.onPropertiesChange.emit({ dimension, orientation, duration, type: 'facebook' });
             if (iframe) {
               const scale = orientation == 'landscape' ? 1 : fbPlayer.clientHeight / iframe.clientHeight;
               

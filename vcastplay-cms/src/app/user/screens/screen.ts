@@ -4,7 +4,7 @@ import { Playlist } from "../playlist/playlist";
 import { Schedule } from "../schedules/schedules";
 
 export interface Screen {
-    id: number;
+    id: any;
     code: string;
     name: string;
     type: 'desktop' | 'android' | 'web';

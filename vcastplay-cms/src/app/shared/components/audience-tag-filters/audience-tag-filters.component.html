@@ -1,4 +1,4 @@
-<p-dialog header="Audience Tags" [(visible)]="isShowAudienceTag" (onHide)="audienceTagInputForm.reset()"
+<p-dialog header="Audience Tags" [(visible)]="isShowAudienceTag" (onHide)="onHideAudienceTag()"
     [style]="{ width: '50rem', height: '500px' }" [draggable]="false" appendTo="body" modal>
     <div class="relative flex flex-col gap-5 h-full" [formGroup]="audienceTagInputForm">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">

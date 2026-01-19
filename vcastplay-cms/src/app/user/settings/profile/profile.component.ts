@@ -5,6 +5,7 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { UserService } from '../users/user.service';
 import { UtilityService } from '../../../core/services/utility.service';
 import { RoleService } from '../roles/role.service';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
@@ -21,6 +22,31 @@ export class ProfileComponent {
   utils = inject(UtilityService);
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
+
+  userForm: FormGroup = new FormGroup({
+    id: new FormControl(''),
+    // code: new FormControl(''),
+    firstName: new FormControl('', [ Validators.required ]),
+    middleName: new FormControl(''),
+    lastName: new FormControl('', [ Validators.required ]),
+    email: new FormControl('', [ Validators.required, Validators.email ]),
+    password: new FormControl('', [ Validators.required ]),
+    mobileNo: new FormControl('', [ Validators.required ]),
+    // role: new FormControl('', [ Validators.required ]),
+    // status: new FormControl(''),
+    // expiredAt: new FormControl(''),
+  })  
+
+  securityForm: FormGroup = new FormGroup({
+    password: new FormControl('', [ Validators.required ]),
+    newPassword: new FormControl(null, [ 
+      Validators.required, 
+      Validators.minLength(6), 
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/),
+      this.userService.forbiddenStartValidator() 
+    ]),
+    confirmNewPassword: new FormControl(null, [ Validators.required ])
+  }, { validators: this.userService.passMatchValidator });
 
   ngOnInit() { }
 
@@ -48,14 +74,6 @@ export class ProfileComponent {
         this.userForm.reset();
       }
     })
-  }
-
-  get userForm() {
-    return this.userService.userForm;
-  }
-
-  get securityForm() {
-    return this.userService.securityForm;
   }
 
   get currentPass() {

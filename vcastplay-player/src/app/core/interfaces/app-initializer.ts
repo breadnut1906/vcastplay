@@ -39,7 +39,10 @@ export function initializeApp() {
         case 'android':
           playerService.onSendDataToAndroid(body);
           playerService.onGetAndroidInformation();
+          const { resolution: androidResolution, orientation: androidOrientation, ...androidInfo } = playerService.androidData();
           console.log(playerService.androidData());
+          
+          Object.assign(body, { resolution: androidResolution, orientation: androidOrientation, info: androidInfo });
           break;
         case 'desktop':
           const [ playerInfo ]: any = await Promise.all([ playerService.onGetDesktopInformation() ]);
@@ -60,7 +63,7 @@ export function initializeApp() {
           console.log('Player registered successfully:', res);
         },
         error: (err) => {
-          console.error('Error registering player:', err);
+          console.error('Error registering player:', JSON.stringify(err));
           message.add({ severity:'error', summary: 'Error', detail: 'Failed to register desktop player.' });
         },
         complete: () => {

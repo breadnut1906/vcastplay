@@ -288,7 +288,7 @@ export class UtilityService {
 
   formatSize(bytes: number) {
     const k = 1024
-    const dm = 3
+    const dm = 0
     const sizes: any = this.config.translation.fileSizeTypes
     if (bytes == 0) {
       return `0 ${sizes[0]}`
@@ -326,6 +326,30 @@ export class UtilityService {
   getFormControl(formGroup: FormGroup, fieldName: string) {
     return formGroup.controls[fieldName]
   }
+
+  // getStatusAndIcon(status: string) {
+  //   const statuses = {
+  //     approved: { status: 'success', icon: 'pi-thumbs-up-fill' },
+  //     active: { status: 'success', icon: 'pi-check-circle' },
+  //     online: { status: 'success', icon: 'pi-check-circle' },
+  //     playing: { status: 'success', icon: 'pi-play-circle' },
+  //     connected: { status: 'success', icon: 'pi-check-circle' },
+  //     on: { status: 'success', icon: 'pi-check-circle' },
+  //     success: { status: 'success', icon: 'pi-check-circle' },
+  //     inactive: { status: 'warn', icon: 'pi-pause-circle' },
+  //     standby: { status: 'warn', icon: 'pi-pause-circle' },
+  //     expiring: { status: 'warn', icon: 'pi-pause-circle' },
+  //     disapproved: { status: 'danger', icon: 'pi-thumbs-down-fill' },
+  //     suspended: { status: 'danger', icon: 'pi-times-circle' },
+  //     offline: { status: 'danger', icon: 'pi-times-circle' },
+  //     disconnected: { status: 'danger', icon: 'pi-times-circle' },
+  //     off: { status: 'danger', icon: 'pi-times-circle' },
+  //     expired: { status: 'danger', icon: 'pi-times-circle' },
+  //     error: { status: 'danger', icon: 'pi-times-circle' },
+  //   }
+
+  //   return statuses[status.toLowerCase()] || { status: 'secondary', icon: 'pi-question-circle' }
+  // }
 
   getStatus(status: string) {
     switch (status.toLowerCase()) {
@@ -496,6 +520,14 @@ export class UtilityService {
       'Authorization': accessToken
     });
     return this.http.delete(url, { headers }); 
+  }
+
+  onMergeVirtualPage<T>(current: T[], page: number, limit: number, total: number, items: T[]): T[] {
+    const data = [...current];
+    if (data.length < total) data.length = total;
+    const start = (page - 1) * limit;
+    items.forEach((item, i) => data[start + i] = item);
+    return data;
   }
 
   // Public API

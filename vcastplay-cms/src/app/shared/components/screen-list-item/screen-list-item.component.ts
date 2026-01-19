@@ -11,7 +11,7 @@ import { UtilityService } from '../../../core/services/utility.service';
 })
 export class ScreenListItemComponent {
 
-  @Input() screen!: Screen;
+  @Input() screen!: Screen | any;
   @Input() actionBtn!: TemplateRef<any>;
   @Input() isAdmin: boolean = false;
 

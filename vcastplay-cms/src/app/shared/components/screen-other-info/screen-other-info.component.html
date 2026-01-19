@@ -14,17 +14,21 @@
                     @case ('desktop') {
                         <p class="text-sm"><span class="font-semibold">IP Address: </span>{{ info.ip }}</p>
                         <p class="text-sm"><span class="font-semibold">Operating System: </span>{{ info.os }}</p>
-                        <p class="text-sm"><span class="font-semibold">CPU: </span>{{ info.cpu }} <span class="font-bold">({{ info.cpuTemp || '-' }})</span></p>
+                        <p class="text-sm"><span class="font-semibold">CPU: </span>{{ info.cpu }} <span class="font-bold">({{ info.cpuTemp || '0 \u00B0C' }})</span></p>
                         <p class="text-sm"><span class="font-semibold">Memory (RAM): </span>{{ info.ram }}</p>
                         <ng-container *ngIf="info.graphics as gpu">
                             <p class="text-sm"><span class="font-semibold">Graphics Card: </span>{{ gpu.controllers[0].model }}</p>
                         </ng-container>
                         <ng-container *ngIf="info.disk as disks">
-                            <div class="flex items-center text-sm justify-between gap-3 select-none">
-                                <span class="font-semibold">Disks:</span>
+                            <p class="text-sm"><span class="font-semibold">Storage:</span></p>
+                            <div class="flex flex-col items-center text-sm justify-between gap-3 select-none">
                                 @for (disk of disks; track $index) {
-                                    <div class="text-center border border-[var(--p-surface-300)] w-full p-1 hover:bg-[var(--p-surface-100)] rounded-lg">
-                                        {{ disk.mount }} ({{ disk.size }})
+                                    <div class="flex gap-3 border border-[var(--p-surface-300)] w-full p-1 hover:bg-[var(--p-surface-100)] hover:dark:bg-[var(--p-surface-700)] rounded-lg p-2">
+                                        <div class="flex flex-col gap-2 w-full">
+                                            <p>Drive {{ disk.mount }}</p>
+                                            <p-progressbar [value]="getDiskPercentage(disk) | number: '1.0-0'" valueStyleClass="h-10" [showValue]="false" />
+                                            <p class="text-xs">{{ utils.formatSize(disk.free) }} free of {{ utils.formatSize(disk.size) }}</p>
+                                        </div>
                                     </div>
                                 }
                             </div>
@@ -35,8 +39,8 @@
             @if (!isAdmin) {
                 <p-divider [align]="'left'"><span class="font-semibold">Operational Schedules</span></p-divider>
                 <div class="flex flex-col gap-4">
-                    @if (screen.isALLDay) {
-                        <p class="text-sm font-semibold">All Day</p>
+                    @if (screen.isAllDay) {
+                        <p-tag value="All Day" severity="success" />
                     } @else {
                         <div class="flex flex-col gap-5">
                             <div class="flex flex-col gap-4">
@@ -44,6 +48,8 @@
                                 <div class="flex flex-wrap gap-3">
                                     @for (days of screen.weekdays; track $index) {
                                         <p-chip [label]="days" class="text-sm" />
+                                    } @empty {
+                                        <p class="italic text-gray-400 text-sm">No Data</p>
                                     }
                                 </div>
                             </div>
@@ -52,6 +58,8 @@
                                 <div class="flex whitespace-nowrap gap-3 w-full overflow-x-auto min-w-full">
                                     @for (hour of screen.hours; track $index) {
                                         <p-chip [label]="hourFormat(hour)" class="text-sm" />
+                                    } @empty {
+                                        <p class="italic text-gray-400 text-sm">No Data</p>
                                     }
                                 </div>
                             </div>
@@ -75,7 +83,7 @@
                         <i class="pi pi-map-marker"></i>
                         <p class="text-sm font-semibold">{{ screen.fullAddress || '-' }}</p>
                     </div>
-                    <app-mapmarkers [markers]="[ screen ]" [readOnly]="true" [zoom]="3" />
+                    <app-mapmarkers class="h-40" [markers]="[ screen ]" [readOnly]="true" [zoom]="3" />
                 </div>
             }
         </div>

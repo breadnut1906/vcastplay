@@ -21,22 +21,16 @@
                     </div>
                 </div>
             </ng-template>
-            <div class="flex-1">
+            <div class="flex-1 h-full border border-gray-200">
                 <p-table 
                     class="hidden lg:block" 
                     [value]="users()"
                     selectionMode="single"
                     [scrollable]="true" 
                     size="small"
-                    (onPage)="onPageChange($event)" 
-                    [rows]="paginatedUsers().itemsPerPage || 10"
-                    [totalRecords]="paginatedUsers().totalItems"
-                    [first]="(paginatedUsers().currentPage - 1) * paginatedUsers().itemsPerPage || 10"
                     [loading]="userLoading()"
                     [showLoader]="false"
                     stripedRows 
-                    showGridlines
-                    paginator
                     lazy
                 >
                     <ng-template #header>
@@ -93,6 +87,10 @@
                     }
                 }
             </div>
+            <ng-template #footer>
+                <p-paginator [rows]="paginatedUsers().itemsPerPage" [first]="(paginatedUsers().currentPage - 1) * 10" 
+                    [totalRecords]="paginatedUsers().totalItems" (onPageChange)="onPageChange($event)"></p-paginator>
+            </ng-template>
         </p-card>
     </div>
 </div>
@@ -102,8 +100,8 @@
     <p-button (onClick)="onClickDelete(item, $event)" pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
 </ng-template>
 
-<p-dialog header="User Information" [(visible)]="userService.showDialog" styleClass="w-[30rem] h-auto" [modal]="true" [draggable]="false" [focusOnShow]="false">
-    <app-user-details [userForm]="userForm" />
+<p-dialog header="User Information" [(visible)]="showDialog" styleClass="w-[30rem] h-auto" [modal]="true" [draggable]="false" [focusOnShow]="false">
+    <app-user-details [userForm]="userForm" [isEdit]="isEdit" />
     <ng-template #footer>
         <p-button label="Cancel" severity="secondary" (onClick)="onClickCancel()" />
         <p-button label="Save" (onClick)="onClickSave($event)" />

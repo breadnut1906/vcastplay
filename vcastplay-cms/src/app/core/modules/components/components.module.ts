@@ -12,7 +12,6 @@ import { FooterComponent } from '../../../shared/components/footer/footer.compon
 import { BroadcastListItemComponent } from '../../../user/settings/broadcast/broadcast-list-item/broadcast-list-item.component';
 import { BroadcastDetailsComponent } from '../../../user/settings/broadcast/broadcast-details/broadcast-details.component';
 import { UserListItemComponent } from '../../../shared/components/user-list-item/user-list-item.component';
-import { UserDetailsComponent } from '../../../user/settings/users/user-details/user-details.component';
 import { UserApprovalComponent } from '../../../user/settings/users/user-approval/user-approval.component';
 import { RoleListItemComponent } from '../../../user/settings/roles/role-list-item/role-list-item.component';
 import { RoleDetailsComponent } from '../../../user/settings/roles/role-details/role-details.component';
@@ -50,6 +49,8 @@ import { ScreenManagementListItemComponent } from '../../../user/screen-manageme
 import { ScreenControlsComponent } from '../../../user/screen-management/screen-controls/screen-controls.component';
 import { ScreenFilterComponent } from '../../../user/screens/screen-filter/screen-filter.component';
 import { ScreenListItemComponent } from '../../../shared/components/screen-list-item/screen-list-item.component';
+import { UserDetailsComponent } from '../../../shared/components/user-details/user-details.component';
+import { AssetUploadFileComponent } from '../../../user/assets/asset-upload-file/asset-upload-file.component';
 
 const COMPONENT_MODULES = [
   CommonModule,
@@ -102,6 +103,7 @@ const COMPONENT_MODULES = [
   AssetPreviewComponent,
   AssetUploadResultComponent,
   AssetToPlaylistComponent,
+  AssetUploadFileComponent,
 
   // Audience Tag Components
   AudienceTagFiltersComponent,

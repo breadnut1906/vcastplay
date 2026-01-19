@@ -216,7 +216,7 @@ export class SchedulesService {
         if (design) this.selectedContent.set({ ...design, eventId });
         break;
       default:
-        const asset = this.assetService.onGetAssets().find(item => item.code == id);
+        const asset = this.assetService.onGetAssets().find(item => item.id == id);
         if (asset) this.selectedContent.set({ ...asset, eventId });
         break;
     }    

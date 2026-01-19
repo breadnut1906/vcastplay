@@ -28,7 +28,15 @@ export class CategoryService {
     const accessToken = `Bearer ${this.storage.get('accessToken')}`;
     const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'Authorization': accessToken });
     return headers;
-  }  
+  }
+
+  onLoadCategory(page: number = 1, limit: number = 10) {
+    return this.http.get(`${this.api}tenants/categories?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onLoadSubCategory(categoryId: number, page: number = 1, limit: number = 10) {
+    return this.http.get(`${this.api}tenants/categories/${categoryId}/sub-categories?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() })
+  }
 
   onLoadCategories(page: number = 1, limit: number = 10) {
     return new Promise<void>((resolve, reject) => {

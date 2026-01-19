@@ -1,0 +1,99 @@
+<p-dialog header="Upload Asset" [(visible)]="dialog" [style]="{ width: '40rem' }" (onHide)="onHideDialog()"
+    [draggable]="false" closable modal>
+
+    <div class="flex flex-col gap-4 mt-2">
+        <p-floatlabel variant="on">
+            <p-select id="type" [options]="assetService.assetType()" optionLabel="label" optionValue="value" 
+                (onChange)="onChangeType($event)" [formControl]="fileTypeCtrl" [readonly]="isEdit()" appendTo="body" [readonly]="isUploading()" fluid />
+            <label for="type">File Type</label>
+        </p-floatlabel>
+        @if (fileTypeCtrl.value == 'file' && !isUploading()) {
+            <div class="border-2 border-dashed border-gray-400 rounded-lg relative overflow-y-auto relative select-none h-30">
+                <div class="absolute top-0 left-0 h-full w-full flex flex-col items-center justify-center z-20" 
+                    (drop)="onFileSelectedOrDropped($event)" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)">
+                    <div class="text-lg flex gap-2 items-center justify-center">
+                        <p>
+                            <span class="font-semibold">Drop files here or </span>
+                            <a class="text-blue-500 hover:underline cursor-pointer" (click)="fileInput.click()">Browse</a>
+                        </p>
+                    </div>
+                    <p class="text-sm text-gray-400">Maximum file size: 300MB</p>
+                </div>
+
+                <input #fileInput type="file" accept="image/*, video/mp4, video/webm, video/ogg, audio/mpeg, audio/ogg, audio/wav, audio/mp3, .html, .htm" 
+                    (change)="onFileSelectedOrDropped($event)" multiple hidden />
+            </div>
+        } @else {
+            <form class="flex flex-col gap-4" [formGroup]="assetLinkForm">
+                <p-floatlabel variant="on">
+                    <input id="link" pInputText formControlName="link" placeholder="Link" fluid />
+                    <label for="link">Link</label>
+                </p-floatlabel>
+                @if (hasLink) { 
+                    <p-floatlabel variant="on">
+                        <input id="name" type="text" pInputText formControlName="name" placeholder="Name" fluid>
+                        <label for="name">Name</label>
+                    </p-floatlabel>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <p-floatlabel variant="on">
+                            <p-select id="orientation" [options]="utils.orientations()" formControlName="orientation"  
+                                optionLabel="label" optionValue="value" placeholder="Orientation" readonly fluid />
+                            <label for="orientation">Orientation</label>
+                        </p-floatlabel>
+
+                        <p-floatlabel variant="on">
+                            <input id="dimension" type="text" pInputText formControlName="dimension" placeholder="Dimension" readonly fluid>
+                            <label for="dimension">Dimension</label>
+                        </p-floatlabel>
+
+                        <p-inputgroup>
+                            <p-floatlabel variant="on">
+                                <input id="duration" type="text" pInputText formControlName="duration" placeholder="Duration" readonly fluid>
+                                <label for="duration">Duration</label>
+                            </p-floatlabel>
+                            <p-inputgroup-addon>sec.</p-inputgroup-addon>
+                        </p-inputgroup>
+                    </div>
+
+                    <div class="relative aspect-video">
+                        <app-asset-preview class="absolute h-full w-full flex items-center justify-center bg-stone-800"
+                            [asset]="assetLinkForm.value" (onPropertiesChange)="onPropertiesChange($event)" />
+                    </div>
+                }
+            </form>
+        }
+        
+        <div class="flex flex-col gap-6 overflow-y-auto" [ngClass]="{ 'max-h-60': uploadItems().length > 0 }">
+            @for (item of uploadItems(); track $index) {
+                <div class="relative flex flex-col justify-center w-full p-4 border border-gray-300 rounded-lg gap-2">
+                    <div class="flex flex-col">
+                        <p class="font-semibold text-sm w-60 md:w-auto truncate line-clamp-1">{{ item.file.name }}</p>
+                        <p class="text-xs">{{ utils.formatSize(item.file.size || 0) }}</p>
+                    </div>
+                    <div class="absolute right-0 top-0 m-4 flex items-center gap-2">
+                        @if (item.status == 'success') {
+                            <i class="pi pi-check-circle text-green-400 mx-2"></i>
+                        } @else if (item.status == 'error') {
+                            <p-button (onClick)="onClickRetryFile(item)" icon="pi pi-refresh" size="small"
+                                pTooltip="Retry" tooltipPosition="bottom" text />
+                        }
+                        <p-button (onClick)="onClickRemoveFile(item)" icon="pi pi-trash" severity="danger" size="small" 
+                            pTooltip="Remove" tooltipPosition="bottom" text />
+                    </div>
+                    @if (item.status == 'error') {
+                        <p-tag value="Upload failed. Please try again." severity="danger" />
+                    } @else {
+                        <p-progressbar [value]="item.progress | number: '1.0-0'" [showValue]="false" color="green" />
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <div class="flex items-center justify-between gap-3 w-full">
+            @if (fileTypeCtrl.value == 'file') { <p class="text-sm">{{ uploadItems().length || 0 }} files</p> }
+            <p-button class="ml-auto" label="Complete" icon="pi pi-check" (onClick)="onHideDialog()" size="small" [disabled]="isUploading()" />
+        </div>
+    </ng-template>
+</p-dialog>

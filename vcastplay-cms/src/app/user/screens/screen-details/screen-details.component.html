@@ -13,9 +13,9 @@
                 </div>
             </div>
         </ng-template>
-        <div class="flex flex-col gap-4">
-            <div class="grid grid-cols-12 gap-4" [formGroup]="screenForm">
-                <div class="col-span-12 md:col-span-2">
+        <div class="grid grid-cols-12 gap-4 h-full pb-10 md:pb-0" [formGroup]="screenForm">
+            <div class="flex flex-col gap-4 col-span-12 md:col-span-6 lg:col-span-8">
+                <div class="grid grid-cols-3 gap-4">
                     <p-inputgroup>
                         <p-floatlabel variant="on">
                             <input id="code" pInputText formControlName="code"
@@ -26,153 +26,118 @@
                             <p-button icon="pi pi-copy" (onClick)="onCopyToClipboard('code')" pTooltip="Copy" tooltipPosition="bottom" text />
                         </p-inputgroup-addon>
                     </p-inputgroup>
-                </div>
-                <div class="col-span-9 md:col-span-8">
                     <p-floatlabel variant="on">
                         <input id="name" pInputText formControlName="name"
                             [ngClass]="{ 'ng-invalid ng-dirty': formControl('name').invalid && formControl('name').touched }" fluid />
                         <label for="name">Name</label>
                     </p-floatlabel>
-                </div>
-                <div class="col-span-3 md:col-span-2">
                     <p-floatlabel variant="on">
                         <p-select inputId="type" [options]="types()" optionLabel="label" optionValue="value" formControlName="type" appendTo="body" readonly fluid />
                         <label for="type">Type</label>
                     </p-floatlabel>
                 </div>
-                <div class="col-span-12 flex flex-col gap-2">
+                <div class="flex flex-col gap-2 h-full flex-1">
                     <p-floatlabel variant="on">
                         <input id="fullAddress" type="text" pInputText formControlName="fullAddress" readonly fluid>
                         <label for="fullAddress">Address</label>
                     </p-floatlabel>
-                    <div class="w-full">
+                    <div class="w-full h-50 md:h-full">
                         @if (loadingAddressSignal()) { <p-progress-bar mode="indeterminate" /> }
-                        <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" />
-                    </div>
-                </div>
-                <div class="col-span-12 md:col-span-6">
-                    <p-floatlabel variant="on">
-                        <p-select id="groupId" [options]="groups()" optionLabel="name" optionValue="id" formControlName="groupId" 
-                            (onClear)="formControl('subGroup').reset()"
-                            [virtualScroll]="true" [virtualScrollItemSize]="38" [virtualScrollOptions]="groupOptions"
-                            [ngClass]="{ 'ng-invalid ng-dirty': formControl('groupId').invalid && formControl('groupId').touched }" 
-                            appendTo="body" filter showClear fluid lazy>
-                            <ng-template #footer>
-                                <div class="p-3">
-                                    <p-button (onClick)="isShowGroupForm.set(true)" label="Add New" 
-                                        severity="secondary" size="small" icon="pi pi-plus" fluid text />
-                                </div>
-                            </ng-template>
-                        </p-select>
-                        <label for="groupId">Group</label>
-                    </p-floatlabel>
-                    @if (formControl('groupId').touched && (formControl('groupId').dirty || formControl('groupId').invalid)) {
-                        @if (formControl('groupId').invalid) {
-                            <div class="p-2 text-sm text-red-500 flex items-center gap-2">
-                                <i class="pi pi-exclamation-circle"></i>
-                                @if (formControl('groupId').errors?.['required']) { This field is required }
-                            </div>
-                        }
-                    }
-                </div>
-                <div class="col-span-12 md:col-span-6">
-                    <p-floatlabel variant="on">
-                        <p-select id="subGroupId" [options]="subGroups()" optionLabel="name" optionValue="id" formControlName="subGroupId" 
-                            virtualScroll="true" [virtualScrollOptions]="subGroupOptions"
-                            [ngClass]="{ 'ng-invalid ng-dirty': formControl('subGroupId').invalid && formControl('subGroupId').touched }" 
-                            [readonly]="!formControl('groupId').value" appendTo="body" filter showClear fluid lazy>
-                            <ng-template #footer>
-                                <div class="p-3">
-                                    <p-button (onClick)="isShowSubGroupForm.set(true)" label="Add New" [disabled]="formControl('groupId').invalid"
-                                        severity="secondary" size="small" icon="pi pi-plus" fluid text />
-                                </div>
-                            </ng-template>
-                        </p-select>
-                        <label for="subGroupId">Sub Group</label>
-                    </p-floatlabel>
-                    @if (formControl('subGroupId').touched && (formControl('subGroupId').dirty || formControl('subGroupId').invalid)) {
-                        @if (formControl('subGroupId').invalid) {
-                            <div class="p-2 text-sm text-red-500 flex items-center gap-2">
-                                <i class="pi pi-exclamation-circle"></i>
-                                @if (formControl('subGroupId').errors?.['required']) { This field is required }
-                            </div>
-                        }
-                    }
-                </div>
-                <div class="col-span-12 md:col-span-6">
-                    <p-floatlabel variant="on">
-                        <p-select inputId="orientations" [options]="orientations()" optionLabel="label" optionValue="value" 
-                            formControlName="orientation" appendTo="body" readonly fluid />
-                        <label for="orientations">Orientations</label>
-                    </p-floatlabel>
-                </div>
-                <div class="col-span-12 md:col-span-6">
-                    <p-floatlabel variant="on">
-                        <!-- <p-select inputId="resolutions" [options]="resolutions()" optionLabel="label" optionValue="value" 
-                            formControlName="resolution" appendTo="body" showClear fluid /> -->
-                        <input type="text" pInputText id="resolutions" formControlName="resolution"
-                            [ngClass]="{ 'ng-invalid ng-dirty': formControl('resolution').invalid && formControl('resolution').touched }" fluid readonly />
-                        <label for="resolutions">Resolutions</label>
-                    </p-floatlabel>
-                </div>
-                <!-- <div class="col-span-1 md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div class="col-span-1 md:col-span-6">
-                        <p-floatlabel variant="on">
-                            <p-select inputId="locations" [options]="locations()" optionLabel="label" optionValue="value" formControlName="locations" appendTo="body" 
-                                [ngClass]="{ 'ng-invalid ng-dirty': formControlGeographic('locations').invalid && formControlGeographic('locations').touched }" showClear fluid />
-                            <label for="locations">Locations</label>
-                        </p-floatlabel>
-                    </div>
-                    <div class="col-span-1 md:col-span-6">
-                        <p-floatlabel variant="on">
-                            <p-select inputId="landmarks" [options]="landmarks()" optionLabel="label" optionValue="value" formControlName="landmarks" appendTo="body" 
-                                [ngClass]="{ 'ng-invalid ng-dirty': formControlGeographic('landmarks').invalid && formControlGeographic('landmarks').touched }" showClear fluid />
-                            <label for="landmarks">Landmarks</label>
-                        </p-floatlabel>
-                    </div>
-                </div> -->
-                <div class="col-span-1 md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div class="col-span-1 md:col-span-6">
-                        <p-floatlabel variant="on">
-                            <input type="text" pInputText id="location" formControlName="location"
-                                [ngClass]="{ 'ng-invalid ng-dirty': formControl('location').invalid && formControl('location').touched }" fluid />
-                            <label for="location">Locations</label>
-                        </p-floatlabel>
-                    </div>
-                    <div class="col-span-1 md:col-span-6">
-                        <p-floatlabel variant="on">
-                            <input type="text" pInputText id="landmark" formControlName="landmark"
-                                [ngClass]="{ 'ng-invalid ng-dirty': formControl('landmark').invalid && formControl('landmark').touched }" fluid />
-                            <label for="landmark">Landmarks</label>
-                        </p-floatlabel>
+                        @else { <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" /> }
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div class="col-span-1 md:col-span-6">
-                    <app-weekday-hour-selection [formGroup]="screenForm" [showAllDay]="true" allDayLabel="Always On" />
+            <div class="flex flex-col gap-4 col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
+                    <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Display</span>
+                    <div class="flex justify-between gap-4 p-4 text-sm">
+                        <p>Orientation:</p>
+                        <p-tag [value]="screen.orientation?.toUpperCase()" severity="info" />
+                    </div>
+                    <div class="flex justify-between gap-4 p-4 text-sm border-b border-gray-200 dark:border-gray-700">
+                        <p>Resolution:</p>
+                        <p>{{ screen.resolution }}</p>
+                    </div>
+                    <p-button class="m-2" label="View More" size="small" severity="info" text fluid />
                 </div>
-                <div class="col-span-1 md:col-span-6 flex flex-col gap-2">
-                    <p-inputgroup>
-                        <p-floatlabel variant="on">
-                            <input id="tag" type="text" pInputText [formControl]="tagControl" fluid />
-                            <label for="tag">Tag</label>
+                <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
+                    <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Groupings</span>
+                    <div class="flex items-center gap-4 p-4">
+                        <div class="flex flex-col w-full">
+                            <p-floatlabel variant="on">
+                                <p-select id="group" [options]="groupOptions.items()" optionLabel="name" optionValue="id" formControlName="groupId" appendTo="body"
+                                    [loading]="groupOptions.loader" (onChange)="onLoadSubGroups($event.value)"
+                                    (onLazyLoad)="onLazyLoadGroups($event)" [virtualScrollItemSize]="38" virtualScroll filter fluid lazy />
+                                <label for="groupId">Group</label>
+                            </p-floatlabel>
+                            @if (formControl('groupId').touched && (formControl('groupId').dirty || formControl('groupId').invalid)) {
+                                @if (formControl('groupId').invalid) {
+                                    <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                                        <i class="pi pi-exclamation-circle"></i>
+                                        @if (formControl('groupId').errors?.['required']) { This field is required }
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <div class="flex flex-col w-full">
+                            <p-floatlabel variant="on">
+                                <p-select id="subGroupId" [options]="subGroupOptions.items()" optionLabel="name" optionValue="id" formControlName="subGroupId" appendTo="body"
+                                    [loading]="subGroupOptions.loader" (onLazyLoad)="onLazyLoadSubGroups($event)"
+                                    [virtualScrollItemSize]="38" virtualScroll filter fluid lazy />
+                                <label for="subGroupId">Sub Group</label>
+                            </p-floatlabel>
+                            @if (formControl('subGroupId').touched && (formControl('subGroupId').dirty || formControl('subGroupId').invalid)) {
+                                @if (formControl('subGroupId').invalid) {
+                                    <div class="p-2 text-sm text-red-500 flex items-center gap-2">
+                                        <i class="pi pi-exclamation-circle"></i>
+                                        @if (formControl('subGroupId').errors?.['required']) { This field is required }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
+                    <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Locations</span>
+                    <div class="flex justify-between gap-4 p-4">
+                        <p-floatlabel class="w-full" variant="on">
+                            <input id="location" type="text" pInputText formControlName="location" fluid>
+                            <label for="location">Location</label>
                         </p-floatlabel>
-                        <p-inputgroup-addon>
-                            <p-button icon="pi pi-plus" [text]="false" pTooltip="Add" tooltipPosition="bottom" (onClick)="onClickAddTag()" />
-                        </p-inputgroup-addon>
-                    </p-inputgroup>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg mt-4 flex-1 p-2 relative min-h-[3rem] overflow-y-scroll">
-                        <div class="flex flex-wrap gap-2">
-                            @for (item of formControl('tags').value; track $index) {
+                        <p-floatlabel class="w-full" variant="on">
+                            <input id="landmark" type="text" pInputText formControlName="landmark" fluid>
+                            <label for="landmark">Landmark</label>
+                        </p-floatlabel>
+                    </div>
+                </div>
+                <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
+                    <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Tags</span>
+                    <div class="col-span-1 md:col-span-6 flex flex-col gap-4 p-4">
+                        <p-inputgroup>
+                            <p-floatlabel variant="on">
+                                <input id="tag" type="text" pInputText [formControl]="tagControl" pSize="small" fluid />
+                                <label for="tag">Tag</label>
+                            </p-floatlabel>
+                            <p-inputgroup-addon>
+                                <p-button icon="pi pi-plus" [text]="false" pTooltip="Add" tooltipPosition="bottom" (onClick)="onClickAddTag()" size="small" fluid />
+                            </p-inputgroup-addon>
+                        </p-inputgroup>
+                        <div class="flex flex-wrap gap-2 max-h-[10rem] overflow-y-scroll relative">
+                            @for (item of screen.tags; track $index) {
                                 <p-chip [label]="item" [removable]="true" (onRemove)="onClickRemoveTag($event, item)" />
                             } @empty {
-                                <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                                <div class="w-full h-full flex items-center justify-center">
                                     <p class="italic">No tag added</p>
                                 </div>
                             }
                         </div>
                     </div>
+
+                </div>
+                <div class="flex items-center justify-between border border-gray-200 dark:border-gray-700 rounded p-4 w-full">
+                    <p>Scheduler <span class="!text-sm pi pi-question-circle"
+                        pTooltip="Schedule the screen to be played at a specific time." tooltipPosition="bottom"></span></p>
+                    <p-button (onClick)="showScheduler.set(true)" size="small" icon="pi pi-pencil" />
                 </div>
             </div>
         </div>
@@ -202,6 +167,13 @@
     <ng-template #footer>
         <p-button label="Close" icon="pi pi-times" (onClick)="isShowSubGroupForm.set(false)" size="small" text />
         <p-button label="Save" icon="pi pi-check" (onClick)="onSaveGroup('sub-group')" size="small" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showScheduler" header="Schedule" [style]="{ width: '40rem' }" [draggable]="false" closable modal>
+    <app-weekday-hour-selection [formGroup]="screenForm" [showAllDay]="true" allDayLabel="Always On" />
+    <ng-template #footer>
+        <p-button label="Save" (onClick)="showScheduler.set(false)" />
     </ng-template>
 </p-dialog>
 

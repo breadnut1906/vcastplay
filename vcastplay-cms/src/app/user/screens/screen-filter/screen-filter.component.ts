@@ -17,6 +17,7 @@ export class ScreenFilterComponent {
   @Input() showOrientation: boolean = false;
   @Input() showLocation: boolean = false;
   @Input() showScreenStatus: boolean = false;
+  @Input() isAdmin: boolean = false;
 
   @Output() filterChange = new EventEmitter<any>();
 
@@ -29,7 +30,7 @@ export class ScreenFilterComponent {
   useFilter = signal<boolean>(false);
 
   ngOnInit() {
-    this.onLoadGroups()
+    if(!this.isAdmin) this.onLoadGroups()
   }
 
   onLoadGroups() {

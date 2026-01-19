@@ -9,12 +9,13 @@ import { Assets } from '../assets';
 
 @Component({
   selector: 'app-asset-list-item',
-  imports: [PrimengUiModule, CommonModule, AssetPreviewComponent ],
+  imports: [ PrimengUiModule, CommonModule, AssetPreviewComponent ],
   templateUrl: './asset-list-item.component.html',
   styleUrl: './asset-list-item.component.scss'
 })
 export class AssetListItemComponent {
 
+  @Input() tenantId: any;
   @Input() asset: Assets | any;
   @Input() customCSS: string = 'h-full';
   @Input() showDetails: boolean = true;
@@ -26,6 +27,7 @@ export class AssetListItemComponent {
   utils = inject(UtilityService);
 
   showDrawer = signal<boolean>(false);
+  publicApi: string = environment.public;
   iconPath: string = environment.iconPath;
 
   get assetViewModeSignal() {

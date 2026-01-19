@@ -62,7 +62,8 @@ async function createWindow() {
 
     if (isDev) {
       // 🟢 DEV: Use Angular live server
-      win.loadURL('http://localhost:4200');
+      // win.loadURL('http://localhost:4200');
+      win.loadURL('http://localhost:50611');
       win.webContents.openDevTools();
     } else {
       // 🟢 PROD: Use built Angular app

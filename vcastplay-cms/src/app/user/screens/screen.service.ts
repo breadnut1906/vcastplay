@@ -36,7 +36,7 @@ export class ScreenService {
   showContents = signal<boolean>(false);
   showScreenDetails = signal<boolean>(false);
 
-  selectedScreen = signal<Screen | null>(null);
+  selectedScreen = signal<Screen | any>(null);
   selectMultipleScreens = signal<Screen[]>([]);
 
   contentType = signal<string>('asset');
@@ -159,8 +159,11 @@ export class ScreenService {
   }
 
   onGetScreenByCode(code: string) {
-    /**Call GET screen by code or id API */
     return this.http.post(`${this.api}tenants/screens/register`, { code }, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onGetScreenById(id: number) {
+    return this.http.get(`${this.api}tenants/screens/${id}`, { headers: this.onGetHTTPHeaders() });
   }
 
   onRefreshScreens() {
@@ -173,7 +176,7 @@ export class ScreenService {
     this.tags?.setValue(tempData.filter((t: any) => t !== tag));
   }
 
-  onSaveScreen(id: number, screen: Screen, mode: string = 'create') {
+  onSaveScreen(id: any, screen: Screen | any, mode: string = 'create') {
     if (mode === 'create') {
       return this.http.post(`${this.api}tenants/screens`, screen, { headers: this.onGetHTTPHeaders() });
     } else {

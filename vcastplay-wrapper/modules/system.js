@@ -15,13 +15,13 @@ async function onGetSystemInfo() {
   const hostname = os.hostname()
   const net = os.networkInterfaces()
   const cpu = await si.cpu()
-  const temp = await onGetCPUTemperature(); //await si.cpuTemperature()
+  const temp = await onGetCPUTemperature();
   const mem = await si.mem()
   const disk = await si.fsSize()
   const osInfo = await si.osInfo()
   const system = await si.system()
   const display = screen.getPrimaryDisplay()
-  const graphics = await si.graphics()
+  const graphics = await si.graphics()  
   
   return {
     hostname,
@@ -32,14 +32,18 @@ async function onGetSystemInfo() {
     cpu: cpu.manufacturer + ' ' + cpu.brand,
     cpuTemp: temp,
     ram: (mem.total / 1e9).toFixed(2) + ' GB',
-    disk: disk.map((d) => ({ mount: d.mount, size: (d.size / 1e9).toFixed(1) + ' GB' })),
+    disk: disk.map((d) => ({
+      mount: d.mount, 
+      size: d.size,
+      used: d.used,
+      free: d.available,
+    })),
     os: osInfo.distro + ' ' + osInfo.release,
     serial: system.uuid,
     browserVersion: process.versions.chrome,
     screen: display.size,
     graphics: graphics,
-    coords: null, // placeholder, will be filled by renderer
-    appVersion: app.getVersion(),
+    appVersion: app.getVersion()
   }
 }
 

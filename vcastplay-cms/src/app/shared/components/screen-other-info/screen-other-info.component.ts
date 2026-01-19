@@ -26,4 +26,8 @@ export class ScreenOtherInfoComponent {
     const end = moment(date.end).format('hh:mm A');
     return `${start} - ${end}`;
   }
+
+  getDiskPercentage(disk: any) {
+    return (disk.used / disk.size) * 100
+  }
 }

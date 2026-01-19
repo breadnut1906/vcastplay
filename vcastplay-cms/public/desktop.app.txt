@@ -1,0 +1,1 @@
+This is a sample file if desktop app is bundled or in zip

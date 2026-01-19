@@ -1,6 +1,6 @@
 import { Component, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {  FormGroup } from '@angular/forms';
+import {  FormControl, FormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import moment from 'moment';
 import { WEEKDAYS } from '../../interfaces/general';
@@ -27,9 +27,9 @@ export class WeekdayHourSelectionComponent {
 
   ngOnInit() { }
 
-  onClickAddHours() {
-    const hourValue = this.hoursControl?.value;
-    const hoursTotal = this.hoursControl?.value.length;
+  onClickAddHours() {    
+    const hourValue = this.hoursControl?.value ?? [];
+    const hoursTotal = this.hoursControl?.value?.length ?? 0;
     let nextStart = (hourValue.length === 0 ? moment().startOf('hour') : moment(hourValue[hourValue.length - 1].end)).toDate();
     let nextEnd = moment(nextStart).add(1, 'hour').toDate();
     while (hourValue.some((hour: any) => hour.start.getTime() === nextStart.getTime() && hour.end.getTime() === nextEnd.getTime())) {
@@ -87,5 +87,5 @@ export class WeekdayHourSelectionComponent {
   get isAllDay() { return this.formGroup.get('isAllDay')?.value; }
   get isAllWeekdays() { return this.formGroup.get('isAllWeekdays')?.value; }
   get weekdaysControl() { return this.formGroup.get('weekdays'); }
-  get hoursControl() { return this.formGroup.get('hours'); }
+  get hoursControl() { return this.formGroup.get('hours') as FormControl; }
 }

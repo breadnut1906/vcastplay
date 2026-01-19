@@ -87,10 +87,11 @@
     <p-button (onClick)="onClickDelete(item, $event)" pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
 </ng-template>
 
-<!-- <p-dialog header="User Information" [(visible)]="userService.showDialog" styleClass="w-[30rem] h-auto" [modal]="true" [draggable]="false" [focusOnShow]="false">
-    <app-user-details [userForm]="userForm" />
+<p-dialog header="User Information" [(visible)]="showDialog" styleClass="w-[30rem] h-auto" (onHide)="userForm.reset()"
+    [modal]="true" [draggable]="false" [focusOnShow]="false">
+    <app-user-details [userForm]="userForm" [isEdit]="isEdit" />
     <ng-template #footer>
-        <p-button label="Cancel" severity="secondary" (onClick)="onClickCancel()" />
+        <p-button label="Cancel" severity="secondary" (onClick)="showDialog.set(false)" />
         <p-button label="Save" (onClick)="onClickSave($event)" />
     </ng-template>
-</p-dialog> -->
+</p-dialog>

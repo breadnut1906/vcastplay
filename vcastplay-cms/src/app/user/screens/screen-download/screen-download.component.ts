@@ -27,9 +27,14 @@ export class ScreenDownloadComponent {
     this.showLink.set(false);
     if (device == 'web') {
       this.showLink.set(true);
-      return;
     }
-    this.showDownload.set(false);
+    if (device == 'android') {
+      window.open('https://play.google.com/store/apps/details?id=com.google.android.googlequicksearchbox&pcampaignid=web_share', '_blank');
+    }
+
+    if (device == 'desktop') {
+      window.open('desktop.app.text');
+    }
   }
 
   onCopyToClipboard() {

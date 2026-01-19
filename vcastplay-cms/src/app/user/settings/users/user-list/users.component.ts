@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../../core/modules/primeng-ui/primeng-ui.module';
 import { ComponentsModule } from '../../../../core/modules/components/components.module';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -6,6 +6,8 @@ import { User } from '../../../../shared/interfaces/account-settings';
 import { UtilityService } from '../../../../core/services/utility.service';
 import { UserService } from '../user.service';
 import { RoleService } from '../../roles/role.service';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Pagination } from '../../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-users',
@@ -23,13 +25,52 @@ export class UsersComponent {
   
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
+  
+  users = signal<User[]>([]);
+  paginatedUsers = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
+  userLoading = signal<boolean>(false);
+  showDialog = signal<boolean>(false);
+  isEdit = signal<boolean>(false);
+
+  userForm: FormGroup = new FormGroup({
+    id: new FormControl(''),
+    // code: new FormControl(''),
+    firstName: new FormControl('', [ Validators.required ]),
+    middleName: new FormControl(''),
+    lastName: new FormControl('', [ Validators.required ]),
+    email: new FormControl('', [ Validators.required, Validators.email ]),
+    password: new FormControl('', [ Validators.required ]),
+    mobileNo: new FormControl('', [ Validators.required ]),
+    // role: new FormControl('', [ Validators.required ]),
+    // status: new FormControl(''),
+    // expiredAt: new FormControl(''),
+  })
+
+  securityForm: FormGroup = new FormGroup({
+    password: new FormControl('', [ Validators.required ]),
+    newPassword: new FormControl(null, [ 
+      Validators.required, 
+      Validators.minLength(6), 
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/),
+      this.userService.forbiddenStartValidator() 
+    ]),
+    confirmNewPassword: new FormControl(null, [ Validators.required ])
+  }, { validators: this.userService.passMatchValidator });
 
   ngOnInit() { 
     this.onInitializeData();
   }
 
-  onInitializeData() {
-    this.userService.onLoadUsers();
+  onInitializeData(page: number = 1, limit: number = 10) {
+    this.userLoading.set(true);
+    this.userService.onLoadUsers().subscribe({
+      next: (res: any) => {
+        this.users.set(res.items);
+        this.paginatedUsers.set(res.meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.userLoading.set(false)
+    });
   }
   
   onClickRefresh() {
@@ -132,7 +173,7 @@ export class UsersComponent {
     const pageNumber = event.first / event.rows + 1;
     const { currentPage, itemsPerPage, ...meta } = this.paginatedUsers();
     this.paginatedUsers.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
-    this.userService.onLoadUsers(pageNumber, event.rows);
+    this.onInitializeData(pageNumber, event.rows);
   }
 
   onSaveNewUsers(item: User) {
@@ -142,29 +183,5 @@ export class UsersComponent {
   onUpdateUser(item: User) {
     const index = this.users().findIndex(x => x.id === item.id);
     if (index !== -1) this.users()[index] = item;
-  }
-
-  get userForm() {
-    return this.userService.userForm;
-  }
-
-  get showDialog() {
-    return this.userService.showDialog;
-  }
-
-  get isEdit() {
-    return this.userService.isEdit;
-  }
-
-  get users() {
-    return this.userService.users;
-  }
-
-  get paginatedUsers() {
-    return this.userService.paginatedUsers;
-  }
-
-  get userLoading() {
-    return this.userService.userLoading;
   }
 }

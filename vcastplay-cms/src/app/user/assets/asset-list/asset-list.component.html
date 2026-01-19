@@ -37,36 +37,14 @@
             (onClick)="showPrompt.set(true)"
             label="Generate AI"
             icon="pi pi-ethereum"
-            [disabled]="isUploading()"
             outlined
           />
-          <p-button (onClick)="onClickAddNew()" label="Upload" icon="pi pi-upload" [disabled]="isUploading()" />
+          <p-button (onClick)="onClickAddNew()" label="Upload" icon="pi pi-upload" />
         </div>
       </div>
     </ng-template>
 
     <div class="flex flex-col gap-4 h-full">
-      @if (isUploading()) {
-        <div class="flex flex-col">
-          <p-progressbar styleClass="!h-4" [value]="updatingProgress()" />
-          <p class="text-sm">Uploading: {{ fileIndex() }} of {{ totalFiles() }}</p>
-        </div>
-      } @else {
-        <div
-          class="hidden lg:flex justify-center items-center border-dashed border-2 border-zinc-300 p-5 rounded-lg cursor-pointer hover:bg-zinc-100 hover:dark:bg-zinc-800"
-          (drop)="onFileSelectOrDrop($event); $event.preventDefault()"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave($event)"
-          (click)="fileInput.click()"
-        >
-          <p class="text-gray-500">
-            <span class="font-semibold">Drop files here</span> or click to upload
-          </p>
-          <input type="file" accept="image/*, video/mp4, video/webm, video/ogg, audio/mpeg, audio/ogg, audio/wav, audio/mp3, .html, .htm"
-            (change)="onFileSelectOrDrop($event)" multiple hidden #fileInput />
-        </div>
-      }
-
       <div
         class="relative block lg:hidden px-3 gap-4 overflow-y-auto"
         [ngClass]="{
@@ -83,28 +61,21 @@
             <p>Upload</p>
           </div>
         </div>
-        @for (item of filteredAssets(); track $index) {
-        <app-asset-list-item
-          [asset]="item"
-          [disableDrag]="true"
-          [showOptions]="true"
-          [actionBtn]="actionBtn"
-        />
+        @for (item of assets(); track $index) {
+          <app-asset-list-item [asset]="item" [tenantId]="tenantId" [disableDrag]="true" [showOptions]="true" [actionBtn]="actionBtn" />
         }
       </div>
 
-      <div class="flex-1 min-h-0 hidden lg:block">
+      <div class="flex-1 min-h-0 hidden lg:block mt-4">
         <p-table
-          [value]="assetService.loadingSignal() ? utils.tableSkeletonRows : filteredAssets()"
+          [value]="assets()"
+          [loading]="isLoading()"
           selectionMode="single"
           [scrollable]="true"
-          [rows]="rows()"
-          [first]="first()"
           scrollHeight="flex"
+          (onPage)="onPageChange($event)"
           size="small"
-          (onPage)="assetService.onPageChange($event)"
           stripedRows
-          paginator
         >
           <ng-template #header>
             <tr>
@@ -127,7 +98,7 @@
                   <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
                     @if(['video', 'image'].includes(item.type)) {
                     <img
-                      [src]="item.thumbnail"
+                      [src]="publicApi + 'assets/' + tenantId + '/thumbnails/' + item.name.replace('.mp4', '.jpg')"
                       class="max-h-full object-contain"
                       [alt]="item.name"
                       loading="lazy"
@@ -146,33 +117,26 @@
                 <div class="flex flex-col gap-1">
                   <p class="font-semibold">{{ item.name }}</p>
                   @if(['video', 'image'].includes(item.type)) {
-                  <div class="flex gap-2">
-                    <p class="text-sm italic">
-                      {{ utils.formatSize(item?.fileDetails.size ?? 0) }}
-                    </p>
-                    <p class="text-sm italic">
-                      ({{ item?.fileDetails.resolution?.width ?? 0 }} x
-                      {{ item.fileDetails.resolution?.height ?? 0 }})
-                    </p>
-                  </div>
+                    <div class="flex gap-2">
+                      <p class="text-sm italic">{{ utils.formatSize(item.sizeKb ?? 0) }}</p>
+                      <p class="text-sm italic">({{ item.dimension }})</p>
+                    </div>
                   }
                 </div>
               </td>
               <td><p-tag [value]="item.type.toUpperCase()" severity="info" /></td>
               <td>
-                <p class="text-sm font-medium">
-                  {{ item.fileDetails?.orientation?.toUpperCase() ?? '-' }}
-                </p>
+                <p class="text-sm font-medium">{{ item.orientation.toUpperCase() ?? '-' }}</p>
               </td>
               <td>
                 @if (!item.category || !item.subCategory) {
-                <p class="text-sm text-red-500 italic">No category available</p>
+                  <p class="text-sm text-red-500 italic">No category available</p>
                 } @else {
-                {{ item.category }} & {{ item.subCategory }}
+                  {{ item.category }} & {{ item.subCategory }}
                 }
               </td>
               <td>{{ utils.timeConversion(item.duration) }}</td>
-              <td>{{ utils.onGetLastUpdatedLabel(item.updatedOn) }}</td>
+              <td>{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</td>
               <td>
                 <div class="flex flex-row gap-2 items-center justify-center">
                   <ng-container
@@ -192,10 +156,10 @@
         </p-table>
       </div>
     </div>
-
-    <!-- <ng-template #footer>
-            <p-paginator [rows]="rows" [totalRecords]="totalRecords"></p-paginator>
-        </ng-template> -->
+    <ng-template #footer>
+      <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * 10" 
+        [totalRecords]="pagination().totalItems" (onPageChange)="onPageChange($event)" />
+    </ng-template>
   </p-card>
 </div>
 
@@ -203,33 +167,19 @@
   <div class="relative aspect-video border-2 border-[var(--p-surface-300)] group bg-stone-800 text-white rounded-lg">
     <ng-container *ngIf="selectedAsset() && isShowPreview()">
       <app-asset-preview class="absolute h-full w-full flex items-center justify-center bg-stone-800"
-        [asset]="selectedAsset()" [showControls]="true" />
+        [asset]="selectedAsset()" [link]="publicApi + 'assets/' + tenantId + '/' + selectedAsset().name" [showControls]="true" />
     </ng-container>
   </div>
 </p-dialog>
 
-<app-asset-upload-result [uploadResult]="uploadResults()" [isShowUploadResult]="isShowUploadResult()" />
+<app-asset-upload-file [dialog]="isShowUpload" [isEdit]="isEdit" (isShowDialogChange)="isShowDialogChange($event)" [asset]="selectedAsset()" />
 
 <app-asset-ai-generate [showPrompt]="showPrompt" />
 
-<app-asset-to-playlist [assetForm]="assetForm" [isShowAddToPlaylist]="isShowAddToPlaylist" />
+<!-- <app-asset-to-playlist [assetForm]="assetForm" [isShowAddToPlaylist]="isShowAddToPlaylist" /> -->
 
 <ng-template #actionBtn let-item>
-  <p-button
-    (onClick)="onClickEdit(item)"
-    pTooltip="Edit"
-    tooltipPosition="bottom"
-    icon="pi pi-pencil"
-    severity="success"
-    size="small"
-  />
-  <p-button
-    (onClick)="onClickOpenOptions($event, item, actionMenu)"
-    pTooltip="More"
-    tooltipPosition="bottom"
-    icon="pi pi-cog"
-    severity="contrast"
-    size="small"
-  />
+  <p-button (onClick)="onClickEdit(item)" pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="success" size="small" />
+  <p-button (onClick)="onClickOpenOptions($event, item, actionMenu)" pTooltip="More" tooltipPosition="bottom" icon="pi pi-cog" severity="contrast" size="small" />
   <p-menu #actionMenu [model]="actionItems" [popup]="true" appendTo="body" />
 </ng-template>
