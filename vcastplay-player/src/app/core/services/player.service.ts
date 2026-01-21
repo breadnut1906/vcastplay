@@ -84,17 +84,20 @@ export class PlayerService {
     }
     
     onGetAndroidInformation() {
-        if ((window as any).AndroidBridge && typeof (window as any).AndroidBridge.getDeviceDetails === 'function') {
-            (window as any).AndroidBridge.getDeviceDetails = (data: any) => {
-                console.log('Received from android device details:', data);
-                this.androidData.set(data);
-            };
+        (window as any).AndroidBridge = (window as any).AndroidBridge || {};
+
+        // Android → JS callback
+        (window as any).AndroidBridge.onDeviceDetails = (data: any) => {
+            console.log('Received from android device details:', data);
+            this.androidData.set(data);
+        };
+
+        // JS → Android request
+        if (typeof (window as any).AndroidBridge.requestDeviceDetails === 'function') {
+            (window as any).AndroidBridge.requestDeviceDetails();
+        } else {
+            console.warn('AndroidBridge.requestDeviceDetails not available yet');
         }
-        // window.getDeviceDetails = (data: any) => {
-        //     console.log('Received from android device details:', data);
-        //     // You can update Angular state here if needed
-        //     this.androidData.set(data);
-        // };
     }
     
     onGetBrowserInformation() {
