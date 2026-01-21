@@ -21,7 +21,6 @@ export class AssetFilterComponent {
   categoryService = inject(CategoryService);
   cdr = inject(ChangeDetectorRef);
 
-  audienceTag: any;
   isShowAudienceTag = signal<boolean>(false);
 
   useFilter = signal<boolean>(false);
@@ -67,16 +66,14 @@ export class AssetFilterComponent {
 
   onClickApply(filter: any) {
     const filters = this.assetFilterForm.value;
-    const audienceTag = this.audienceTag
-    this.filterChange.emit({ filters, audienceTag });
+    this.filterChange.emit(filters);
     this.useFilter.set(true);
     filter.hide();
   }
 
   onClickClear(filter: any) {
     this.assetFilterForm.reset();
-    this.audienceTag = null;
-    this.filterChange.emit({ filters: this.assetFilterForm.value, audienceTag: {} });
+    this.filterChange.emit({ ...this.assetFilterForm.value });
     this.useFilter.set(false);
     filter.hide();
   }
@@ -87,13 +84,12 @@ export class AssetFilterComponent {
 
   onClickApplyAudienceTag() {
     const filters = this.assetFilterForm.value;
-    const audienceTag = this.audienceTag;
     this.isShowAudienceTag.set(false);
-    this.filterChange.emit({ filters, audienceTag });
+    this.filterChange.emit(filters);
   }
 
   onAudienceTagChange(event: any) {
-    this.audienceTag = event;
+    this.assetFilterForm.patchValue({ audienceTags: event });
   }
   
   onLazyLoadCategories(event: LazyLoadEvent | any) {

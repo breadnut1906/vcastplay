@@ -29,16 +29,19 @@
                 <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
                     <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">
                         File Info
-                        <p-tag [value]="asset.type.toUpperCase()" severity="info" />
+                        <p-tag [value]="asset.type.toUpperCase() || 'N/A'" severity="info" />
                     </span>
                     <form class="flex flex-col gap-4 p-4" [formGroup]="assetForm">
                         <p-floatlabel variant="on">
-                            <input id="name" type="text" pInputText formControlName="name" placeholder="Name" readonly fluid>
+                            <input id="name" type="text" pInputText formControlName="name" readonly fluid>
                             <label for="name">Name</label>
                         </p-floatlabel>
 
                         @if (asset.link) {
-                            <input id="link" type="text" pInputText formControlName="link" placeholder="Link" fluid>
+                            <p-floatlabel variant="on">
+                                <input id="link" type="text" pInputText formControlName="link" placeholder="Link" fluid>
+                                <label for="link">Link</label>
+                            </p-floatlabel>
                         }
 
                         <div class="grid grid-cols-2 gap-4">
@@ -53,36 +56,34 @@
                         
                         <p-floatlabel variant="on">
                             <p-select id="orientation" [options]="utils.orientations()" formControlName="orientation"  
-                                optionLabel="label" optionValue="value" placeholder="Orientation" readonly fluid />
+                                optionLabel="label" optionValue="value" readonly fluid />
                             <label for="orientation">Orientation</label>
                         </p-floatlabel>
 
                         <p-floatlabel variant="on">
-                            <input id="dimension" type="text" pInputText formControlName="dimension" placeholder="Dimension" readonly fluid>
+                            <input id="dimension" type="text" pInputText formControlName="dimension" readonly fluid>
                             <label for="dimension">Dimension</label>
                         </p-floatlabel>
 
                         <div class="grid grid-cols-2 gap-4">
                             <p-inputgroup>
                                 <p-floatlabel variant="on">
-                                    <input id="sizeKb" type="text" pInputText formControlName="sizeKb" placeholder="Size (KB)" readonly fluid>
+                                    <input id="sizeKb" type="text" pInputText formControlName="sizeKb" readonly fluid>
                                     <label for="sizeKb">Size (KB)</label>
                                 </p-floatlabel>
                                 <p-inputgroup-addon>KB</p-inputgroup-addon>
                             </p-inputgroup>
 
-                            <p-inputgroup>
-                                <p-floatlabel variant="on">
-                                    <input id="duration" type="text" pInputText formControlName="duration" placeholder="Duration" readonly fluid>
-                                    <label for="duration">Duration</label>
-                                </p-floatlabel>
-                                <p-inputgroup-addon>sec.</p-inputgroup-addon>
-                            </p-inputgroup>
+                            <p-floatlabel variant="on">
+                                <p-inputmask styleClass="w-full" formControlName="duration" mask="99:99:99" 
+                                    placeholder="hh:mm:ss" [readonly]="asset.type !== 'image'" [ngClass]="{ 'ng-invalid ng-dirty': assetForm.errors?.['max24Hours'] }" />
+                                <label for="duration">Duration</label>
+                            </p-floatlabel>
                         </div>
                     </form>
                 </div>
                 <div class="flex items-center justify-between border border-gray-200 dark:border-gray-700 rounded p-4 w-full">
-                    <p>Audience Tag <span class="!text-sm pi pi-question-circle"
+                    <p>Audience Tags <span class="!text-sm pi pi-question-circle"
                         pTooltip="Categorize audiences using optional demographic, time-based, and location-based tags for better targeting." tooltipPosition="bottom"></span></p>
                     <p-button (onClick)="showAudienceTag.set(true)" size="small" icon="pi pi-pencil" />
                 </div>
@@ -122,4 +123,4 @@
     </ng-template>
 </p-dialog>
 
-<app-audience-tag-filters [isShowAudienceTag]="showAudienceTag" (onAudienceTagChange)="onAudienceTagChange($event)">
+<app-audience-tag-filters [formGroup]="assetForm" [isShowAudienceTag]="showAudienceTag" (onAudienceTagChange)="onAudienceTagChange($event)">

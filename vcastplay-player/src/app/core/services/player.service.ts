@@ -84,11 +84,17 @@ export class PlayerService {
     }
     
     onGetAndroidInformation() {
-        window.getDeviceDetails = (data: any) => {
-            console.log('Received from android device details:', data);
-            // You can update Angular state here if needed
-            this.androidData.set(data);
-        };
+        if ((window as any).AndroidBridge && typeof (window as any).AndroidBridge.getDeviceDetails === 'function') {
+            (window as any).AndroidBridge.getDeviceDetails = (data: any) => {
+                console.log('Received from android device details:', data);
+                this.androidData.set(data);
+            };
+        }
+        // window.getDeviceDetails = (data: any) => {
+        //     console.log('Received from android device details:', data);
+        //     // You can update Angular state here if needed
+        //     this.androidData.set(data);
+        // };
     }
     
     onGetBrowserInformation() {
@@ -101,11 +107,11 @@ export class PlayerService {
 
     onSendDataToAndroid(data: any) {
         if ((window as any).AndroidBridge && typeof (window as any).AndroidBridge.sendCommand === 'function') {
-        const jsonData = JSON.stringify(data);
-        console.log(jsonData);
-        (window as any).AndroidBridge.sendCommand(jsonData);
+            const jsonData = JSON.stringify(data);
+            console.log(jsonData);
+            (window as any).AndroidBridge.sendCommand(jsonData);
         } else {
-        console.warn('AndroidBridge not available.');
+            console.warn('AndroidBridge not available.');
         }
     }
     

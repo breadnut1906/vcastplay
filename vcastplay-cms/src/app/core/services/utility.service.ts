@@ -44,11 +44,13 @@ export class UtilityService {
     { label: 'Image', value: 'image' },
     { label: 'Video', value: 'video' },
     { label: 'Audio', value: 'audio' },
-    { label: 'File', value: 'file' },
-    { label: 'Web', value: 'web' },
-    { label: 'Widget', value: 'widget' },
-    { label: 'Youtube', value: 'youtube' },
-    { label: 'Facebook', value: 'facebook' },
+    { label: 'HTML', value: 'html' },
+    { label: 'Link', value: 'link' },
+    // { label: 'File', value: 'file' },
+    // { label: 'Web', value: 'web' },
+    // { label: 'Widget', value: 'widget' },
+    // { label: 'Youtube', value: 'youtube' },
+    // { label: 'Facebook', value: 'facebook' },
   ])
 
   orientations = signal<SelectOption[]>([
@@ -323,6 +325,12 @@ export class UtilityService {
         .join(' ')
   }
 
+  timeToSeconds(time: string) {
+    if (!time) return
+    const [hours, minutes, seconds] = time.split(':').map(Number)
+    return hours * 3600 + minutes * 60 + seconds
+  }
+
   getFormControl(formGroup: FormGroup, fieldName: string) {
     return formGroup.controls[fieldName]
   }
@@ -468,6 +476,17 @@ export class UtilityService {
 
     return ''
   }
+  
+  onImageError(event: any) {
+    const imgElement = event.target as HTMLImageElement;
+    imgElement.src = 'assets/no-image.png';
+  }
+
+  getLinkType(url: string): string {
+    if (url.includes('facebook')) return 'facebook';
+    if (url.includes('youtube') || url.includes('youtu.be')) return 'youtube';
+    return 'html';
+  }
 
   private extractYouTubeId(url: string): string {
     const regex = /(?:youtube\.com\/.*v=|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -549,7 +568,7 @@ export class UtilityService {
 
   getReverseGeolocation(lat: number, lng: number) {
     return this.http.get(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18`
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&polygon_geojson=1&format=jsonv2&zoom=18`
     )
   }
 

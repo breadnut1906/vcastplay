@@ -5,34 +5,28 @@ export interface Assets {
     name: string;
     type: string;
     link: string;
-    category?: string;
-    subCategory?: string;
+    category?: any;
+    subCategory?: any;
     thumbnail?: string
-    duration: number;
+    duration: any;
     sizeKb?: number;
     orientation?: string;
     dimension?: string;
 
     // Availability
     availability?: boolean;
-    start?: Date | null;
-    end?: Date | null;
+    start?: any;
+    end?: any;
     allDay?: boolean;
     allWeekdays?: boolean;
     weekdays?: string[];
     hours?: string[];
 
     // Audience Tagging
-    audienceTag?: any;
+    audienceTags?: any;
 
     // content id for playlist
     contentId?: any;
-}
-
-export interface UploadResults {
-    name: string;
-    status: 'success' | 'error';
-    message?: string;
 }
 
 export interface UploadItem {

@@ -15,8 +15,8 @@
         </ng-template>
         <div class="grid grid-cols-12 gap-4 h-full pb-10 md:pb-0" [formGroup]="screenForm">
             <div class="flex flex-col gap-4 col-span-12 md:col-span-6 lg:col-span-8">
-                <div class="grid grid-cols-3 gap-4">
-                    <p-inputgroup>
+                <div class="grid grid-cols-12 gap-4">
+                    <p-inputgroup class="col-span-4 md:col-span-6 lg:col-span-3">
                         <p-floatlabel variant="on">
                             <input id="code" pInputText formControlName="code"
                                 [ngClass]="{ 'ng-invalid ng-dirty': formControl('code').invalid && formControl('code').touched }" readonly fluid />
@@ -26,14 +26,10 @@
                             <p-button icon="pi pi-copy" (onClick)="onCopyToClipboard('code')" pTooltip="Copy" tooltipPosition="bottom" text />
                         </p-inputgroup-addon>
                     </p-inputgroup>
-                    <p-floatlabel variant="on">
+                    <p-floatlabel class="col-span-8 md:col-span-6 lg:col-span-9" variant="on">
                         <input id="name" pInputText formControlName="name"
                             [ngClass]="{ 'ng-invalid ng-dirty': formControl('name').invalid && formControl('name').touched }" fluid />
                         <label for="name">Name</label>
-                    </p-floatlabel>
-                    <p-floatlabel variant="on">
-                        <p-select inputId="type" [options]="types()" optionLabel="label" optionValue="value" formControlName="type" appendTo="body" readonly fluid />
-                        <label for="type">Type</label>
                     </p-floatlabel>
                 </div>
                 <div class="flex flex-col gap-2 h-full flex-1">
@@ -43,18 +39,23 @@
                     </p-floatlabel>
                     <div class="w-full h-50 md:h-full">
                         @if (loadingAddressSignal()) { <p-progress-bar mode="indeterminate" /> }
-                        @else { <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" /> }
+                        <!-- @else { <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" /> } -->
+                        @if (screenForm.valid) { <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" /> }
                     </div>
                 </div>
             </div>
             <div class="flex flex-col gap-4 col-span-12 md:col-span-6 lg:col-span-4">
                 <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
                     <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Display</span>
-                    <div class="flex justify-between gap-4 p-4 text-sm">
-                        <p>Orientation:</p>
-                        <p-tag [value]="screen.orientation?.toUpperCase()" severity="info" />
+                    <div class="flex items-center justify-between gap-4 px-4 py-2 text-sm">
+                        <p>Type:</p>
+                        <p-tag [value]="screen.type?.toUpperCase() || 'N/A'" severity="success" />
                     </div>
-                    <div class="flex justify-between gap-4 p-4 text-sm border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between gap-4 px-4 py-2 text-sm">
+                        <p>Orientation:</p>
+                        <p>{{ screen.orientation?.toUpperCase() || 'N/A' }}</p>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-4 py-2 text-sm border-b border-gray-200 dark:border-gray-700">
                         <p>Resolution:</p>
                         <p>{{ screen.resolution }}</p>
                     </div>

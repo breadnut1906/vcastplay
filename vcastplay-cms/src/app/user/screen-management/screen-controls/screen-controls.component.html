@@ -1,13 +1,13 @@
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 border border-zinc-200 rounded-lg px-3 py-6 md:p-3 items-center overflow-hidden">
-    <div class="col-span-1 md:col-span-6 flex">
+<div class="grid grid-cols-12 gap-6 items-center">
+    <div class="col-span-12 lg:col-span-6 flex">
         <div class="flex gap-3 items-center w-full" [formGroup]="selectedContentForm">
             <p-inputgroup>
                 <p-inputgroup-addon>
-                    <p-button label="Assign Content" severity="info" (onClick)="onClickOpenContents()" outlined />
+                    <p-button label="Assign Content" severity="info" (onClick)="onClickOpenContents()" size="small" outlined />
                 </p-inputgroup-addon>
-                <input id="name" type="text" placeholder="Content" formControlName="name" readonly pInputText>
+                <input id="name" type="text" placeholder="Content" formControlName="name" pSize="small" readonly pInputText>
                 <p-inputgroup-addon>
-                    <p-button (onClick)="onClickApplyContents()" [disabled]="selectedContentForm.invalid">
+                    <p-button (onClick)="onClickApplyContents()" [disabled]="selectedContentForm.invalid" size="small">
                         <div class="flex gap-2">
                             <img src="assets/vcastplay-logo.png" alt="vcastplay-icon" width="20">
                             <p>Apply</p>
@@ -17,34 +17,27 @@
             </p-inputgroup>
         </div>
     </div>
-    <div class="col-span-1 lg:col-span-6">
-        <div class="flex items-center w-full h-full relative">
-            <div class="flex items-center absolute right-0">
-                <div class="flex flex-wrap gap-3 items-center">
-                    <p class="text-sm">Controls:</p>
-                    <p-button (onClick)="onClickOpenScreen()"
-                        icon="pi pi-play" pTooltip="Open" tooltipPosition="bottom" size="small" fluid />
-                    <p-button (onClick)="onClickCloseScreen()"
-                        icon="pi pi-times-circle" pTooltip="Close" tooltipPosition="bottom" size="small" fluid />
-                    <p-button (onClick)="onClickRestartScreen()"
-                        icon="pi pi-refresh" pTooltip="Restart" tooltipPosition="bottom" size="small" fluid />
-                    <p-button (onClick)="onClickShutdownScreen()"
-                        icon="pi pi-power-off" pTooltip="Shutdown" tooltipPosition="bottom" size="small" fluid />
-                    <p-button (onClick)="onClickBroadCastMessage()" 
-                        icon="pi pi-megaphone" pTooltip="Broadcast Message" tooltipPosition="bottom" size="small" fluid />
-                    <p-button (onClick)="onClickOpenSettings()" 
-                        icon="pi pi-cog" pTooltip="Settings" tooltipPosition="bottom" size="small" fluid /> 
-                </div>
+    <div class="col-span-12 lg:col-span-6">
+        <div class="flex gap-3 items-center justify-center lg:justify-end">
+            <p class="text-sm">Controls:</p>
+            <div class="flex-wrap flex gap-3">
+                <p-button (onClick)="onClickOpenScreen()"
+                    icon="pi pi-play" pTooltip="Open" tooltipPosition="bottom" size="small" fluid />
+                <p-button (onClick)="onClickCloseScreen()"
+                    icon="pi pi-times-circle" pTooltip="Close" tooltipPosition="bottom" size="small" fluid />
+                <p-button (onClick)="onClickRestartScreen()"
+                    icon="pi pi-refresh" pTooltip="Restart" tooltipPosition="bottom" size="small" fluid />
+                <p-button (onClick)="onClickShutdownScreen()"
+                    icon="pi pi-power-off" pTooltip="Shutdown" tooltipPosition="bottom" size="small" fluid />
+                <p-button (onClick)="onClickBroadCastMessage()" 
+                    icon="pi pi-megaphone" pTooltip="Broadcast Message" tooltipPosition="bottom" size="small" fluid />
+                <p-button (onClick)="onClickOpenSettings()" 
+                    icon="pi pi-cog" pTooltip="Settings" tooltipPosition="bottom" size="small" fluid /> 
             </div>
         </div>
     </div>
 </div>
 
-<p-dialog header="Assign Content" [(visible)]="showContents" styleClass="w-[50rem] h-auto" (onHide)="onClickCloseDialog()" 
-    [resizable]="false" [modal]="true" [draggable]="false">
-    <app-content-selection #contents [selectedTypes]="['asset', 'playlist', 'design', 'schedule']" 
-        (contentType)="onContentTypeChange($event)" (selectedContents)="onSelectionChange($event)" />
-    <ng-template #footer>
-        <p-button label="Close" severity="secondary" (onClick)="onClickCloseDialog()" />
-    </ng-template>
-</p-dialog>
+<!-- [selectedTypes]="['asset', 'playlist', 'design', 'schedule']" -->
+<app-content-selection [showContents]="showContents" #contents [selectedTypes]="['asset']" (contentType)="onContentTypeChange($event)" 
+    (selectedContents)="onSelectionChange($event)" />

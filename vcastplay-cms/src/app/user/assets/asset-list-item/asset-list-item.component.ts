@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, Input, signal, TemplateRef } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, signal, TemplateRef } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { AssetsService } from '../assets.service';
 import { UtilityService } from '../../../core/services/utility.service';
@@ -18,10 +18,13 @@ export class AssetListItemComponent {
   @Input() tenantId: any;
   @Input() asset: Assets | any;
   @Input() customCSS: string = 'h-full';
-  @Input() showDetails: boolean = true;
+  @Input() showDetails: boolean = false;
   @Input() disableDrag: boolean = false;
   @Input() showOptions: boolean = false;
+  @Input() isSelected: boolean = false;
   @Input() actionBtn!: TemplateRef<any>;
+
+  @Output() onPropertiesChange = new EventEmitter<any>();
 
   assetService = inject(AssetsService);
   utils = inject(UtilityService);
@@ -29,6 +32,13 @@ export class AssetListItemComponent {
   showDrawer = signal<boolean>(false);
   publicApi: string = environment.public;
   iconPath: string = environment.iconPath;
+
+  onClickToggleDetails() {
+    if (this.showDetails) this.showDrawer.set(true);
+    else {
+      this.onPropertiesChange.emit(this.asset);
+    }
+  }
 
   get assetViewModeSignal() {
     return this.assetService.assetViewModeSignal;

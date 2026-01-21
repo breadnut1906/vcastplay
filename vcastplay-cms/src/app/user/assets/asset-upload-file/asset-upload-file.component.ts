@@ -38,10 +38,10 @@ export class AssetUploadFileComponent {
   assetLinkForm = this.formBuilder.group({
     name: ['', Validators.required],
     link: ['', Validators.required],
-    duration: [''],
-    orientation: [''],
-    dimension: [''],
-    type: [''],
+    duration: ['', Validators.required],
+    orientation: ['', Validators.required],
+    dimension: ['100x100'],
+    type: ['', Validators.required],
     sizeKb: [0]
   })
 
@@ -51,17 +51,19 @@ export class AssetUploadFileComponent {
 
   onChangeType(event: any) {
     this.assetLinkForm.reset();
-    this.assetLinkForm.patchValue({ type: event.value, link: null, });
+    this.assetLinkForm.patchValue({ type: event.value, link: null, sizeKb: 0, dimension: '100x100' });
   }
 
   onPropertiesChange(event: any) {
     this.assetLinkForm.patchValue(event);
-    const asset = this.assetLinkForm.value;
-    this.assetService.onSaveAssets(asset).subscribe({
-      next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }),
-      error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to update asset!' }),
-      complete: () => { }
-    });
+    if (!this.isTypeHTML) {
+      const asset = this.assetLinkForm.value;
+      this.assetService.onSaveAssets(asset).subscribe({
+        next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }),
+        error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to update asset!' }),
+        complete: () => { }
+      });
+    }
   }
 
   onHideDialog() {
@@ -161,11 +163,40 @@ export class AssetUploadFileComponent {
     }
   }
 
+  onClickCompleteUpload() {
+    if (this.isTypeHTML) {
+      const asset = this.assetLinkForm.value;
+      this.assetService.onSaveAssets(asset).subscribe({
+        next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset saved successfully!' }),
+        error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to save asset!' }),
+        complete: () => this.onHideDialog()
+      });
+    } else {
+      this.onHideDialog();
+    }
+  }
+
   get tenantId() {
     return this.storage.get('id');
   }
 
   get hasLink() {
     return this.assetLinkForm.get('link')?.value;
+  }
+
+  get hasFiles() {
+    return this.uploadItems().length > 0;
+  }
+
+  get remainingFiles() {
+    return this.uploadItems().filter(i => i.status === 'success').length || 0;
+  }
+
+  get isValid() {
+    return this.assetLinkForm.valid;
+  }
+
+  get isTypeHTML() {
+    return this.assetLinkForm.get('link')?.value?.endsWith('.html');
   }
 }

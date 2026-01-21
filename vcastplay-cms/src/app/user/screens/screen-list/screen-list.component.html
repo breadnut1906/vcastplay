@@ -20,89 +20,93 @@
                     </div>
                 </div>
             </ng-template>
-            <div class="flex-1 md:h-full">
-                <p-table
-                    class="hidden lg:block" 
-                    [value]="screenService.screens()" 
-                    [loading]="screenService.loadingSignal()"
-                    selectionMode="single"
-                    [scrollable]="true" 
-                    size="small"
-                    stripedRows
-                    lazy
-                >
-                    <ng-template #header>
-                        <tr>
-                            <th>Screen</th>
-                            <th>Orientation</th>
-                            <th>Resolution</th>
-                            <th>Groups</th>
-                            <th>Registered On</th>
-                            <th>Last Update</th>
-                            <th>Status</th>
-                            <th>
-                                <div class="text-center">Actions</div>
-                            </th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-item>
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex items-center" [pTooltip]="utils.toTitleCase(item.type)" tooltipPosition="bottom">
-                                        @switch (item.type) {
-                                            @case('desktop') { <i class="pi pi-desktop !font-black !text-2xl !text-blue-500"></i> }
-                                            @case('android') { <i class="pi pi-android !text-2xl !text-lime-500"></i> }
-                                            @default { <i class="pi pi-globe !text-2xl"></i> }
+            <div class="relative flex-1">
+                <div class="aboslute top-0 left-0 h-full w-full">
+                    <p-table
+                        class="hidden lg:block" 
+                        [value]="screens()" 
+                        [loading]="isLoading()"
+                        selectionMode="single"
+                        [scrollable]="true" 
+                        size="small"
+                        stripedRows
+                        lazy
+                    >
+                        <ng-template #header>
+                            <tr>
+                                <th>Screen</th>
+                                <th>Orientation</th>
+                                <th>Resolution</th>
+                                <th>Groups</th>
+                                <th>Registered On</th>
+                                <th>Last Update</th>
+                                <th>Status</th>
+                                <th>
+                                    <div class="text-center">Actions</div>
+                                </th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-item>
+                            <tr>
+                                <td>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex items-center" [pTooltip]="utils.toTitleCase(item.type)" tooltipPosition="bottom">
+                                            @switch (item.type) {
+                                                @case('desktop') { <i class="pi pi-desktop !font-black !text-2xl !text-blue-500"></i> }
+                                                @case('android') { <i class="pi pi-android !text-2xl !text-lime-500"></i> }
+                                                @default { <i class="pi pi-globe !text-2xl"></i> }
+                                            }
+                                        </div>
+
+                                        <div class="flex flex-col">
+                                            <p class="text-base font-semibold">{{ item.name }}</p>
+                                            <p class="text-sm">{{ item.code }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><p class="text-sm font-semibold">{{ item.orientation.toUpperCase() ?? '-' }}</p></td>
+                                <td><p class="text-sm">{{ item.resolution }}</p></td>
+                                <td>
+                                    <div class="text-sm flex gap-1">
+                                        @if (!item.group || !item.subGroup) {
+                                            <p class="text-red-500 italic">No group available</p>
+                                        } @else {
+                                            <div class="flex flex-col">
+                                                <span class="font-semibold text-gray-900">{{ item.group.name }}</span>
+                                                <span class="text-gray-500">{{ item.subGroup.name }}</span>
+                                            </div>
                                         }
                                     </div>
-
-                                    <div class="flex flex-col">
-                                        <p class="text-base font-semibold">{{ item.name }}</p>
-                                        <p class="text-sm">{{ item.code }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><p class="text-sm font-semibold">{{ item.orientation.toUpperCase() ?? '-' }}</p></td>
-                            <td><p class="text-sm">{{ item.resolution }}</p></td>
-                            <td>
-                                <div class="text-xs">
-                                    @if (!item.groupId || !item.subGroupId) {
-                                        <p class="text-red-500 italic">No group available</p>
+                                </td>
+                                <td>
+                                    @if (item.registeredDate) {
+                                        <p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.registeredDate) }}</p>
                                     } @else {
-                                        <p>{{ item.group.name }}</p>
-                                        <p>{{ item.subGroup.name }}</p>
+                                        <p class="text-sm text-red-500 italic">Not Registered</p>
                                     }
-                                </div>
-                            </td>
-                            <td>
-                                @if (item.registeredDate) {
-                                    <p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.registeredDate) }}</p>
-                                } @else {
-                                    <p class="text-sm text-red-500 italic">Not Registered</p>
-                                }
-                            </td>
-                            <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
-                            <td><p-tag [value]="item.status || 'active'" [icon]="'pi ' + utils.getIcon(item?.status || 'active')"
-                                [severity]="utils.getStatus(item?.status || 'active')" /></td>
-                            <td>
-                                <div class="flex flex-row justify-center gap-2">
-                                    <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
-                                </div> 
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template #emptymessage>
-                        <tr>
-                            <td colspan="9" [height]="20">
-                                <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+                                </td>
+                                <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
+                                <td><p-tag [value]="item.status || 'active'" [icon]="'pi ' + utils.getIcon(item?.status || 'active')"
+                                    [severity]="utils.getStatus(item?.status || 'active')" /></td>
+                                <td>
+                                    <div class="flex flex-row justify-center gap-2">
+                                        <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
+                                    </div> 
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template #emptymessage>
+                            <tr>
+                                <td colspan="9" [height]="20">
+                                    <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
                 <div class="block lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @if (!screenService.loadingSignal()) {
-                        @for (item of screenService.screens(); track $index) {
+                    @if (!isLoading()) {
+                        @for (item of screens(); track $index) {
                             <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
                         } @empty {
                             <div class="flex justify-center items-center p-5 h-100">
@@ -117,8 +121,11 @@
                 </div>
             </div>
             <ng-template #footer>
-                <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * 10" 
-                    [totalRecords]="pagination().totalItems" (onPageChange)="onPageChange($event)"></p-paginator>
+                <div class="flex flex-col md:flex-row items-center justify-between pt-4 md:pt-0">
+                    <p class="text-sm">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
+                        to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
+                    <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />
+                </div>
             </ng-template>
         </p-card>
     </div>
@@ -151,4 +158,4 @@
 
 <app-screen-download [showDownload]="showDownload" />
 
-<app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="screenService.selectedScreen.set(null)" />
+<app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" />

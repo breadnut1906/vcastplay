@@ -1,4 +1,4 @@
-<p-card>
+<!-- <p-card>
     <ng-template #title>
         <div class="flex gap-2 items-center">
             <div class="flex items-end justify-center gap-2">
@@ -16,11 +16,12 @@
                 </div>
             </div>
             <div class="ml-auto">
-                <p-tag [value]="screen.screenStatus?.toUpperCase()" [severity]="utils.getStatus(screen.screenStatus ?? '')" [icon]="'pi ' + utils.getIcon(screen.screenStatus ?? '')" />
+                <p-tag [value]="screen.screenStatus?.toUpperCase() ?? 'N/A'" [severity]="utils.getStatus(screen.screenStatus ?? '')" 
+                    [icon]="'pi ' + utils.getIcon(screen.screenStatus ?? '')" />
             </div>
         </div>
     </ng-template>
-    <div class="flex flex-col my-5 gap-5">
+    <div class="flex-col my-5 gap-5 hidden sm:flex">
         <div class="flex gap-2 items-center">
             <p class="font-semibold">Last Online:</p>
             <div class="flex gap-2 items-center ml-auto">
@@ -48,4 +49,31 @@
             <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: screen }"></ng-container>
         </div>
     </ng-template>
-</p-card>
+</p-card> -->
+<div class="relative shadow-lg rounded-lg h-full flex flex-col" [ngClass]="{ 'shadow-blue-500/50 border border-blue-500': isSelected }">
+    <div class="absolute top-0 left-0 flex items-center justify-between w-full p-3 z-20">
+        <p-checkbox [(ngModel)]="selectMultipleScreens" [inputId]="screen.name" name="screen" [value]="screen" />
+        <p-tag [value]="screen.screenStatus?.toUpperCase() ?? 'N/A'" [severity]="utils.getStatus(screen.screenStatus ?? '')" 
+            [icon]="'pi ' + utils.getIcon(screen.screenStatus ?? '')" />
+    </div>
+    <div class="relative flex items-center rounded-t-lg justify-center h-40 w-full bg-[var(--p-primary-500)] cursor-pointer" (click)="onSelectItem(screen)">
+        <div class="absolute inset-0 bg-[var(--p-primary-400)] opacity-50 rounded-t-lg z-10"></div>
+        <img src="assets/vcastplay.png" class="w-40 md:w-30" alt="vcastplay logo">
+        <div class="absolute left-0 bottom-0 flex items-center m-2 z-30" [pTooltip]="utils.toTitleCase(screen.type)" tooltipPosition="bottom">
+            @switch (screen.type) {
+                @case('desktop') { <p-tag value="Desktop" severity="info" /> }
+                @case('android') { <p-tag value="Android" severity="success" /> }
+                @default { <p-tag value="Web" severity="secondary" /> }
+            }
+        </div>
+    </div>
+    <div class="flex items-center justify-between p-4">
+        <div class="text-sm flex flex-col">
+            <p class="font-semibold">{{ screen.name }}</p>
+            <p class="italic text-gray-400">Content Name</p>
+        </div>
+        <div class="flex justify-end gap-2">
+            <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: screen }"></ng-container>
+        </div>
+    </div>
+</div>

@@ -12,12 +12,12 @@
                 <div class="flex gap-4 items-center mb-2">
                     <app-filters class="w-full md:w-[25rem]"></app-filters>
                     <div class="hidden md:flex gap-3 ml-auto">
-                        <p-button (onClick)="onClickAddNew()" label="Add Role" icon="pi pi-plus" />
                         <p-button (onClick)="onClickRefresh()" label="Refresh" variant="outlined" icon="pi pi-refresh"></p-button>
+                        <p-button (onClick)="onClickAddNew()" label="Add Role" icon="pi pi-plus" />
                     </div>
                     <div class="flex gap-3 md:hidden">
-                        <p-button (onClick)="onClickAddNew()" label="" icon="pi pi-plus" pTooltip="Add Role" tooltipPosition="bottom" />
                         <p-button (onClick)="onClickRefresh()" label="" variant="outlined" icon="pi pi-refresh" pTooltip="Refresh" tooltipPosition="bottom" />
+                        <p-button (onClick)="onClickAddNew()" label="" icon="pi pi-plus" pTooltip="Add Role" tooltipPosition="bottom" />
                     </div>
                 </div>
             </ng-template>

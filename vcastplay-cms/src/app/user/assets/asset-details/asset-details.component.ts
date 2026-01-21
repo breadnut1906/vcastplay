@@ -12,6 +12,7 @@ import { StorageService } from '../../../core/services/storage.service';
 import { Assets } from '../assets';
 import { Category, SubCategory } from '../../settings/categories/category';
 import { Pagination } from '../../../shared/interfaces/general';
+import moment from 'moment';
 
 @Component({
   selector: 'app-asset-details',
@@ -47,7 +48,7 @@ export class AssetDetailsComponent {
     orientation: ['', Validators.required],
     dimension: ['', Validators.required],
     sizeKb: [0],
-    duration: [0],
+    duration: [null, [Validators.required, Validators.pattern(/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$/)]],
     availability: [false],
     start: [null],
     end: [null],
@@ -55,8 +56,8 @@ export class AssetDetailsComponent {
     isAllWeekdays: [false],
     weekdays: [[]],
     hours: [[]],
-    audienceTag: ['']
-  }, { validators: this.assetService.dateRangeValidator() });
+    audienceTags: [[]]
+  }, { validators: [ this.assetService.dateRangeValidator(), this.assetService.durationValidator() ] });
 
   categoryOptions = {
     items: signal<Category[]>([]),
@@ -85,16 +86,24 @@ export class AssetDetailsComponent {
   }
 
   ngOnInit() {    
+    this.onLoadCategories();
     this.route.queryParams.subscribe(params => {
       const { id } = params;
       this.onLoadAssetById(id);
-      this.onLoadCategories();
     })
   }
 
   onLoadAssetById(id: number) {
     this.assetService.onGetAssetById(id).subscribe({
-      next: (res: any) => this.assetForm.patchValue(res),
+      next: (res: any) => {
+        const { duration, ...rest } = res;
+        // seconds to hh:mm:ss
+        const time = this.utils.timeConversion(duration);
+        const dateTime = this.assetService.onDateTimeConversions(rest);
+
+        this.assetForm.patchValue({ ...rest, ...dateTime, duration: time, });
+        if (res.categoryId) this.onLoadSubCategories(res.categoryId);
+      },
       error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message })
     })
   }
@@ -131,7 +140,7 @@ export class AssetDetailsComponent {
   }
 
   onLoadSubCategories(categoryId: number, page: number = 1, limit: number = 10) {
-    this.assetForm.get('subCategoryId')?.reset();
+    // this.assetForm.get('subCategoryId')?.reset();
     this.subCategoryOptions.loader = true;
     this.subCategoryOptions.categoryId = categoryId;
     this.categoryService.onLoadSubCategory(categoryId, page, limit).subscribe({
@@ -160,8 +169,8 @@ export class AssetDetailsComponent {
     this.onLoadSubCategories(categoryId, page, total);
   }
 
-  onAudienceTagChange(event: any) {
-    this.assetForm.patchValue({ audienceTag: event });
+  onAudienceTagChange(event: any) {    
+    this.assetForm.patchValue({ audienceTags: event });
   }
   
   onChangeAvailability(event: any) {
@@ -211,7 +220,11 @@ export class AssetDetailsComponent {
         label: 'Save',
       },
       accept: () => {
-        this.assetService.onUpdateAssets(this.asset).subscribe({
+        const { id, duration, ...data }: any = this.assetForm.value;
+        // hh:mm:ss to seconds
+        const time = this.utils.timeToSeconds(duration);
+        const dateTime = this.assetService.onDateTimeConversions(data, true);        
+        this.assetService.onUpdateAssets(id, { ...data, ...dateTime, duration: time }).subscribe({
           next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }),
           error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to update asset!' }),
           complete: () => {
@@ -245,8 +258,8 @@ export class AssetDetailsComponent {
           next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' }),
           error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete user!' }),
           complete: () => {
-            this.router.navigate([ '/assets/asset-library' ]);
             this.assetForm.reset();
+            this.router.navigate([ '/assets/asset-library' ]);
           }
         });
       },
@@ -264,5 +277,9 @@ export class AssetDetailsComponent {
 
   get tenantId() {
     return this.storage.get('id');
+  }
+
+  get audienceTags() {
+    return this.asset.audienceTags || [];
   }
 }

@@ -7,6 +7,7 @@ import _ from 'lodash';
 import { Screen, ScreenMessage } from '../../screens/screen';
 import { BroadcastService } from '../../settings/broadcast/broadcast.service';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
+import { Pagination } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-screen-management-list',
@@ -24,57 +25,64 @@ export class ScreenManagementListComponent {
 
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
-  
-  screenFilters = signal<any>(this.screenFilterForm.valueChanges)
-  filteredScreen = computed(() => {
-    const { type, group, subGroup, location, screenStatus, contentStatus, keywords } = this.screenFilters();
-    const screens = this.screenService.screens();
 
-    return screens.filter((screen: Screen) => {
-      const matchesStatus = screen.status;// == 'active'; 
-      const matchesType = !type || screen.type.includes(type);
-      const matchesGroup = !group || screen.groupId?.includes(group);
-      const matchesSubGroup = !subGroup || screen.subGroupId?.includes(subGroup);
-      const matchesKeywords = !keywords || _.includes(screen.name.toLowerCase(), keywords.toLowerCase()) || _.includes(screen.code, keywords);
-      const matchedLocation = !location || screen?.location.includes(location);
-      const matchedScreenStatus = !screenStatus || screen.screenStatus == screenStatus;
-      // const matchedContentStatus = !contentStatus || screen.assignedContent?.status == contentStatus;
-
-      return matchesStatus && matchesType && matchesGroup && matchesSubGroup && matchesKeywords && matchedLocation && matchedScreenStatus //&& matchedContentStatus;
-    })
-  });
+  isLoading = signal<boolean>(false);
+  showBroadcast = signal<boolean>(false);
+  showSettings = signal<boolean>(false);
+  showScreenDetails = signal<boolean>(false);
+  screens = signal<any[]>([]);
+  selectedScreen = signal<Screen | null>(null);
+  selectMultipleScreens = signal<Screen[]>([]);
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
 
   ngOnInit() {
-    this.screenService.onGetScreens();
-    this.toggleControls.set(false);
+    this.onInitializedScreens();
   }
 
-  ngOnDestroy() {
-    this.selectMultipleScreens.set([]);
+  ngOnDestroy() { }
+
+  onInitializedScreens(page: number = 1, limit: number = 10) {
+    this.isLoading.set(true);
+    this.screenService.onGetScreenManagement(page, limit).subscribe({
+      next: (res: any) => {
+        const { items, meta } = res;
+        this.screens.set(items);
+        this.pagination.set(meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.isLoading.set(false)
+    });
   }
 
   isAllChecked(): boolean {
-    return this.selectMultipleScreens().length == this.filteredScreen().length;
+    return this.selectMultipleScreens().length == this.screens().length;
   }
 
   onClickCheckAll(checked: boolean) {
-    checked ? this.selectMultipleScreens.set(this.filteredScreen()) : this.selectMultipleScreens.set([]);
+    checked ? this.selectMultipleScreens.set(this.screens()) : this.selectMultipleScreens.set([]);
   }
 
-  onFilterChange(event: any) {
-    this.screenFilters.set(event.filters);
+  onFilterChange(event: any) { }
+
+  onBroadCastMessage(event: any) {
+    console.log(event);
+  //   const messageArr: ScreenMessage[] = this.selectedArrScreenBroadcastMessage();
+  //   if (messageArr.length == 0) return;
+  //   this.screenService.onBroadCastMessage(messageArr);
+  //   this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message sent successfully!' });
+  //   this.showBroadcast.set(false);
+  //   this.selectedArrScreenBroadcastMessage.set([]);
+  }
+  
+  onPageChange(event: any) {
+    const rows = event.rows;
+    const pageNumber = event.first / event.rows + 1;
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.screenService.onGetScreenManagement(pageNumber, event.rows);
   }
 
-  onClickApplyBroadcastMessage() {
-    const messageArr: ScreenMessage[] = this.selectedArrScreenBroadcastMessage();
-    if (messageArr.length == 0) return;
-    this.screenService.onBroadCastMessage(messageArr);
-    this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message sent successfully!' });
-    this.showBroadcast.set(false);
-    this.selectedArrScreenBroadcastMessage.set([]);
-  }
-
-  onClickApplySettings() {
+  onSettingsChange(event: any) {
     this.message.add({ severity:'success', summary: 'Success', detail: 'Settings applied successfully!' });
     this.showSettings.set(false);
   }
@@ -83,30 +91,36 @@ export class ScreenManagementListComponent {
     this.message.add({ severity:'success', summary: 'Success', detail: 'Contents applied successfully!' });
   }
 
-  onClickCloseDialog() {
-    this.showBroadcast.set(false);
-    this.showSettings.set(false);
-    this.screenConfigForm.reset();
-    this.selectedScreen.set(null);
-    this.showScreenDetails.set(false);
-    this.selectedArrScreenBroadcastMessage.set([]);
-  }
-
   onClickOpenDetails(screen: Screen) {
     this.selectedScreen.set(screen);
     this.showScreenDetails.set(true);
   }
 
-  get rows() { return this.screenService.rows; }
-  get totalRecords() { return this.screenService.totalRecords; }
-  get screenFilterForm() { return this.screenService.screenFilterForm; }
-  get toggleControls() { return this.screenService.toggleControls; }
-  get selectMultipleScreens() { return this.screenService.selectMultipleScreens; }
-  get showBroadcast() { return this.screenService.showBroadcast; }
-  get showSettings() { return this.screenService.showSettings; }
-  get screenConfigForm() { return this.screenService.screenConfigForm; }
-  get showScreenDetails() { return this.screenService.showScreenDetails; }
-  get selectedScreen() { return this.screenService.selectedScreen; }
+  get isMobile() { return this.utils.isMobile(); }
+  get isTablet() { return this.utils.isTablet(); }
 
+  get screenFilterForm() { return this.screenService.screenFilterForm; }
   get selectedArrScreenBroadcastMessage() { return this.broadcastService.selectedArrScreenBroadcastMessage; }
+
+  get legend() {
+    const totalPlaying = this.screens().filter(screen => screen.status == 'playing').length;
+    const totalDisconnected = this.screens().filter(screen => screen.status == 'disconnect').length;
+    const totalStandby = this.screens().filter(screen => screen.status == 'standby').length;
+    const totalApproved = this.screens().filter(screen => screen.approvalStatus == 'approved').length;
+    const totalDisapproved = this.screens().filter(screen => screen.approvalStatus == 'disapproved').length;
+
+    return { totalPlaying, totalDisconnected, totalStandby, totalApproved, totalDisapproved };
+  }
+
+  get isSelecAll() {
+    return this.selectMultipleScreens().length == this.screens().length;
+  }
+
+  get hasSelectedScreens() {
+    return this.selectMultipleScreens().length > 0;
+  }
+
+  get isCheckIndeterminate() {
+    return this.selectMultipleScreens().length > 0 && this.selectMultipleScreens().length < this.screens().length;
+  }
 }

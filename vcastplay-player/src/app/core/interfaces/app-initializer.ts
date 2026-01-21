@@ -10,7 +10,6 @@ import { MessageService } from "primeng/api";
 // Initialization of the system
 export function initializeApp() {
   return async () => {
-    let body: any;
     const appVersion = environment.version;
     const utils = inject(UtilsService);
     const storage = inject(StorageService);
@@ -25,51 +24,54 @@ export function initializeApp() {
     const uniqueId = uuidv7();
     const playerCode = utils.genereteScreenCode(6);
 
-    // Generate player: unique code, player code, platform and app version
-    if (!storage.hasKey('uniqueId')) {
-      storage.set('uniqueId', uniqueId);
-      storage.set('platform', platform);
-      storage.set('code', playerCode);
-      storage.set('appVersion', appVersion);
+    try {
+      // Generate player: unique code, player code, platform and app version
+      if (!storage.hasKey('uniqueId')) {
+        storage.set('uniqueId', uniqueId);
+        storage.set('platform', platform);
+        storage.set('code', playerCode);
+        storage.set('appVersion', appVersion);
 
-      const body = { uniqueId, code: playerCode, type: platform };
-      
-
-      switch (platform) {
-        case 'android':
-          playerService.onSendDataToAndroid(body);
-          playerService.onGetAndroidInformation();
-          const { resolution: androidResolution, orientation: androidOrientation, ...androidInfo } = playerService.androidData();
-          console.log(playerService.androidData());
-          
-          Object.assign(body, { resolution: androidResolution, orientation: androidOrientation, info: androidInfo });
-          break;
-        case 'desktop':
-          const [ playerInfo ]: any = await Promise.all([ playerService.onGetDesktopInformation() ]);
-          const screen = playerInfo.screen;
-          const resolution = `${screen.width}x${screen.height}`;
-          const screenOrientation = screen.width >= screen.height ? 'landscape' : 'portrait';
-          Object.assign(body, { resolution, orientation: screenOrientation, info: playerInfo });
-          break;
-      
-        default:
-          const { height, width, orientation, ...info } = playerService.onGetBrowserInformation();
-          Object.assign(body, { resolution: `${width}x${height}`, orientation, info });
-          break;
-      }
-
-      playerService.onRegisterPlayer(body).subscribe({
-        next: (res) => {
-          console.log('Player registered successfully:', res);
-        },
-        error: (err) => {
-          console.error('Error registering player:', JSON.stringify(err));
-          message.add({ severity:'error', summary: 'Error', detail: 'Failed to register desktop player.' });
-        },
-        complete: () => {
-          message.add({ severity:'success', summary: 'Success', detail: 'Desktop player registered successfully.' });
+        const body = { uniqueId, code: playerCode, type: platform };
+        
+        switch (platform) {
+          case 'android':
+            playerService.onSendDataToAndroid(body);
+            playerService.onGetAndroidInformation();
+            console.log('Android Details:', playerService.androidData());
+            const newResolution = playerService.androidData().resolution;
+            const newOrientation = playerService.androidData().orientation;
+            
+            const androidInfo = playerService.androidData();
+            
+            Object.assign(body, { resolution: newResolution, orientation: newOrientation, info: androidInfo });
+            break;
+          case 'desktop':
+            const [ playerInfo ]: any = await Promise.all([ playerService.onGetDesktopInformation() ]);
+            const screen = playerInfo.screen;
+            const resolution = `${screen.width}x${screen.height}`;
+            const screenOrientation = screen.width >= screen.height ? 'landscape' : 'portrait';
+            Object.assign(body, { resolution, orientation: screenOrientation, info: playerInfo });
+            break;
+        
+          default:
+            const { height, width, orientation, ...info } = playerService.onGetBrowserInformation();
+            Object.assign(body, { resolution: `${width}x${height}`, orientation, info });
+            break;
         }
-      })
+
+        playerService.onRegisterPlayer(body).subscribe({
+          next: (res) => console.log(`${platform} player installed successfully.`, res),
+          error: (err) => {
+            console.error(`Failed to install ${platform} player.`, JSON.stringify(err));
+            message.add({ severity:'error', summary: 'Error', detail: `Failed to install ${platform} player.` });
+          },
+          complete: () => message.add({ severity:'success', summary: 'Success', detail: `${platform} player installed successfully.` })
+        })
+      }
+    } catch (error) {
+      console.error(error);
+      message.add({ severity:'error', summary: 'Error', detail: `Failed to install ${platform} player.` });
     }
   }
 }

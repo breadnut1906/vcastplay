@@ -9,10 +9,10 @@ export class PlatformService {
   isAndroid = signal<boolean>(false);
 
   initializeApp(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         this.detectElectron();
-        this.detectAndroid().then(resolve);
+        await this.detectAndroid().then(resolve);
       } catch (error) {
         reject(error);
       }

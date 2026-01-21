@@ -78,12 +78,13 @@ export class MapmarkersComponent {
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.markerClusterGroup.clearLayers();
-      const { lat, lng } = e.latlng;      
+      const { lat, lng } = e.latlng;       
       this.selectedScreen.emit({ latitude: lat, longitude: lng });
       const marker = L.marker([ lat, lng ], {
         icon: this.mapIcon
       });
 
+      this.map.setView([ lat, lng ], this.maxZoom - 2);
       this.markerClusterGroup.addLayer(marker);
     });
   }
@@ -98,7 +99,7 @@ export class MapmarkersComponent {
         direction: 'top',
         opacity: 0.9
       });
-
+            
       this.map.setView([ latitude, longitude ], this.maxZoom - 2);
 
       this.markerClusterGroup.addLayer(marker);

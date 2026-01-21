@@ -7,10 +7,10 @@
       </div>
     </ng-template>
     <ng-template #title>
-      <div class="flex gap-2 items-center">
+      <div class="flex flex-col md:flex-row gap-4 items-center">
         <app-asset-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" />
-        <div class="ml-auto flex gap-2">
-          <div class="flex items-center gap-2 block lg:hidden">
+        <div class="flex lg:hidden flex gap-2 w-full">
+          <div class="md:ml-auto flex items-center gap-2 block lg:hidden">
             <p class="text-base font-normal">View:</p>
             <p-selectbutton
               [options]="assetViewModes"
@@ -30,141 +30,163 @@
             pTooltip="Generate AI"
             tooltipPosition="bottom"
             icon="pi pi-ethereum"
+            size="small"
           />
+          <p-button class="lg:hidden" pTooltip="Upload" tooltipPosition="bottom" (onClick)="onClickAddNew()" icon="pi pi-upload" size="small" />
+          
+          <!-- <p-togglebutton class="ml-auto lg:hidden" [formControl]="selectionModeCtrl" onLabel="Cancel" offLabel="Multiple"  /> -->
         </div>
         <div class="ml-auto items-center gap-3 hidden lg:flex">
-          <p-button
-            (onClick)="showPrompt.set(true)"
-            label="Generate AI"
-            icon="pi pi-ethereum"
-            outlined
-          />
+          @if (hasSelectedAssets) {
+            <p-button (onClick)="onClickDeleteMultiple($event)" label="Delete" icon="pi pi-trash" severity="danger" outlined />
+          }
+          <p-button (onClick)="showPrompt.set(true)" label="Generate AI" icon="pi pi-ethereum" outlined />
           <p-button (onClick)="onClickAddNew()" label="Upload" icon="pi pi-upload" />
         </div>
       </div>
     </ng-template>
 
-    <div class="flex flex-col gap-4 h-full">
-      <div
-        class="relative block lg:hidden px-3 gap-4 overflow-y-auto"
-        [ngClass]="{
-          'grid grid-cols-2 md:grid-cols-3 gap-4': assetViewModeSignal() == 'Grid',
-          'flex flex-col gap-2': assetViewModeSignal() == 'List'
-        }"
-      >
-        <div
-          class="flex items-center justify-center border-dashed border-2 border-gray-400 p-5 rounded-lg cursor-pointer hover:bg-gray-100"
-          (click)="onClickAddNew()"
-        >
-          <div class="flex flex-col gap-4 items-center justify-center">
-            <i class="pi pi-plus-circle text-gray-400" style="font-size: 2rem"></i>
-            <p>Upload</p>
+    <div class="flex flex-col gap-4 h-full mt-4 md:mt-0">
+      @if (isMultipleSeletion) {
+        <div class="flex gap-2 items-center">
+          <p>Select All</p>
+          <p-checkbox binary />
+        </div>
+      }
+      <div class="relative flex lg:hidden flex-1 overflow-y-auto">
+        <div class="absolute top-0 left-0 h-full w-full">
+          <div class="grid-cols-3 md:grid-cols-4 flex-col gap-4" [ngClass]="{ 'grid': assetViewModeSignal() == 'Grid', 'flex': assetViewModeSignal() == 'List' }">
+            @for (item of assets(); track $index) {
+              <app-asset-list-item [asset]="item" [tenantId]="tenantId" [showDetails]="!isMultipleSeletion"
+                [disableDrag]="true" [showOptions]="!isMultipleSeletion" [isSelected]="isSelected(item.id)" 
+                  (onPropertiesChange)="onAssetItemChange($event)" [actionBtn]="actionBtn" />
+            }
           </div>
         </div>
-        @for (item of assets(); track $index) {
-          <app-asset-list-item [asset]="item" [tenantId]="tenantId" [disableDrag]="true" [showOptions]="true" [actionBtn]="actionBtn" />
-        }
       </div>
 
-      <div class="flex-1 min-h-0 hidden lg:block mt-4">
-        <p-table
-          [value]="assets()"
-          [loading]="isLoading()"
-          selectionMode="single"
-          [scrollable]="true"
-          scrollHeight="flex"
-          (onPage)="onPageChange($event)"
-          size="small"
-          stripedRows
-        >
-          <ng-template #header>
-            <tr>
-              <th [style]="{ width: '80px' }">Preview</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Orientation</th>
-              <th>Category & Sub Category</th>
-              <th>Duration</th>
-              <th>Last Update</th>
-              <th>
-                <div class="text-center">Actions</div>
-              </th>
-            </tr>
-          </ng-template>
-          <ng-template #body let-item>
-            <tr class="text-sm">
-              <td>
-                <div class="relative h-15">
-                  <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                    @if(['video', 'image'].includes(item.type)) {
-                    <img
-                      [src]="publicApi + 'assets/' + tenantId + '/thumbnails/' + item.name.replace('.mp4', '.jpg')"
-                      class="max-h-full object-contain"
-                      [alt]="item.name"
-                      loading="lazy"
-                    />
-                    } @else { @switch (item.type) { @case('audio') {
-                    <i class="pi pi-volume-up" [style]="{ 'font-size': '2rem' }"></i> } @case('web')
-                    { <i class="pi pi-globe" [style]="{ 'font-size': '2rem' }"></i> }
-                    @case('widget') {
-                    <i class="pi pi-layout" [style]="{ 'font-size': '2rem' }"></i> } 
-                    @case('youtube') { <img class="w-12" src="assets/socials/youtube.png" [alt]="item.name"> } 
-                    @case('facebook') { <img class="w-12" src="assets/socials/facebook.png" [alt]="item.name"> } } }
+      <div class="hidden lg:block relative flex-1">
+        <div class="absolute top-0 left-0 h-full w-full">
+          <p-table
+            [(selection)]="selectedArrAssets"
+            [value]="assets()"
+            [loading]="isLoading()"
+            selectionMode="multiple"
+            [scrollable]="true"
+            scrollHeight="flex"
+            (onPage)="onPageChange($event)"
+            size="small"
+            stripedRows
+          >
+            <ng-template #header>
+              <tr>
+                <th style="width: 2rem"><p-tableHeaderCheckbox /></th>
+                <th [style]="{ width: '80px' }">Preview</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Orientation</th>
+                <th>Category</th>
+                <th>Duration</th>
+                <th>Last Update</th>
+                <th><div class="text-center">Actions</div></th>
+              </tr>
+            </ng-template>
+            <ng-template #body let-item>
+              <tr class="text-sm">
+                <td><p-tableCheckbox [value]="item" /></td>
+                <td>
+                  <div class="relative h-15">
+                    <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                      @if(['video', 'image'].includes(item.type)) {
+                      <img
+                        [src]="publicApi + 'assets/' + tenantId + '/thumbnails/' + item.name.replace('.mp4', '.jpg')"
+                        class="max-h-full object-contain"
+                        [alt]="item.name"
+                        loading="lazy"
+                        (error)="utils.onImageError($event)"
+                      />
+                      } @else { 
+                        @switch (item.type) { 
+                          @case('audio') { <i class="pi pi-volume-up" [style]="{ 'font-size': '2rem' }"></i> } 
+                          @case('html') { <i class="pi pi-file" [style]="{ 'font-size': '2rem' }"></i> }
+                          <!-- @case('widget') { <i class="pi pi-layout" [style]="{ 'font-size': '2rem' }"></i> }  -->
+                          @case('link') { 
+                            @if (utils.getLinkType(item.link) == 'facebook') {
+                              <img class="w-12" src="assets/socials/facebook.png" [alt]="item.name">
+                            } @else if (utils.getLinkType(item.link) == 'youtube') {
+                              <img class="w-12" src="assets/socials/youtube.png" [alt]="item.name">
+                            } @else {
+                              <i class="pi pi-globe" [style]="{ 'font-size': '2rem' }"></i> 
+                            }
+                          }
+                        } 
+                      }
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td>
-                <div class="flex flex-col gap-1">
-                  <p class="font-semibold">{{ item.name }}</p>
-                  @if(['video', 'image'].includes(item.type)) {
-                    <div class="flex gap-2">
-                      <p class="text-sm italic">{{ utils.formatSize(item.sizeKb ?? 0) }}</p>
-                      <p class="text-sm italic">({{ item.dimension }})</p>
+                </td>
+                <td>
+                  <div class="flex flex-col gap-1">
+                    <p class="font-semibold">{{ item.name }}</p>
+                    @if(['video', 'image'].includes(item.type)) {
+                      <div class="flex gap-2">
+                        <p class="italic">{{ utils.formatSize(item.sizeKb ?? 0) }}</p>
+                        <p class="italic">({{ item.dimension }})</p>
+                      </div>
+                    }
+                  </div>
+                </td>
+                <td><p-tag [value]="item.type.toUpperCase()" severity="info" /></td>
+                <td><p class="font-medium">{{ item.orientation.toUpperCase() ?? '-' }}</p></td>
+                <td>
+                  @if (!item.category || !item.subCategory) {
+                    <p class="text-red-500 italic">No category available</p>
+                  } @else {
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-gray-900">{{ item.category.name }}</span>
+                      <span class="text-gray-500">{{ item.category.name }}</span>
                     </div>
                   }
-                </div>
-              </td>
-              <td><p-tag [value]="item.type.toUpperCase()" severity="info" /></td>
-              <td>
-                <p class="text-sm font-medium">{{ item.orientation.toUpperCase() ?? '-' }}</p>
-              </td>
-              <td>
-                @if (!item.category || !item.subCategory) {
-                  <p class="text-sm text-red-500 italic">No category available</p>
-                } @else {
-                  {{ item.category }} & {{ item.subCategory }}
-                }
-              </td>
-              <td>{{ utils.timeConversion(item.duration) }}</td>
-              <td>{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</td>
-              <td>
-                <div class="flex flex-row gap-2 items-center justify-center">
-                  <ng-container
-                    *ngTemplateOutlet="actionBtn; context: { $implicit: item }"
-                  ></ng-container>
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template #emptymessage>
-            <tr>
-              <td colspan="9" [height]="20">
-                <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
+                </td>
+                <td>{{ utils.timeConversion(item.duration) }}</td>
+                <td>{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</td>
+                <td>
+                  <div class="flex flex-row gap-2 items-center justify-center">
+                    <ng-container
+                      *ngTemplateOutlet="actionBtn; context: { $implicit: item }"
+                    ></ng-container>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+              <tr>
+                <td colspan="9" [height]="20">
+                  <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
       </div>
     </div>
     <ng-template #footer>
-      <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * 10" 
-        [totalRecords]="pagination().totalItems" (onPageChange)="onPageChange($event)" />
+      <div class="flex flex-col md:flex-row items-center justify-between pt-4 md:pt-0">
+        <div class="flex gap-2 text-sm">
+          <p>Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
+              to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
+          @if (hasSelectedAssets) {
+            <p class="text-red-500 italic">Selected: {{ selectedArrAssets().length }} asset(s)</p>
+          }
+        </div>
+        <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />
+      </div>
     </ng-template>
   </p-card>
 </div>
 
 <p-dialog header="Preview" [(visible)]="isShowPreview" [style]="{ width: '50rem' }" (onHide)="selectedAsset.set(null)" [resizable]="false" modal>
-  <div class="relative aspect-video border-2 border-[var(--p-surface-300)] group bg-stone-800 text-white rounded-lg">
+  <div class="relative aspect-video border-2 border-[var(--p-surface-300)] dark:border-[var(--p-surface-700)] bg-stone-800 dark:bg-stone-900
+    text-white rounded-lg group ">
     <ng-container *ngIf="selectedAsset() && isShowPreview()">
       <app-asset-preview class="absolute h-full w-full flex items-center justify-center bg-stone-800"
         [asset]="selectedAsset()" [link]="publicApi + 'assets/' + tenantId + '/' + selectedAsset().name" [showControls]="true" />

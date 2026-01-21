@@ -37,9 +37,12 @@ export class AssetPreviewComponent {
 
   ngOnChanges(changes: SimpleChanges) {
     clearTimeout(this.fbTimerId);  
-    clearTimeout(this.ytTimerId);
-    if (changes['asset'] && changes['asset'].currentValue && changes['asset'].currentValue.type === 'facebook') this.onFacebookLoad();
-    if (changes['asset'] && changes['asset'].currentValue && changes['asset'].currentValue.type === 'youtube') this.onYoutubeLoad();
+    clearTimeout(this.ytTimerId);    
+    if (changes['asset'] && changes['asset'].currentValue) {
+      const link = changes['asset'].currentValue?.link;
+      if (link?.includes('facebook.com') || link?.includes('fb.watch')) this.onFacebookLoad();
+      if (link?.includes('youtube.com') || link?.includes('youtu.be')) this.onYoutubeLoad();
+    }
   }
 
   async onYoutubeLoad() {
@@ -68,7 +71,7 @@ export class AssetPreviewComponent {
               const duration = event.target.getDuration();
               
               const orientation = width > height ? 'landscape' : 'portrait';
-              this.onPropertiesChange.emit({ duration, name: title, type: 'youtube', orientation, dimension: `${width}x${height}` });
+              this.onPropertiesChange.emit({ duration, name: title, orientation, dimension: `${width}x${height}` });
             },
             onStateChange: (event: any) => {
               if (this.autoPlay) {
@@ -117,8 +120,9 @@ export class AssetPreviewComponent {
             const height = iframe.offsetHeight;
             const orientation = width > height ? 'landscape' : 'portrait';
             const dimension = `${width}x${height}`;
-            const duration = Math.ceil(player.getDuration());
-            this.onPropertiesChange.emit({ dimension, orientation, duration, type: 'facebook' });
+            const duration = Math.ceil(player.getDuration());           
+            
+            this.onPropertiesChange.emit({ name: 'Facebook Video', dimension, orientation, duration });
             if (iframe) {
               const scale = orientation == 'landscape' ? 1 : fbPlayer.clientHeight / iframe.clientHeight;
               
@@ -142,4 +146,8 @@ export class AssetPreviewComponent {
       this.onPropertiesChange.emit(null);
     }
   }
+
+  get isTypeLink() { return this.asset.type === 'link'; }
+  get isFacebook() { return this.asset.link.includes('facebook'); }
+  get isYoutube() { return this.asset.link.includes('youtube'); }
 }

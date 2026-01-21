@@ -29,7 +29,6 @@ import { ScheduleListItemComponent } from '../../../user/schedules/schedule-list
 import { SchedulesContentListComponent } from '../../../user/schedules/schedules-content-list/schedules-content-list.component';
 import { AudienceTagFiltersComponent } from '../../../shared/components/audience-tag-filters/audience-tag-filters.component';
 import { AssetToPlaylistComponent } from '../../../user/assets/asset-to-playlist/asset-to-playlist.component';
-import { AssetUploadResultComponent } from '../../../user/assets/asset-upload-result/asset-upload-result.component';
 import { AssetPreviewComponent } from '../../../user/assets/asset-preview/asset-preview.component';
 import { AssetFilterComponent } from '../../../user/assets/asset-filter/asset-filter.component';
 import { AssetListItemComponent } from '../../../user/assets/asset-list-item/asset-list-item.component';
@@ -51,6 +50,7 @@ import { ScreenFilterComponent } from '../../../user/screens/screen-filter/scree
 import { ScreenListItemComponent } from '../../../shared/components/screen-list-item/screen-list-item.component';
 import { UserDetailsComponent } from '../../../shared/components/user-details/user-details.component';
 import { AssetUploadFileComponent } from '../../../user/assets/asset-upload-file/asset-upload-file.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 
 const COMPONENT_MODULES = [
   CommonModule,
@@ -63,6 +63,7 @@ const COMPONENT_MODULES = [
   ContentSelectionComponent,
   WeekdayHourSelectionComponent,
   FooterComponent,
+  PaginatorComponent,
 
   // Broadcast Components
   BroadcastListItemComponent,
@@ -101,7 +102,6 @@ const COMPONENT_MODULES = [
   AssetListItemComponent,
   AssetFilterComponent,
   AssetPreviewComponent,
-  AssetUploadResultComponent,
   AssetToPlaylistComponent,
   AssetUploadFileComponent,
 

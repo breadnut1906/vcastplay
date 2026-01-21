@@ -60,6 +60,7 @@ export class ScreenDetailsComponent {
     loadedPage: new Set<number>()
   }
 
+  isLoading = signal<boolean>(false);
   formBuilder = inject(FormBuilder);
   screenForm = this.formBuilder.group({
     id: [null],
@@ -114,18 +115,18 @@ export class ScreenDetailsComponent {
   }
 
   onLoadScreenById(id: number) {
+    this.isLoading.set(true);
     this.screenService.onGetScreenById(id).subscribe({
       next: (res: any) => {
         if (!res) this.router.navigate([ '/screens/screen-registration' ]);
-        
         const { latitude, longitude, hours, groupId }: any = res || {};
         const hour = hours?.map((hour: any) => ({ ...hour, start: new Date(hour.start), end: new Date(hour.end), oldEnd: hour.end })) || [];
         this.screenForm.patchValue({ ...res, hours: hour });
-        this.onLoadSubGroups(groupId);
-        this.onGetLocation({ latitude, longitude });
+        if (groupId) this.onLoadSubGroups(groupId);
+        if (latitude && longitude) this.onGetLocation({ latitude, longitude });
       },
       error: (err: any) => this.message.add({ severity: 'error', summary: 'Error', detail: err.error.message || 'Failed to load screen!' }),
-      
+      complete: () => this.isLoading.set(false)
     });
   }
 
@@ -201,12 +202,12 @@ export class ScreenDetailsComponent {
     this.loadingAddressSignal.set(true);
     this.utils.getReverseGeolocation(event.latitude, event.longitude).subscribe({
       next: (result: any) => {
-        const { address, lat, lon, display_name } = result;
+        const { address, display_name } = result;
         this.screenForm.patchValue({ 
           ...address, 
           fullAddress: display_name,
-          latitude: parseFloat(lat), 
-          longitude: parseFloat(lon), 
+          latitude: event.latitude.toFixed(6), 
+          longitude: event.longitude.toFixed(6), 
           zipCode: address.postcode 
         });
       },

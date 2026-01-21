@@ -1,106 +1,116 @@
-<div class="relative flex flex-col gap-2 h-full">
-  <div class="grid grid-cols-2 gap-4 w-full">
-    @if (!assetOnly) {
-      <p-floatlabel class="w-auto" variant="on">
-        <p-select
-          inputId="type"
-          [options]="filtereContentTypes()"
-          optionLabel="label"
-          optionValue="value"
-          [formControl]="contentTypeControl"
-          appendTo="body"
-          placeholder="Select Contents"
-          fluid
-        />
-      </p-floatlabel>
-    } 
-    @switch (contentTypeControl.value) { @case ('asset') {
-    <app-asset-filter (filterChange)="onFilterChange($event)" />
-    } @case ('playlist') {
-    <app-playlist-filter (filterChange)="onFilterChange($event)" />
-    } @case ('design') {
-    <app-filters (filterChange)="onFilterChange($event)" />
-    } @case ('clipart') {
-    <app-filters (filterChange)="onFilterChange($event)" />
-    } @case ('schedule') {
-    <app-schedule-filter (filterChange)="onFilterChange($event)" />
-    } }
-  </div>
+<p-dialog header="Assign Content" [(visible)]="showContents" styleClass="w-[50rem] h-[40rem]" (onShow)="onInitializedContents()" (onHide)="selectionContent.set(null)"
+  [resizable]="false" [modal]="true" [draggable]="false">
+  <div class="relative flex flex-col gap-2 h-full">
+    <div class="grid grid-cols-2 gap-4 w-full">
+      @if (!assetOnly) {
+        <p-floatlabel class="w-auto" variant="on">
+          <p-select
+            inputId="type"
+            [options]="filtereContentTypes()"
+            optionLabel="label"
+            optionValue="value"
+            [formControl]="contentTypeControl"
+            appendTo="body"
+            placeholder="Select Contents"
+            fluid
+          />
+        </p-floatlabel>
+      } 
+      @switch (contentTypeControl.value) { @case ('asset') {
+      <app-asset-filter (filterChange)="onFilterChange($event)" />
+      } @case ('playlist') {
+      <app-playlist-filter (filterChange)="onFilterChange($event)" />
+      } @case ('design') {
+      <app-filters (filterChange)="onFilterChange($event)" />
+      } @case ('clipart') {
+      <app-filters (filterChange)="onFilterChange($event)" />
+      } @case ('schedule') {
+      <app-schedule-filter (filterChange)="onFilterChange($event)" />
+      } }
+    </div>
 
-  <div class="flex-1 min-h-[200px] overflow-y-auto border border-[var(--p-surface-300)]">
-    <p-table
-      #contentTable
-      [value]="filteredContentLists()"
-      [(selection)]="selectionContent"
-      (selectionChange)="onSelectionChange($event)"
-      dataKey="id"
-      [scrollable]="true"
-      scrollHeight="flex"
-      [selectionMode]="selectionMode"
-      size="small"
-      stripedRows
-      showGridlines
-    >
-      <ng-template #header>
-        <tr>
-          <th style="width: 3rem"></th>
-          <th>Name</th>
-          <th>
-            @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) { Duration } @else if
-            (['clipart'].includes(contentTypeControl.value)) { Preview } @else { Description }
-          </th>
-        </tr>
-      </ng-template>
-      <ng-template #body let-item>
-        <tr class="text-sm" [pSelectableRow]="item" [pSelectableRowDisabled]="!isSelectable || readonly">
-          <td>
-            @if (isSelectable) {
-            <div class="text-center">
-              @if (selectionMode == 'multiple') {
-              <p-tableCheckbox [value]="item" />
-              } @else {
-              <p-tableRadioButton [value]="item" />
-              }
-            </div>
-            } @else {
-            <div class="text-center">
-              <p-button
-                (onClick)="onSelectionChange(item)"
-                icon="pi pi-plus"
-                severity="success"
-                size="small"
-                pTooltip="Select"
-                tooltipPosition="bottom"
-              />
-            </div>
-            }
-          </td>
-          <td>
-            <div class="flex flex-col">
-              <p class="w-50 line-clamp-1 truncate" [pTooltip]="item.name" tooltipPosition="bottom">
-                {{ item.name }}
-              </p>
-              @if (['image', 'video', 'audio'].includes(item.type)) {
-              <p class="text-sm italic">{{ utils.formatSize(item.fileDetails.size) }}</p>
-              }
-            </div>
-          </td>
-          <td>
-            @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) {
-            {{ utils.timeConversion(item.duration) }} } @else if
-            (['clipart'].includes(contentTypeControl.value)) {
-            <img [src]="item.link" [alt]="item.name" class="w-12" /> } @else {
-            {{ item.description }} }
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template #emptymessage>
-        <tr>
-          <td colspan="3" [height]="20">
-            <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+    <div class="relative flex-1">
+      <div class="absolute top-0 left-0 h-full w-full">
+        <p-table
+          #contentTable
+          [value]="contentLists()"
+          [(selection)]="selectionContent"
+          (selectionChange)="onSelectionChange($event)"
+          [loading]="isLoading()"
+          dataKey="id"
+          [scrollable]="true"
+          scrollHeight="flex"
+          [selectionMode]="selectionMode"
+          size="small"
+          stripedRows
+          showGridlines
+        >
+          <ng-template #header>
+            <tr>
+              <th style="width: 3rem"></th>
+              <th>Name</th>
+              <th>
+                @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) { Duration } @else if
+                (['clipart'].includes(contentTypeControl.value)) { Preview } @else { Description }
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-item>
+            <tr class="text-sm" [pSelectableRow]="item" [pSelectableRowDisabled]="!isSelectable || readonly">
+              <td>
+                @if (isSelectable) {
+                <div class="text-center">
+                  @if (selectionMode == 'multiple') {
+                  <p-tableCheckbox [value]="item" />
+                  } @else {
+                  <p-tableRadioButton [value]="item" />
+                  }
+                </div>
+                } @else {
+                <div class="text-center">
+                  <p-button
+                    (onClick)="onSelectionChange(item)"
+                    icon="pi pi-plus"
+                    severity="success"
+                    size="small"
+                    pTooltip="Select"
+                    tooltipPosition="bottom"
+                  />
+                </div>
+                }
+              </td>
+              <td>
+                <div class="flex flex-col">
+                  <p class="w-auto line-clamp-1 truncate">{{ item.name }}</p>
+                  @if (['image', 'video', 'audio'].includes(item.type)) {
+                    <p class="text-sm italic">{{ utils.formatSize(item.sizeKb ?? 0) }}</p>
+                  }
+                </div>
+              </td>
+              <td>
+                @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) {
+                {{ utils.timeConversion(item.duration) }} } @else if
+                (['clipart'].includes(contentTypeControl.value)) {
+                <img [src]="item.link" [alt]="item.name" class="w-12" /> } @else {
+                {{ item.description }} }
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="3" [height]="20">
+                <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+    <div class="flex flex-col md:flex-row items-center justify-between pt-4 md:pt-0">
+        <p class="text-sm">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
+            to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
+        <p-paginator [rows]="pagination().itemsPerPage" [first]="(pagination().currentPage - 1) * pagination().itemsPerPage" [totalRecords]="pagination().totalItems" 
+        (onPageChange)="onPageChange($event)" [rowsPerPageOptions]="[5, 10, 20, 50, 100]" dropdownAppendTo="body" />
+    </div>
   </div>
-</div>
+</p-dialog>

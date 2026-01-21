@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, inject, Input, signal, ViewChild } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { ScreenService } from '../../screens/screen.service';
 import { UtilityService } from '../../../core/services/utility.service';
@@ -6,6 +6,7 @@ import { BroadcastService } from '../../settings/broadcast/broadcast.service';
 import { Screen } from '../../screens/screen';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ContentSelectionComponent } from '../../../shared/components/content-selection/content-selection.component';
+import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-screen-controls',
@@ -17,6 +18,8 @@ export class ScreenControlsComponent {
 
   @ViewChild('contents') contents!: ContentSelectionComponent;
 
+  @Input() selectMultipleScreens = signal<Screen[]>([]);
+
   screenService = inject(ScreenService);
   broadcastService = inject(BroadcastService);
   utils = inject(UtilityService);
@@ -24,19 +27,28 @@ export class ScreenControlsComponent {
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
 
+  showSettings = signal<boolean>(false);
+  showContents = signal<boolean>(false);
+  showBroadcast = signal<boolean>(false);
+  formBuilder = inject(FormBuilder);
+  selectedContentForm = this.formBuilder.group({
+    id: [''],
+    name: ['', [ Validators.required ]],
+    type: ['']
+  })
+
   onClickOpenContents() {
     const selectedScreens: Screen[] = this.selectMultipleScreens();
     if (selectedScreens.length == 0) {
       this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
       return;
     }
-    this.contents.selectionContent.set([]);
+    // this.contents.selectionContent.set([]);
     this.showContents.set(true);
   }
 
   onClickApplyContents() {
     this.message.add({ severity:'success', summary: 'Success', detail: 'Contents applied successfully!' });
-    this.selectionContent.set(null);
     console.log(this.selectedContentForm.value);
     this.selectedContentForm.reset();
   }
@@ -101,14 +113,10 @@ export class ScreenControlsComponent {
   
   onSelectionChange(event: any) {
     if (!event) {
-      this.selectionContent.set(null);
+      this.selectedContentForm.reset();
       return;
     }
-    this.selectedContentForm.patchValue({ 
-      id: event.id, 
-      name: event.name,
-      type: this.contentType()
-    });
+    this.selectedContentForm.patchValue({  id: event.id,  name: event.name, type: event.type });
   }
 
   onContentTypeChange(event: any) {
@@ -118,12 +126,4 @@ export class ScreenControlsComponent {
   get isMobile() { return this.utils.isMobile(); }
   get isTablet() { return this.utils.isTablet(); }
   get contentType() { return this.screenService.contentType; }
-  get showBroadcast() { return this.screenService.showBroadcast; }
-  get showSettings() { return this.screenService.showSettings; }
-  get showContents() { return this.screenService.showContents; }
-  get toggleControls() { return this.screenService.toggleControls; }
-  get selectionContent() { return this.screenService.selectionContent; }
-  get selectMultipleScreens() { return this.screenService.selectMultipleScreens; }
-
-  get selectedContentForm() { return this.screenService.selectedContentForm; }
 }

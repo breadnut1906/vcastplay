@@ -7,6 +7,7 @@ import { StorageService } from '../../core/services/storage.service';
 import { UtilityService } from '../../core/services/utility.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Screen, ScreenMessage } from './screen';
+import moment from 'moment';
 
 @Injectable({
   providedIn: 'root'
@@ -30,14 +31,10 @@ export class ScreenService {
 
   showDownload = signal<boolean>(false);
   showOTP = signal<boolean>(false);
-  showBroadcast = signal<boolean>(false);
   toggleControls = signal<boolean>(false);
-  showSettings = signal<boolean>(false);
-  showContents = signal<boolean>(false);
-  showScreenDetails = signal<boolean>(false);
 
   selectedScreen = signal<Screen | any>(null);
-  selectMultipleScreens = signal<Screen[]>([]);
+  // selectMultipleScreens = signal<Screen[]>([]);
 
   contentType = signal<string>('asset');
   selectedContentForm: FormGroup = new FormGroup({
@@ -113,6 +110,7 @@ export class ScreenService {
     info: new FormControl(null),
   });
 
+  // Global Form
   screenFilterForm: FormGroup = new FormGroup({
     dateRange: new FormControl(null),
     type: new FormControl(null),
@@ -126,16 +124,11 @@ export class ScreenService {
     keywords: new FormControl(null),
   });
 
-  screenConfigForm: FormGroup = new FormGroup({
-    display: new FormControl(false),
-    audio: new FormControl(false),
-    alwaysTop: new FormControl(false),
-    fullscreen: new FormControl(false),
-    syncTime: new FormControl(false),
-    playbackLogging: new FormControl(false),
-  })
-
   tagControl: FormControl = new FormControl(null);
+  
+  onDateTimeConversions(screen: Screen) {
+    return screen.hours?.map((hour: any) => ({ ...hour, start: moment(hour.start).toDate(), end: moment(hour.end).toDate() })) || [];
+  }
   
   onGetHTTPHeaders() {
     const tenantId = this.storage.get('id');
@@ -145,12 +138,7 @@ export class ScreenService {
   }  
 
   onLoadScreens(page: number = 1, limit: number = 10) {
-    this.utils.onGETApi(`${this.api}tenants/screens?page=${page}&limit=${limit}`).subscribe((res: any) => {
-      const { items, meta } = res;
-      this.screenSignal.set(items);
-      this.pagination.set(meta);
-      // this.totalRecords.set(meta.totalItems);
-    })
+    return this.utils.onGETApi(`${this.api}tenants/screens?page=${page}&limit=${limit}`)
   }
 
   onGetScreens() {
@@ -164,6 +152,10 @@ export class ScreenService {
 
   onGetScreenById(id: number) {
     return this.http.get(`${this.api}tenants/screens/${id}`, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onGetScreenManagement(page: number = 1, limit: number = 10) {
+    return this.http.get(`${this.api}tenants/screen-management?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() });
   }
 
   onRefreshScreens() {
@@ -244,9 +236,9 @@ export class ScreenService {
     console.log('Broadcast message', messages);
   }
 
-  onAssignContents() {
+  onAssignContents(content: any) {
     /**Call POST assign contents API */
-    console.log('Assign contents', this.selectMultipleScreens());
+    console.log('Assign contents', content);
   }
 
   get tags() { return this.screenForm.get('tags'); }

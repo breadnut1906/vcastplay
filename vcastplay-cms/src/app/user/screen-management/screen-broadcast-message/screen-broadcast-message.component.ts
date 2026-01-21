@@ -1,7 +1,8 @@
-import { Component, EventEmitter, inject, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { UtilityService } from '../../../core/services/utility.service';
 import { BroadcastService } from '../../settings/broadcast/broadcast.service';
+import { ScreenMessage } from '../../screens/screen';
 
 @Component({
   selector: 'app-screen-broadcast-message',
@@ -11,19 +12,26 @@ import { BroadcastService } from '../../settings/broadcast/broadcast.service';
 })
 export class ScreenBroadcastMessageComponent {
 
-  @Output() messages = new EventEmitter<any>();
+  @Input() showBroadcast = signal<boolean>(false);
+  @Output() onBroadCastMessage = new EventEmitter<any>();
 
   broadcastService = inject(BroadcastService);
   utils = inject(UtilityService);
 
-  ngOnInit() { 
-    this.broadcastService.onGetMessages();
+  messages = signal<ScreenMessage[]>([]);
+  selectedScreenBroadcastMessage = signal<ScreenMessage | null>(null);
+
+  ngOnInit() { }
+
+  onLoadMessages() { 
+    this.messages.set(this.broadcastService.onGetMessages()); 
   }
 
-  onSelectionChange(event: any) { 
-    this.messages.emit(event); 
+  onClickSendBroadcast() { 
+    this.onBroadCastMessage.emit(this.selectedScreenBroadcastMessage()); 
   }
 
-  get message() { return this.broadcastService.messages; }
-  get selectedArrScreenBroadcastMessage() { return this.broadcastService.selectedArrScreenBroadcastMessage; }
+  onClickCloseDialog() { 
+    this.showBroadcast.set(false);
+  }
 }

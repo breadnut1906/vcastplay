@@ -13,6 +13,7 @@ import { UtilityService } from '../../../core/services/utility.service';
 })
 export class AudienceTagFiltersComponent {
 
+  @Input() formGroup!: FormGroup;
   @Input() isShowAudienceTag = signal<boolean>(false);
 
   @Output() onAudienceTagChange = new EventEmitter<any>();
@@ -21,10 +22,10 @@ export class AudienceTagFiltersComponent {
   message = inject(MessageService);
   utils: any = inject(UtilityService);
 
-  audienceTags: any[] = [];
+  audienceTags = signal<any[]>([]);
   audienceTagInputForm: FormGroup = new FormGroup({
-    tags: new FormControl(null, [ Validators.required ]),
-    tagValue: new FormControl(null, [ Validators.required ]),
+    tag: new FormControl(null, [ Validators.required ]),
+    value: new FormControl(null, [ Validators.required ]),
   });
 
   categoryLists = signal<any[]>([]);
@@ -53,45 +54,51 @@ export class AudienceTagFiltersComponent {
   }
 
   onSelectionChange(event: any) {
-    const groupId = this.tags().find((tag: any) => tag.name === event.value)?.id;
+    const groupId = this.tags().find((tag: any) => tag.id === event.value)?.id;
     this.onLoadTagValuesById(groupId);
   }
 
+  onShowAudienceTag() {
+    this.audienceTags.set(this.formGroup.get('audienceTags')?.value || []);
+  }
+
   onHideAudienceTag() {
-    this.audienceTagInputForm.reset(); 
-    this.audienceTags = [];
+    this.audienceTagInputForm.reset();
   }
 
   onClickAddTag() {
     if (this.audienceTagInputForm.invalid) return;
 
-    const tags = this.audienceTags;
-    const tag = this.audienceTagInputForm.value;
+    const tags: any[] = this.audienceTags();
+    const { tag, value } = this.audienceTagInputForm.value;
 
-    const index = tags.findIndex(data => data.name == tag.name && data.tagValue == tag.tagValue);
+    const tagData = this.tags().find(data => data.id == tag);
+    const tagValue = this.tagValues().find(data => data.id == value);
+    const audienceTagValue = { tag: tagData.name, tagValueId: tagValue.id, tagValue: tagValue.value };
+
+    const index = tags.findIndex(data => data.tag == audienceTagValue.tag && data.tagValue == audienceTagValue.tagValue);
 
     if (index != -1) {
       this.message.add({ severity: 'error', summary: 'Error', detail: 'Tag already added' });
       return;
-    }
-
-    this.audienceTags = [...tags, tag];
+    }    
+    
+    this.audienceTags.set([...tags, audienceTagValue])
     this.audienceTagInputForm.reset();
     this.tagValues.set([]);
   }
 
   onClickRemoveTag(item: any) {
-    const tempData = this.audienceTags;
-    const index = tempData.findIndex(data => data.name == item.name && data.tagValue == item.tagValue);
+    const tempData: any[] = this.audienceTags() || [];
+    const index = tempData.findIndex(data => data.tag == item.tag && data.tagValue == item.tagValue);
     tempData.splice(index, 1);
-    this.audienceTags = [...tempData];
+    this.audienceTags.set([...tempData])
   }
 
   onClickApply() {
-    this.onAudienceTagChange.emit(this.audienceTags);
+    this.onAudienceTagChange.emit(this.audienceTags());
     this.isShowAudienceTag.set(false);
   }
-
 
   get tags() {
     return this.tagService.tags;

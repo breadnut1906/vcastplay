@@ -1,5 +1,5 @@
 <p-dialog header="Upload Asset" [(visible)]="dialog" [style]="{ width: '40rem' }" (onHide)="onHideDialog()"
-    [draggable]="false" closable modal>
+    [draggable]="true" [resizable]="false" closable modal>
 
     <div class="flex flex-col gap-4 mt-2">
         <p-floatlabel variant="on">
@@ -25,30 +25,34 @@
             </div>
         } @else {
             <form class="flex flex-col gap-4" [formGroup]="assetLinkForm">
-                <p-floatlabel variant="on">
-                    <input id="link" pInputText formControlName="link" placeholder="Link" fluid />
-                    <label for="link">Link</label>
-                </p-floatlabel>
+                @if (!isUploading()) {
+                    <p-floatlabel variant="on">
+                        <input id="link" pInputText formControlName="link" fluid />
+                        <label for="link">Link</label>
+                    </p-floatlabel>
+                }
                 @if (hasLink) { 
                     <p-floatlabel variant="on">
-                        <input id="name" type="text" pInputText formControlName="name" placeholder="Name" fluid>
+                        <input id="name" type="text" pInputText formControlName="name" fluid>
                         <label for="name">Name</label>
                     </p-floatlabel>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 gap-4" [ngClass]="{ 'md:grid-cols-3': !isTypeHTML, 'md:grid-cols-2': isTypeHTML }">
                         <p-floatlabel variant="on">
                             <p-select id="orientation" [options]="utils.orientations()" formControlName="orientation"  
-                                optionLabel="label" optionValue="value" placeholder="Orientation" readonly fluid />
+                                optionLabel="label" optionValue="value" [readonly]="!isTypeHTML" fluid />
                             <label for="orientation">Orientation</label>
                         </p-floatlabel>
 
-                        <p-floatlabel variant="on">
-                            <input id="dimension" type="text" pInputText formControlName="dimension" placeholder="Dimension" readonly fluid>
-                            <label for="dimension">Dimension</label>
-                        </p-floatlabel>
+                        @if (!isTypeHTML) {
+                            <p-floatlabel variant="on">
+                                <input id="dimension" type="text" pInputText formControlName="dimension" [readonly]="!isTypeHTML" fluid>
+                                <label for="dimension">Dimension</label>
+                            </p-floatlabel>
+                        }
 
                         <p-inputgroup>
                             <p-floatlabel variant="on">
-                                <input id="duration" type="text" pInputText formControlName="duration" placeholder="Duration" readonly fluid>
+                                <p-inputnumber id="duration" formControlName="duration" [readonly]="!isTypeHTML" [showButtons]="isTypeHTML" fluid />
                                 <label for="duration">Duration</label>
                             </p-floatlabel>
                             <p-inputgroup-addon>sec.</p-inputgroup-addon>
@@ -92,8 +96,8 @@
 
     <ng-template #footer>
         <div class="flex items-center justify-between gap-3 w-full">
-            @if (fileTypeCtrl.value == 'file') { <p class="text-sm">{{ uploadItems().length || 0 }} files</p> }
-            <p-button class="ml-auto" label="Complete" icon="pi pi-check" (onClick)="onHideDialog()" size="small" [disabled]="isUploading()" />
+            @if (fileTypeCtrl.value == 'file' && hasFiles) { <p class="text-sm">{{ remainingFiles }} of {{ uploadItems().length || 0 }} files uploaded</p> }
+            <p-button class="ml-auto" label="Complete" icon="pi pi-check" (onClick)="onClickCompleteUpload()" size="small" [disabled]="isUploading() || (isTypeHTML && !isValid)" />
         </div>
     </ng-template>
 </p-dialog>

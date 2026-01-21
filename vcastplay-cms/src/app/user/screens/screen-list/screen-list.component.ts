@@ -6,6 +6,7 @@ import { ComponentsModule } from '../../../core/modules/components/components.mo
 import { UtilityService } from '../../../core/services/utility.service';
 import { Router } from '@angular/router';
 import _ from  'lodash';
+import { Pagination } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-screen-list',
@@ -23,27 +24,32 @@ export class ScreenListComponent {
   message = inject(MessageService);
   router = inject(Router);
 
+  isLoading = signal<boolean>(false);
   isVerifyOTP = signal<boolean>(false);
   isShowInfo = signal<boolean>(false);
-  screenFilters = signal<any>(this.screenFilterForm.valueChanges)
-  filteredScreen = computed(() => {
-    const { type, group, subGroup, orientation, status, keywords } = this.screenFilters();
-    const screens = this.screenService.screens();
+  showDownload = signal<boolean>(false);
+  showOTP = signal<boolean>(false);
+  // selectedScreen = signal<Screen | null>(null);
+  screens = signal<Screen[]>([]);
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
 
-    return screens.filter((screen: any) => {
-      const matchesType = !type || screen.type.includes(type);
-      const matchesGroup = !group || screen.group?.includes(group);
-      const matchesSubGroup = !subGroup || screen.subGroup?.includes(subGroup);
-      const matchesOrientation = !orientation || screen.displaySettings.orientation?.includes(orientation);
-      const matchesStatus = !status || (screen.status == status);
-      const matchesKeywords = !keywords || _.includes(screen.name.toLowerCase(), keywords.toLowerCase()) || _.includes(screen.code, keywords);
-
-      return matchesType && matchesGroup && matchesSubGroup && matchesOrientation && matchesStatus && matchesKeywords;
-    })
-  });
+  screenFilters = signal<any>({});
 
   ngOnInit() {
-    this.screenService.onLoadScreens();
+    this.onInitializeScreens();
+  }
+
+  onInitializeScreens(page: number = 1, limit: number = 10) {
+    this.isLoading.set(true);
+    this.screenService.onLoadScreens().subscribe({
+      next: (res: any) => {
+        const { items, meta } = res;
+        this.screens.set(items);
+        this.pagination.set(meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.isLoading.set(false)
+    });
   }
 
   onClickEdit(item: any) {
@@ -118,7 +124,7 @@ export class ScreenListComponent {
     const pageNumber = event.first / event.rows + 1;
     const { currentPage, itemsPerPage, ...meta } = this.pagination();
     this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
-    this.screenService.onLoadScreens(pageNumber, event.rows);
+    this.onInitializeScreens(pageNumber, event.rows);
   }
 
   onFilterChange(event: any) {
@@ -128,14 +134,8 @@ export class ScreenListComponent {
   formControl(fieldName: string) { return this.utils.getFormControl(this.screenForm, fieldName); }
   
   get isMobile() { return this.utils.isMobile(); }
-
-  get rows() { return this.screenService.rows; }
-  get showOTP() { return this.screenService.showOTP; }
   get screenForm() { return this.screenService.screenForm; }
   get isEditMode() { return this.screenService.isEditMode; }
-  get pagination() { return this.screenService.pagination; }
-  get totalRecords() { return this.screenService.totalRecords; }
-  get showDownload() { return this.screenService.showDownload; }
   get selectedScreen() { return this.screenService.selectedScreen; }
   get screenFilterForm() { return this.screenService.screenFilterForm; }
 }

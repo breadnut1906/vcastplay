@@ -1,52 +1,65 @@
-<p-fieldset legend="Configuration">
-    <form [formGroup]="screenConfigForm" class="flex flex-col gap-4">
-        <div class="flex items-center gap-2">
-            <div class="flex flex-col">
-                <p class="font-semibold">Display Status</p>
-                <p class="text-sm font-thin">Toggles the screen display status via network.</p>
+<p-dialog
+    header="Settings"
+    [(visible)]="showSettings"
+    styleClass="w-[50rem] h-auto"
+    [resizable]="false"
+    [modal]="true"
+    [draggable]="false"
+>
+    <p-fieldset legend="Configuration">
+        <form [formGroup]="screenConfigForm" class="flex flex-col gap-4">
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <p class="font-semibold">Display Status</p>
+                    <p class="text-sm font-thin">Toggles the screen display status via network.</p>
+                </div>
+                <p-toggleswitch class="ml-auto" formControlName="display" />
             </div>
-            <p-toggleswitch class="ml-auto" formControlName="display" />
-        </div>
-        <div class="flex items-center gap-2">
-            <div class="flex flex-col">
-                <p class="font-semibold">Audio</p>
-                <p class="text-sm font-thin">Toggles the screen audio.</p>
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <p class="font-semibold">Audio</p>
+                    <p class="text-sm font-thin">Toggles the screen audio.</p>
+                </div>
+                <p-toggleswitch class="ml-auto" formControlName="audio" />
             </div>
-            <p-toggleswitch class="ml-auto" formControlName="audio" />
-        </div>
-        <div class="flex items-center gap-2">
-            <div class="flex flex-col">
-                <p class="font-semibold">Always on Top</p>
-                <p class="text-sm font-thin">Displays the screen always on top.</p>
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <p class="font-semibold">Always on Top</p>
+                    <p class="text-sm font-thin">Displays the screen always on top.</p>
+                </div>
+                <p-toggleswitch class="ml-auto" formControlName="alwaysTop" />
             </div>
-            <p-toggleswitch class="ml-auto" formControlName="alwaysTop" />
-        </div>
-        <div class="flex items-center gap-2">
-            <div class="flex flex-col">
-                <p class="font-semibold">Fullscreen Mode</p>
-                <p class="text-sm font-thin">Displays the screen in fullscreen mode.</p>
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <p class="font-semibold">Fullscreen Mode</p>
+                    <p class="text-sm font-thin">Displays the screen in fullscreen mode.</p>
+                </div>
+                <p-toggleswitch class="ml-auto" formControlName="fullscreen" />
             </div>
-            <p-toggleswitch class="ml-auto" formControlName="fullscreen" />
-        </div>
-        <div class="flex items-center gap-2">
-            <div class="flex flex-col">
-                <p class="font-semibold">Sync Time With Internet</p>
-                <p class="text-sm font-thin">Syncs the screen time with the internet.</p>
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <p class="font-semibold">Sync Time With Internet</p>
+                    <p class="text-sm font-thin">Syncs the screen time with the internet.</p>
+                </div>
+                <p-toggleswitch class="ml-auto" formControlName="syncTime" />
             </div>
-            <p-toggleswitch class="ml-auto" formControlName="syncTime" />
-        </div>
-        <div class="flex items-center gap-2">
-            <div class="flex flex-col">
-                <p class="font-semibold">Content Playback Logging</p>
-                <p class="text-sm font-thin">Tracks which content was played, when, and for how long.</p>
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <p class="font-semibold">Content Playback Logging</p>
+                    <p class="text-sm font-thin">Tracks which content was played, when, and for how long.</p>
+                </div>
+                <p-toggleswitch class="ml-auto" formControlName="playbackLogging" />
             </div>
-            <p-toggleswitch class="ml-auto" formControlName="playbackLogging" />
+        </form>
+    </p-fieldset>
+    <p-fieldset legend="Preventive Maintenance">
+        <div class="flex items-center gap-3">
+            <p class="text-sm">Clears the screen contents and schedules for preventive maintenance reasons.</p>
+            <p-button class="ml-auto" label="Clear" />
         </div>
-    </form>
-</p-fieldset>
-<p-fieldset legend="Preventive Maintenance">
-    <div class="flex items-center gap-3">
-        <p class="text-sm">Clears the screen contents and schedules for preventive maintenance reasons.</p>
-        <p-button class="ml-auto" label="Clear" />
-    </div>
-</p-fieldset>
+    </p-fieldset>
+    <ng-template #footer>
+        <p-button label="Close" severity="secondary" (onClick)="showSettings.set(false)" />
+        <p-button label="Apply" severity="success" (onClick)="onClickAppy()" />
+    </ng-template>
+</p-dialog>

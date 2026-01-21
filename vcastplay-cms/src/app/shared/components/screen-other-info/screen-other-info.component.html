@@ -1,4 +1,4 @@
-<p-drawer [(visible)]="isShowInfo" styleClass="!w-full md:!w-90 lg:!w-[25rem]" position="right" appendTo="body" (onHide)="isShowInfoChange.emit($event)">
+<p-drawer [(visible)]="isShowInfo" styleClass="!w-full md:!w-90 lg:!w-[40rem]" position="right" appendTo="body" (onHide)="isShowInfoChange.emit($event)">
     <ng-template #header>
         <p class="text-xl font-semibold">Details</p>
     </ng-template>
@@ -21,9 +21,10 @@
                         </ng-container>
                         <ng-container *ngIf="info.disk as disks">
                             <p class="text-sm"><span class="font-semibold">Storage:</span></p>
-                            <div class="flex flex-col items-center text-sm justify-between gap-3 select-none">
+                            <div class="flex flex-col lg:flex-row items-center text-sm justify-between gap-3 select-none">
                                 @for (disk of disks; track $index) {
-                                    <div class="flex gap-3 border border-[var(--p-surface-300)] w-full p-1 hover:bg-[var(--p-surface-100)] hover:dark:bg-[var(--p-surface-700)] rounded-lg p-2">
+                                    <div class="flex gap-3 border border-[var(--p-surface-300)] w-full p-1 
+                                        hover:bg-[var(--p-surface-100)] hover:dark:bg-[var(--p-surface-700)] rounded-lg p-2">
                                         <div class="flex flex-col gap-2 w-full">
                                             <p>Drive {{ disk.mount }}</p>
                                             <p-progressbar [value]="getDiskPercentage(disk) | number: '1.0-0'" valueStyleClass="h-10" [showValue]="false" />
@@ -83,7 +84,7 @@
                         <i class="pi pi-map-marker"></i>
                         <p class="text-sm font-semibold">{{ screen.fullAddress || '-' }}</p>
                     </div>
-                    <app-mapmarkers class="h-40" [markers]="[ screen ]" [readOnly]="true" [zoom]="3" />
+                    <app-mapmarkers [ngClass]="{ 'h-30': screen.type == 'desktop', 'h-50': screen.type == 'web' }" [markers]="[ screen ]" [readOnly]="true" [zoom]="3" />
                 </div>
             }
         </div>

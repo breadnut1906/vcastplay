@@ -13,6 +13,7 @@ import { environment } from '../../../environments/environment.development';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { StorageService } from '../../core/services/storage.service';
 import { UtilityService } from '../../core/services/utility.service';
+import moment from 'moment';
 
 @Injectable({
   providedIn: 'root',
@@ -42,10 +43,10 @@ export class AssetsService {
 
   assetType = signal<SelectOption[]>([
     { label: 'File', value: 'file' },
-    { label: 'Web Pages', value: 'web' },
+    { label: 'Web Page', value: 'link' },
     // { label: 'Widgets', value: 'widget' },
-    { label: 'Youtube', value: 'youtube' },
-    { label: 'Facebook', value: 'facebook' },
+    // { label: 'Youtube', value: 'youtube' },
+    // { label: 'Facebook', value: 'facebook' },
   ])
 
   assetTypeControl: FormControl = new FormControl('file', { nonNullable: true })
@@ -87,6 +88,7 @@ export class AssetsService {
     type: new FormControl(null),
     orientation: new FormControl(null),
     keywords: new FormControl(null),
+    audienceTags: new FormControl([]),
   })
 
   
@@ -103,6 +105,38 @@ export class AssetsService {
       }
       return null
     }
+  }
+  
+  durationValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.get('duration')?.value as string;
+      
+      if (!value) return null;
+
+      const [hh, mm, ss] = value.split(':').map(Number);
+
+      if ([hh, mm, ss].some(v => isNaN(v))) return { invalidTime: true };
+
+      const totalSeconds = (hh * 3600) + (mm * 60) + ss;      
+
+      return totalSeconds > 86400 ? { max24Hours: true } : null;
+    };
+  }
+
+  onDateTimeConversions(asset: Assets, isReverse: boolean = false): Assets {
+    if (isReverse) {
+      return {
+        ...asset,
+        start: asset.start ? moment(asset.start).toISOString() : null,
+        end: asset.end ? moment(asset.end).toISOString() : null,
+      };
+    }
+
+    const hours = asset.hours?.map((hour: any) => ({ ...hour, start: moment(hour.start).toDate(), end: moment(hour.end).toDate() })) || [];
+    const start = asset.start ? moment(asset.start).toDate() : null;
+    const end = asset.end ? moment(asset.end).toDate() : null;
+
+    return { ...asset, hours, start, end };
   }
 
   onGetHTTPHeaders() {
@@ -146,8 +180,8 @@ export class AssetsService {
     return this.http.post(`${this.api}tenants/assets`, assets, { headers: this.onGetHTTPHeaders() });
   }
 
-  onUpdateAssets(assets: Assets) {
-    return this.http.patch(`${this.api}tenants/assets/${assets.id}`, assets, { headers: this.onGetHTTPHeaders() });
+  onUpdateAssets(id: any, assets: Assets | any) {
+    return this.http.patch(`${this.api}tenants/assets/${id}`, assets, { headers: this.onGetHTTPHeaders() });
   }
 
   onDeleteAssets(assets: Assets) {
@@ -164,20 +198,26 @@ export class AssetsService {
   }
 
   async processFile(file: File): Promise<any | any> {
-    if (!file) return null;
+    if (!file) return null;    
     
     const name = file.name;
     const sizeKb = file.size;
-    const type = file.type.split('/')[0];
+    const type = file.type.split('/')[0];    
 
-    if (file.type.startsWith('image/')) {
-      const metaData: any = await this.getImageMetaData(file);
-      return { name, sizeKb, type, duration: 10, ...metaData };
-    } else if (file.type.startsWith('video/') || file.type.startsWith('webm/')) {
-      const metaData: any = await this.getVideoMetaData(file);
-      return { name, sizeKb, type, ...metaData };
-    } else {
-      return { name, sizeKb, type };
+    switch (type) {
+      case 'image':
+        const metaDataImage: any = await this.getImageMetaData(file);
+        return { name, sizeKb, type, duration: 10, ...metaDataImage };
+      case 'video':
+        const metaDataVideo: any = await this.getVideoMetaData(file);
+        return { name, sizeKb, type, ...metaDataVideo };
+      case 'audio':
+        const metaDataAudio: any = await this.getAudioMetaData(file);
+        return { name, sizeKb, type, ...metaDataAudio };
+      // Get file type if text/html,
+      default:
+        const fileType = file.type.split('/')[1];
+        return { name, sizeKb, type: fileType, duration: 10, orientation: 'square', dimension: '100x100' };
     }
   }
 
@@ -219,6 +259,27 @@ export class AssetsService {
         reject(new Error('Failed to load video'));
       }
       video.src = URL.createObjectURL(file);
+    });
+
+    return promise;
+  }
+
+  private getAudioMetaData(file: File): Promise<any> {
+    const audio = document.createElement('audio');
+    const promise = new Promise<any>((resolve, reject) => {
+      audio.preload = 'metadata';
+      audio.onloadedmetadata = () => {
+        const duration = Math.floor(audio.duration);        
+        const dimension = `100x100`;
+        const orientation = 'square';
+
+        resolve({ duration, dimension, orientation });
+        URL.revokeObjectURL(audio.src);
+      }
+      audio.onerror = () => {
+        reject(new Error('Failed to load audio'));
+      }
+      audio.src = URL.createObjectURL(file);
     });
 
     return promise;

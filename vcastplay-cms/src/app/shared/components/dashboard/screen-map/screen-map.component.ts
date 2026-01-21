@@ -36,6 +36,7 @@ export class ScreenMapComponent {
   tileLink: string = 'https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=sWmX5SwjXmDHtQNDFmI7CyUgBqUvRzxpT6CM5sSbBLqxd3bpJxNNAZ2O4Rivf1Eo';
 
   screens = signal<Screen[]>([]);
+  selectedScreen = signal<Screen | null>(null);
   
   filterScreens = computed(() => {
     return this.screenService.screens().filter(screen =>
@@ -126,10 +127,6 @@ export class ScreenMapComponent {
   onClickCancel() {
     this.selectedScreen.set(null); 
     this.initializeMap();
-  }
-
-  get selectedScreen() {
-    return this.screenService.selectedScreen;
   }
 
   get isEditMode() {

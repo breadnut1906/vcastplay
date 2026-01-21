@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
 import { UtilityService } from '../../../core/services/utility.service';
@@ -7,10 +7,11 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { PlaylistService } from '../../playlist/playlist.service';
-import { Assets, UploadResults } from '../assets';
+import { Assets } from '../assets';
 import { Pagination } from '../../../shared/interfaces/general';
 import { environment } from '../../../../environments/environment.development';
 import { StorageService } from '../../../core/services/storage.service';
+import { catchError, firstValueFrom, of } from 'rxjs';
 
 @Component({
   selector: 'app-asset-list',
@@ -29,6 +30,7 @@ export class AssetListComponent {
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
   router = inject(Router);
+  cdr = inject(ChangeDetectorRef);
 
   pageInfo: MenuItem = [ { label: 'Assets' }, { label: 'Lists' } ];
   actionItems: MenuItem[] = [
@@ -44,6 +46,7 @@ export class AssetListComponent {
   ];
 
   assets = signal<Assets[]>([]);
+  selectedArrAssets = signal<Assets[]>([]);
   selectedAsset = signal<Assets | any>(null);
   isEdit = signal<boolean>(false);
   isLoading = signal<boolean>(false);
@@ -55,6 +58,7 @@ export class AssetListComponent {
   isShowAddToPlaylist = signal<boolean>(false);
 
   assetViewModeCtrl: FormControl = new FormControl('Grid');
+  selectionModeCtrl: FormControl = new FormControl(false);
 
   constructor() {
     this.assetViewModeCtrl.valueChanges.subscribe(value => this.assetViewModeSignal.set(value));
@@ -125,6 +129,39 @@ export class AssetListComponent {
     })
   }
 
+  onClickDeleteMultiple(event: Event) {
+    this.confirmation.confirm({
+      target: event.target as EventTarget,
+      message: `Do you want to delete ${this.selectedArrAssets().length} assets?`,
+      closable: true,
+      closeOnEscape: true,
+      header: 'Danger Zone',
+      icon: 'pi pi-exclamation-triangle',
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Delete',
+        severity: 'danger',
+      },
+      accept: async () => {
+        const result: any = await Promise.all(this.selectedArrAssets().map(item =>
+          firstValueFrom(this.assetService.onDeleteAssets(item).pipe(catchError(err => of({ error: err, item })))
+        )));
+        if (result.some((item: any) => item.error)) {
+          this.message.add({ severity:'error', summary: 'Error', detail: result.find((item: any) => item.error).error.error.message || 'Failed to delete asset!' });
+        } else {
+          this.message.add({ severity:'success', summary: 'Success', detail: 'Assets deleted successfully!' });
+        }
+        this.selectedArrAssets.set([]);
+        this.onInitializedAssets(1, 10);
+      },
+      reject: () => { }
+    })
+  }
+
   onClickRefresh() { }
 
   onClickPreview() {
@@ -138,12 +175,10 @@ export class AssetListComponent {
 
   onFilterChange(event: any) { }
 
-  onPageChange(event: any) {
+  onPageChange(event: any) {    
     const rows = event.rows;
     const pageNumber = event.first / event.rows + 1;
-    const { currentPage, itemsPerPage, ...meta } = this.pagination();
-    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
-    this.onInitializedAssets(pageNumber, event.rows);
+    this.onInitializedAssets(pageNumber, rows);
   }
   isShowDialogChange(event: any) {
     this.isEdit.set(false);
@@ -151,19 +186,35 @@ export class AssetListComponent {
     this.onInitializedAssets();
   }
 
+  isSelected(id: number): boolean {
+    return this.selectedArrAssets().find(item => item.id === id) ? true : false;
+  }
+
+  onAssetItemChange(asset: Assets) {
+    const assets = this.selectedArrAssets();
+    const index = assets.findIndex(item => item.id === asset.id);
+    if (index !== -1) assets.splice(index, 1);
+    else assets.push(asset);
+    this.selectedArrAssets.set(assets);
+    this.cdr.detectChanges();
+  }
+
   get isMobile() { return this.utils.isMobile(); }
   get isTablet() { return this.utils.isTablet(); }
 
   get showPrompt() { return this.assetService.showPrompt; }
-  get isEditMode() { return this.assetService.isEditMode; }
-  get totalRecords() { return this.assetService.totalRecords; }
   get assetViewModes() { return this.assetService.assetViewModes; }
   get assetFilterForm() { return this.assetService.assetFilterForm; }
-  get selectedArrAssets() { return this.assetService.selectedArrAssets; }
-
-  get selectedArrPlaylist() { return this.playlistService.selectedArrPlaylist; }
 
   get tenantId() {
     return this.storage.get('id');
+  }
+
+  get hasSelectedAssets() {
+    return this.selectedArrAssets().length > 0;
+  }
+
+  get isMultipleSeletion() {
+    return this.selectionModeCtrl.value as boolean;
   }
 }
