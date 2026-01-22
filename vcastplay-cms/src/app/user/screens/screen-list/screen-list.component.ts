@@ -98,11 +98,11 @@ export class ScreenListComponent {
   onClickVerify() {
     this.isVerifyOTP.set(true);
     const code = this.otpCtrl.value;
-    navigator.geolocation.getCurrentPosition((position) => {
-      const { latitude, longitude } = position.coords;
+    // navigator.geolocation.getCurrentPosition((position) => {
+    //   const { latitude, longitude } = position.coords;
       this.screenService.onGetScreenByCode(code).subscribe({
         next: (res: any) => {
-          this.selectedScreen.set({ ...res, latitude, longitude, adminScreenId: res.id });
+          this.selectedScreen.set({ ...res, latitude: 14.6090, longitude: 121.0223, adminScreenId: res.id });
           this.router.navigate([ '/screens/screen-details' ], { queryParams: { id: res.id } });
         },
         error: (err: any) => {
@@ -115,7 +115,7 @@ export class ScreenListComponent {
           this.otpCtrl.reset();
         }
       })
-    });
+    // });
   }
 
   onPageChange(event: any) {

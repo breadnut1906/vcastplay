@@ -52,8 +52,8 @@
               <tr class="text-sm" [pSelectableRow]="item">
                 <td><p-tableCheckbox [value]="item" /></td>
                 <td>
-                  <p-tag [value]="item.screenStatus?.toUpperCase() || 'N/A'" [icon]="'pi ' + utils.getIcon(item.screenStatus ?? '')"
-                    [severity]="utils.getStatus(item.screenStatus ?? '')" />
+                  <p-tag [value]="item.screenStatus?.toUpperCase() || 'OFFLINE'" [icon]="'pi ' + utils.getIcon(item.screenStatus ?? 'OFFLINE')"
+                    [severity]="utils.getStatus(item.screenStatus ?? 'OFFLINE')" />
                 </td>
                 <td>
                   <div class="flex items-center gap-4">

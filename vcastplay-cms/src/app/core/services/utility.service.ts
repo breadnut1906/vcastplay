@@ -335,7 +335,7 @@ export class UtilityService {
     return formGroup.controls[fieldName]
   }
 
-  // getStatusAndIcon(status: string) {
+  // getStatus(status: string) {
   //   const statuses = {
   //     approved: { status: 'success', icon: 'pi-thumbs-up-fill' },
   //     active: { status: 'success', icon: 'pi-check-circle' },
