@@ -137,7 +137,7 @@
               to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
 
             @if (hasSelectedScreens) {
-              <p class="text-red-500 italic">Selected: {{ selectMultipleScreens().length }} asset(s)</p>
+              <p class="text-red-500 italic">Selected: {{ selectMultipleScreens().length }} screen(s)</p>
             }
           </div>
           <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />

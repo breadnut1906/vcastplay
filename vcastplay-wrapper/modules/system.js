@@ -51,8 +51,7 @@ async function onSystemCommand(action, appName) {
   const commands = {
     shutdown: 'shutdown -s -t 0',
     restart: 'shutdown -r -t 0',
-    // open: `start ${appName}`,
-    // open: `cmd /c start "" /min "${appName}" --tray`,
+    openApp: `start ${appName}`,
     open: `${process.env.COMSPEC} /c start "" /min "${appName}" --tray`,
     close: `taskkill /IM ${appName} /T /F`,
     find: `tasklist /FI "IMAGENAME eq ${appName}"`,

@@ -186,7 +186,7 @@ export class ScreenService {
   }
 
   onSendCommand(deviceId: number, data: any, command: string) {
-    return this.http.post(`${this.api}tenants/screen-management/${command}}/${deviceId}`, data, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
+    return this.http.post(`${this.api}tenants/screen-management/${command}/${deviceId}`, data, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
   }
 
   onDisplayScreen() {

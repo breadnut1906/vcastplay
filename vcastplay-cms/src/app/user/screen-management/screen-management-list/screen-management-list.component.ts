@@ -8,7 +8,6 @@ import { Screen, ScreenMessage } from '../../screens/screen';
 import { BroadcastService } from '../../settings/broadcast/broadcast.service';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
 import { Pagination } from '../../../shared/interfaces/general';
-import { WebsocketService } from '../../../core/services/websocket.service';
 
 @Component({
   selector: 'app-screen-management-list',
@@ -23,7 +22,6 @@ export class ScreenManagementListComponent {
   screenService = inject(ScreenService);
   broadcastService = inject(BroadcastService);
   utils = inject(UtilityService);
-  socket = inject(WebsocketService);
 
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
@@ -36,10 +34,6 @@ export class ScreenManagementListComponent {
   selectedScreen = signal<Screen | null>(null);
   selectMultipleScreens = signal<Screen[]>([]);
   pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
-
-  constructor() {
-    this.socket.onListen('connec')
-  }
 
   ngOnInit() {
     this.onInitializedScreens();

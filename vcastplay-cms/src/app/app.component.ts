@@ -4,6 +4,7 @@ import { PrimengUiModule } from './core/modules/primeng-ui/primeng-ui.module'
 import { ComponentsModule } from './core/modules/components/components.module'
 import { UtilityService } from './core/services/utility.service'
 import { StorageService } from './core/services/storage.service'
+import { WebsocketService } from './core/services/websocket.service'
 
 @Component({
   selector: 'app-root',
@@ -12,6 +13,8 @@ import { StorageService } from './core/services/storage.service'
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
+
+  webSocket = inject(WebsocketService);
   utils = inject(UtilityService)
   storage = inject(StorageService)
 

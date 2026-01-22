@@ -52,10 +52,10 @@ export class WebsocketService {
 
     this.socketClient.on('registered', this.onRegister.bind(this));
     this.socketClient.on('apply', this.onApply.bind(this));
-    this.socketClient.on('open', this.onOpen.bind(this));
-    this.socketClient.on('close', this.onClose.bind(this));
-    this.socketClient.on('restart', this.onRestart.bind(this));
-    this.socketClient.on('shutdown', this.onShutdown.bind(this));
+    this.socketClient.on('open', this.onReceiveCommand.bind(this, 'open'));
+    this.socketClient.on('close', this.onReceiveCommand.bind(this, 'close'));
+    this.socketClient.on('restart', this.onReceiveCommand.bind(this, 'restart'));
+    this.socketClient.on('shutdown', this.onReceiveCommand.bind(this, 'shutdown'));
   }
 
   onRegister(data: any, tenantId: any) {
@@ -75,39 +75,15 @@ export class WebsocketService {
     this.player.onSetContent(data);
   }
 
-  onOpen(data: any) {
-    const { type, ...message } = data;
-    if (!['web'].includes(type)) return;
-    if (type == 'desktop') {
-      this.player.sendApp('notepad');
-      this.message.add({ severity:'success', summary: 'Success', detail: 'Device opened app successfully!' });
-    }
-  }
-
-  onClose(data: any) {
-    const { type, ...message } = data;
-    if (!['web'].includes(type)) return;
-    if (type == 'desktop') {
-      this.player.closeApp('notepad');
-      this.message.add({ severity:'success', summary: 'Success', detail: 'Device closed app successfully!' });
-    }
-  }
-
-  onRestart(data: any) {
-    const { type, ...message } = data;
-    if (!['web'].includes(type)) return;
-    if (type == 'desktop') {
-      this.player.send('restart');
-      this.message.add({ severity:'success', summary: 'Success', detail: 'Device restarted successfully!' });
-    }
-  }
-
-  onShutdown(data: any) {
-    const { type, ...message } = data;
-    if (!['web'].includes(type)) return;
-    if (type == 'desktop') {
-      this.player.send('shutdown');
-      this.message.add({ severity:'success', summary: 'Success', detail: 'Device shutdown successfully!' });
+  onReceiveCommand(data: any) {
+    const platform = this.storage.get('platform');
+    switch (platform) {
+      case 'web':
+        console.log('For Web');
+        break;
+      case 'desktop':
+        this.player.send(data);
+        break;
     }
   }
 

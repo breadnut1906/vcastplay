@@ -28,7 +28,7 @@ export class AssetPreviewComponent {
   @ViewChild('audio', { static: false }) audioRef!: ElementRef<HTMLAudioElement>;
   @ViewChild('iframe', { static: false }) iframeRef!: ElementRef<HTMLIFrameElement>;
   @ViewChild('fbPlayer') fbPlayerRef!: ElementRef<HTMLDivElement>;
-  @ViewChild('ytPlayer') ytPlayerRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('ytPlayer', { static: false }) ytPlayerRef!: ElementRef<HTMLDivElement>;
 
   fbService = inject(FacebookSdkService);
   ytService = inject(YoutubeSdkService);
@@ -43,7 +43,14 @@ export class AssetPreviewComponent {
   ngOnChanges(changes: SimpleChanges) {
     clearTimeout(this.fbTimerId);  
     clearTimeout(this.ytTimerId);
-    if (changes['asset'] && changes['asset'].currentValue) {
+
+    // Remove facebook and youtube iframe
+    if (this.ytPlayerRef?.nativeElement) {
+      const iframe = document.querySelector('iframe');
+      if (iframe) iframe.remove();
+    }
+
+    if (changes['asset'] && changes['asset'].currentValue) {      
       if (this.isFacebook) this.onFacebookLoad();
       else if (this.isYoutube) this.onYoutubeLoad();
       else this.onMediaLoad(this.asset.type);
@@ -56,8 +63,6 @@ export class AssetPreviewComponent {
     if (!file) return;
 
     const tempLink = URL.createObjectURL(file.url);
-    console.log(tempLink);
-    
     switch (type) {
       case 'video':
         const video = this.videoRef?.nativeElement;          
@@ -85,6 +90,10 @@ export class AssetPreviewComponent {
     await this.ytService.onLoadSDK()
     this.ytTimerId = setTimeout(async () => {
       const ytPlayer = this.ytPlayerRef?.nativeElement;
+      
+      const iframe = document.querySelector('iframe');
+      if (iframe) iframe.remove();
+
       const { videoId } = this.utils.onGetEmbedUrl(this.asset.url);
       if (!ytPlayer) return;
       

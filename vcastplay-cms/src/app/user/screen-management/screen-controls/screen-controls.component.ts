@@ -121,33 +121,7 @@ export class ScreenControlsComponent {
     })
     this.selectedContent.set(null);
     this.selectedContentForm.reset();
-  }
-
-  onClickCloseScreen() {
-    const selectedScreens: Screen[] = this.selectMultipleScreens();
-    if (selectedScreens.length == 0) {
-      this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
-      return;
-    }
-    this.screenService.onCloseScreen();
-  }
-
-  onClickRestartScreen() {
-    const selectedScreens: Screen[] = this.selectMultipleScreens();
-    if (selectedScreens.length == 0) {
-      this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
-      return;
-    }
-    this.screenService.onRestartScreen();
-  }
-
-  onClickShutdownScreen() {
-    const selectedScreens: Screen[] = this.selectMultipleScreens();
-    if (selectedScreens.length == 0) {
-      this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
-      return;
-    }
-    this.screenService.onShutdownScreen();
+    this.onScreenControlChange.emit(this.screenItems());
   }
 
   onClickBroadCastMessage() {

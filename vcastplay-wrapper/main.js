@@ -26,7 +26,7 @@ async function createWindow() {
 
     win = new BrowserWindow({
       alwaysOnTop: true,
-      fullscreenable: true,
+      fullscreenable: !isDev,
       fullscreen: !isDev,
       autoHideMenuBar: true,
       width: display.size.width,
@@ -35,7 +35,7 @@ async function createWindow() {
       // height: 700,         // custom height
       // x: 0,              // position from left
       // y: 0,              // position from top
-      frame: false,        // remove default OS window frame
+      frame: isDev,        // remove default OS window frame
       // resizable: false,    // disable resizing (optional)
       transparent: false,  // set to true if you want transparent background
       hasShadow: false,    // set to true if you want a shadow
@@ -63,14 +63,14 @@ async function createWindow() {
     if (isDev) {
       // 🟢 DEV: Use Angular live server
       // win.loadURL('http://localhost:4200');
-      win.loadURL('http://localhost:50611');
+      win.loadURL('http://localhost:50883/');
       win.webContents.openDevTools();
     } else {
       // 🟢 PROD: Use built Angular app
       win.loadFile('dist/player/browser/index.html');
       
       // Disable dev tools
-      win.webContents.on('devtools-opened', () => {
+      win.webContents.on('devtools-opened', () => { 
         win.webContents.closeDevTools();
       });
 
@@ -97,7 +97,16 @@ async function onOpenLibreHardwareMonitor() {
 }
 
 ipcMain.handle('control', async (_event, action, appName) => {
-  return await systemFunc.onSystemCommand(action, appName);
+  switch (action) {
+    case 'open':
+      await win.show();
+      return true;
+    case 'close':
+      await win.hide();
+      return true;
+    default:
+      return await systemFunc.onSystemCommand(action, appName);
+  }
 });
 
 ipcMain.handle('getSystemInfo', async () => {
