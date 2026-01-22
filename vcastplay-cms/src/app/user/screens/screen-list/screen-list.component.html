@@ -20,8 +20,8 @@
                     </div>
                 </div>
             </ng-template>
-            <div class="relative flex-1">
-                <div class="aboslute top-0 left-0 h-full w-full">
+            <div class="relative flex-1 h-full">
+                <div class="absolute top-0 left-0 h-full w-full">
                     <p-table
                         class="hidden lg:block" 
                         [value]="screens()" 
@@ -38,7 +38,6 @@
                                 <th>Orientation</th>
                                 <th>Resolution</th>
                                 <th>Groups</th>
-                                <th>Registered On</th>
                                 <th>Last Update</th>
                                 <th>Status</th>
                                 <th>
@@ -78,13 +77,6 @@
                                         }
                                     </div>
                                 </td>
-                                <td>
-                                    @if (item.registeredDate) {
-                                        <p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.registeredDate) }}</p>
-                                    } @else {
-                                        <p class="text-sm text-red-500 italic">Not Registered</p>
-                                    }
-                                </td>
                                 <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
                                 <td><p-tag [value]="item.status || 'active'" [icon]="'pi ' + utils.getIcon(item?.status || 'active')"
                                     [severity]="utils.getStatus(item?.status || 'active')" /></td>
@@ -104,20 +96,24 @@
                         </ng-template>
                     </p-table>
                 </div>
-                <div class="block lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @if (!isLoading()) {
-                        @for (item of screens(); track $index) {
-                            <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
-                        } @empty {
-                            <div class="flex justify-center items-center p-5 h-100">
-                                <p>No screens found</p>
-                            </div>
-                        }
-                    } @else {
-                        @for (item of utils.tableSkeletonRows; track $index) {
-                            <p-skeleton height="5rem" />
-                        }
-                    }
+                <div class="relative h-full overflow-y-auto">
+                    <div class="absolute top-0 left-0 w-full h-full">
+                        <div class="block lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @if (!isLoading()) {
+                                @for (item of screens(); track $index) {
+                                    <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
+                                } @empty {
+                                    <div class="flex justify-center items-center p-5 h-100">
+                                        <p>No screens found</p>
+                                    </div>
+                                }
+                            } @else {
+                                @for (item of utils.tableSkeletonRows; track $index) {
+                                    <p-skeleton height="5rem" />
+                                }
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
             <ng-template #footer>
