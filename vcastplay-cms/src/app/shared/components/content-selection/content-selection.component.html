@@ -49,6 +49,7 @@
             <tr>
               <th style="width: 3rem"></th>
               <th>Name</th>
+              <th>Type</th>
               <th>
                 @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) { Duration } @else if
                 (['clipart'].includes(contentTypeControl.value)) { Preview } @else { Description }
@@ -87,6 +88,7 @@
                   }
                 </div>
               </td>
+              <td><p-tag [value]="item.type.toUpperCase()" severity="info" /></td>
               <td>
                 @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) {
                 {{ utils.timeConversion(item.duration) }} } @else if

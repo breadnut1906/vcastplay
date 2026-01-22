@@ -181,6 +181,14 @@ export class ScreenService {
   }
 
   /** Screen Controls */
+  onApplyContents(deviceId: number, data: any) {    
+    return this.http.post(`${this.api}tenants/screen-management/apply/${deviceId}`, data, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
+  }
+
+  onSendCommand(deviceId: number, data: any, command: string) {
+    return this.http.post(`${this.api}tenants/screen-management/${command}}/${deviceId}`, data, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
+  }
+
   onDisplayScreen() {
     /**Call POST display screen API */
     console.log('Display screen');
@@ -211,9 +219,8 @@ export class ScreenService {
     console.log('Clear All / Reset', value); 
   }
 
-  onClickOpenScreen() {
-    /**Call POST open screen API */
-    console.log('Open screen');
+  onClickOpenScreen(deviceId: number, data: any) {   
+    return this.http.post(`${this.api}tenants/screen-management/open/${deviceId}`, data, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
   }
 
   onCloseScreen() {

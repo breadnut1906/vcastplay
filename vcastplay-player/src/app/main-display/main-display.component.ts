@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
 import { PrimengModule } from '../core/modules/primeng/primeng.module';
-import { NetworkService } from '../core/services/network.service';
 import { UtilsService } from '../core/services/utils.service';
 import { PlayerService } from '../core/services/player.service';
 import { IndexedDbService } from '../core/services/indexed-db.service';
@@ -10,6 +9,7 @@ import { PlatformService } from '../core/services/platform.service';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { WebsocketService } from '../core/services/websocket.service';
+import { environment } from '../../environments/environment.development';
 
 @Component({
   selector: 'app-main-display',
@@ -19,14 +19,15 @@ import { WebsocketService } from '../core/services/websocket.service';
 })
 export class MainDisplayComponent {
 
-  // webSocket = inject(WebsocketService);
   platformService = inject(PlatformService);
-  networkService = inject(NetworkService);
   indexedDB = inject(IndexedDbService);
-  player = inject(PlayerService);
+  webSocket = inject(WebsocketService);
   storage = inject(StorageService);
   message = inject(MessageService);
+  player = inject(PlayerService);
   utils = inject(UtilsService);
+  
+  screenKey: string = environment.screenKey;
 
   isPlay = signal<boolean>(false);
   isLoading = signal<boolean>(false);
@@ -54,41 +55,21 @@ export class MainDisplayComponent {
 
   constructor(private cdr: ChangeDetectorRef) {
     const platform = this.storage.get('platform');
-    window.addEventListener('online', () => this.networkStat.set(true));
-    window.addEventListener('offline', () => this.networkStat.set(false));
 
     effect(() => {
-      console.log('🧭 Network status changed:', this.networkStat());
-      console.log(`System has been initialized in ${platform.toUpperCase()}`);       
-      // this.systemInfo = { ...this.systemInfo, coords: this.utils.location() };
+      console.log(`System has been initialized in ${platform.toUpperCase()}`);
     })
-
-    /**
-     * Receive data from Android
-     * Play content on Android
-     */
-    // window.receiveDataFromAndroid = (data: any) => {
-    //   if (data) {
-    //     console.log('🧭 Data received from Android:', data);
-    //     // setTimeout(() => this.isPlay.set(true), this.timeout);
-    //   } else {
-    //     console.log('🧭 Data received from Android is empty');
-    //   }
-    // }
   }
 
   async ngOnInit() {
-    const content = this.storage.get('currentContent');
-    if (content) {
-      const type = this.storage.get('type'); 
-      const timerDuration = ['facebook', 'youtube', 'design', 'design2'].includes(type) ? 800 : 0;
-      const decryptContent = this.utils.decrypt(content);
-      setTimeout(() => {
-        this.currentContent = JSON.parse(decryptContent);
-        this.isPlay.set(true);
-      }, timerDuration);
+    const items = await this.indexedDB.getAllItems();
+    if (items.length > 0) {
+      this.player.playerContent.set({ type: 'asset', content: items[0] });
+      this.isPlay.set(true);
     }
   }
+
+  ngOnDestroy() { }
 
   async ngAfterViewInit() {
     this.onGetPlayerInformation();
@@ -170,8 +151,6 @@ export class MainDisplayComponent {
   get isDev() { return this.utils.isDev; }
 
   get isElectron() { return window.system?.isElectron; }
-  
-  get networkStat() { return this.networkService.networkStat; }
 
   get playerCode() { return this.player.playerCode; }
   get systemInfo() { return this.player.systemInfo; }
@@ -181,4 +160,10 @@ export class MainDisplayComponent {
 
   get platform() { return this.platformService.platform; }
   get dataFromAndroid() { return this.player.dataFromAndroid; }
+
+  get isOnline() {
+    return this.webSocket.isOnline();
+  }
+
+  get tenantId() { return this.storage.get('tenantId'); }
 }

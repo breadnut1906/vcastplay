@@ -7,6 +7,7 @@ import { UtilityService } from '../../../core/services/utility.service';
 import { Router } from '@angular/router';
 import _ from  'lodash';
 import { Pagination } from '../../../shared/interfaces/general';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-screen-list',
@@ -35,13 +36,15 @@ export class ScreenListComponent {
 
   screenFilters = signal<any>({});
 
+  otpCtrl: FormControl = new FormControl(null);
+
   ngOnInit() {
     this.onInitializeScreens();
   }
 
   onInitializeScreens(page: number = 1, limit: number = 10) {
     this.isLoading.set(true);
-    this.screenService.onLoadScreens().subscribe({
+    this.screenService.onLoadScreens(page, limit).subscribe({
       next: (res: any) => {
         const { items, meta } = res;
         this.screens.set(items);
@@ -81,15 +84,9 @@ export class ScreenListComponent {
       },
       accept: () => {
         this.screenService.onDeleteScreen(item).subscribe({
-          next: (res: any) => {
-            this.message.add({ severity:'success', summary: 'Success', detail: 'Screen deleted successfully!' });
-          },
-          error: (err: any) => {
-            this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete screen!' });
-          },
-          complete: () => {
-            this.screenService.onLoadScreens();
-          }
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Screen deleted successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete screen!' }),
+          complete: () => this.onInitializeScreens()
         });
       },
       reject: () => { }
@@ -100,20 +97,22 @@ export class ScreenListComponent {
 
   onClickVerify() {
     this.isVerifyOTP.set(true);
-    const { code } = this.screenForm.value;
+    const code = this.otpCtrl.value;
     navigator.geolocation.getCurrentPosition((position) => {
       const { latitude, longitude } = position.coords;
       this.screenService.onGetScreenByCode(code).subscribe({
         next: (res: any) => {
-          this.selectedScreen.set({ ...res, latitude, longitude });
+          this.selectedScreen.set({ ...res, latitude, longitude, adminScreenId: res.id });
           this.router.navigate([ '/screens/screen-details' ], { queryParams: { id: res.id } });
         },
         error: (err: any) => {
           this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to verify screen code!' });
+          this.isVerifyOTP.set(false);
         },
         complete: () => {
           this.showOTP.set(false);
           this.isVerifyOTP.set(false);
+          this.otpCtrl.reset();
         }
       })
     });

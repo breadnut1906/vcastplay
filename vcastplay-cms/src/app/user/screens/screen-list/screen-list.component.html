@@ -137,17 +137,16 @@
     <p-button (onClick)="onClickDelete(item, $event)" pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" size="small" />
 </ng-template>
 
-<p-dialog header="Enter Screen Code" [(visible)]="showOTP" styleClass="w-[30rem] h-auto" (onHide)="screenForm.reset()" appendTo="body" modal>
-    <div class="flex items-center justify-center gap-4 w-full py-5" [formGroup]="screenForm">
-        <p-inputotp styleClass="uppercase" formControlName="code" [length]="6" size="large" 
+<p-dialog header="Enter Screen Code" [(visible)]="showOTP" styleClass="w-[30rem] h-auto" (onHide)="otpCtrl.reset()" appendTo="body" modal>
+    <div class="flex items-center justify-center gap-4 w-full py-5">
+        <p-inputotp styleClass="uppercase" [formControl]="otpCtrl" [length]="6" size="large" 
             (keydown.enter)="onClickVerify()" [pAutoFocus]="true" autofocus />
     </div>
     <ng-template #footer>
-        <p-button class="w-full" label="Register" [disabled]="formControl('code').invalid || formControl('code').value.length < 6"
+        <p-button class="w-full" label="Register" [disabled]="otpCtrl.invalid"
             (onClick)="onClickVerify()" fluid />
     </ng-template>
 </p-dialog>
-
 
 <p-dialog [(visible)]="isVerifyOTP" styleClass="w-[30rem] h-auto" [draggable]="false" [closable]="false" modal>
     <div class="flex flex-col items-center justify-center gap-4 w-full py-5">

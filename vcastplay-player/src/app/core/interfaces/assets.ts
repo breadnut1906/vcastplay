@@ -4,7 +4,7 @@ export interface Assets {
     code: string;
     name: string;
     type: string;
-    link: string;
+    url: string;
     category?: string;
     subCategory?: string;
     fileDetails: AssestInfo;

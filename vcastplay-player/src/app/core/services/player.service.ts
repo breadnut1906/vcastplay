@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment.development';
 import { Assets } from '../interfaces/assets';
 import { DesignLayout } from '../interfaces/design-layout';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { IndexedDbService } from './indexed-db.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,13 +13,14 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 export class PlayerService {
 
     platform = inject(PlatformService);
+    indexedDB = inject(IndexedDbService);
     http = inject(HttpClient);
 
     api: string = environment.api;
     apiKey: string = environment.apiKey;
 
-    private contentSignal = signal<Assets | DesignLayout | Playlists | any>(null);
-    playerContent: Assets | DesignLayout | Playlists | any = computed(() => this.contentSignal());
+    playerContent = signal<Assets | DesignLayout | Playlists | any>(null);
+    playerCommand = signal<any>(null);
 
     systemInfo = signal<any>(null);
     playerCode = signal<string>('');
@@ -26,24 +28,27 @@ export class PlayerService {
     androidData = signal<any>(null);
     dataFromAndroid = signal<any>(null);
     isContentLogs = signal<any>(null);
-    showTenantDIalog = signal<any>(null);
 
     playerLoading = signal<boolean>(false);
 
     constructor() { }
 
-    onLoadContents() { 
-        this.contentSignal.set(null); 
+    onLoadContents() { }
+
+    async onSetContent(data: any) {
+        const type = data.content.type;
+        this.indexedDB.clearItems();
+        if (!['facebook', 'youtube', 'link'].includes(type)) {
+            const res = await fetch(data.content.url);
+            const blob = await res.blob();
+            await this.indexedDB.addItem({ ...data.content, url: blob });
+        } else {
+            await this.indexedDB.addItem(data.content);
+        }
+        this.playerContent.set(data);
     }
 
-    onSetContent(type: string) {
-        console.log('save to contentSignal()');
-    }
-
-    onGetContents() {
-        if (this.contentSignal().length === 0) this.onLoadContents();
-        return this.contentSignal();
-    }
+    onGetContents() { }
     
     send(action: string) {
         window.system.control(action)
@@ -83,21 +88,25 @@ export class PlayerService {
         });
     }
     
-    onGetAndroidInformation() {
-        (window as any).AndroidBridge = (window as any).AndroidBridge || {};
+    onGetAndroidInformation(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            (window as any).AndroidBridge = (window as any).AndroidBridge || {};
 
-        // Android → JS callback
-        (window as any).AndroidBridge.onDeviceDetails = (data: any) => {
-            console.log('Received from android device details:', data);
-            this.androidData.set(data);
-        };
+            // Android → JS callback
+            (window as any).AndroidBridge.onDeviceDetails = (data: any) => {
+                resolve(data);
+                console.log('Received from android device details:', data);
+            };
 
-        // JS → Android request
-        if (typeof (window as any).AndroidBridge.requestDeviceDetails === 'function') {
-            (window as any).AndroidBridge.requestDeviceDetails();
-        } else {
-            console.warn('AndroidBridge.requestDeviceDetails not available yet');
-        }
+            // // JS → Android request
+            // if (typeof (window as any).AndroidBridge.requestDeviceDetails === 'function') {
+            //     (window as any).AndroidBridge.requestDeviceDetails();
+            // } else {
+            //     console.warn('AndroidBridge.requestDeviceDetails not available yet');
+            // }
+
+            // // resolve();
+        });
     }
     
     onGetBrowserInformation() {

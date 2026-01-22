@@ -84,7 +84,8 @@
                         <i class="pi pi-map-marker"></i>
                         <p class="text-sm font-semibold">{{ screen.fullAddress || '-' }}</p>
                     </div>
-                    <app-mapmarkers [ngClass]="{ 'h-30': screen.type == 'desktop', 'h-50': screen.type == 'web' }" [markers]="[ screen ]" [readOnly]="true" [zoom]="3" />
+                    <app-mapmarkers [ngClass]="{ 'h-30': screen.type == 'desktop', 'h-50': screen.type == 'web' }" [markers]="[ screen ]" 
+                        [zoom]="17" [readOnly]="true" />
                 </div>
             }
         </div>

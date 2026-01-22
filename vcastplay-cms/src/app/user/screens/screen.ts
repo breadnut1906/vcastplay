@@ -1,3 +1,4 @@
+import { Subscription } from "rxjs";
 import { Assets } from "../assets/assets";
 import { DesignLayout } from "../design-layout/design-layout";
 import { Playlist } from "../playlist/playlist";
@@ -62,4 +63,14 @@ export interface ScreenConfiguration {
     fullscreen: boolean;
     syncTime: boolean;
     playbackLogging: boolean;
+}
+
+export interface ScreenItems {
+    id: any;
+    content: any;
+    progress: number;
+    status: 'pending' | 'sending' | 'success' | 'error' | 'cancel';
+    error?: any;
+    sub?: Subscription;
+    body?: any;
 }

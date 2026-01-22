@@ -18,9 +18,8 @@ export class MapmarkersComponent {
 
   @Input() markers: any[] = [];
   @Input() zoom: number = 12;
-  @Input() minZoom: number = 3;
-  @Input() maxZoom: number = 22;
   @Input() readOnly: boolean = false;
+  @Input() zoomControl: boolean = true;
 
   @Output() selectedScreen = new EventEmitter<Screen | any>();
 
@@ -39,6 +38,10 @@ export class MapmarkersComponent {
 
   ngOnInit() {}
 
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['markers']) this.initializedMap();
+  }
+
   ngOnDestroy() {
     if (this.map) this.map.remove();
   }
@@ -51,13 +54,12 @@ export class MapmarkersComponent {
     if (this.map) this.map.remove();
     this.map = L.map(this.mapMarkers.nativeElement, { 
       center: [14.6090, 121.0223], 
-      zoom: this.zoom, 
-      minZoom: this.minZoom, 
-      zoomControl: false, 
+      zoom: this.zoom,
+      zoomControl: this.zoomControl, 
       attributionControl: false,
     });
     
-    L.tileLayer(this.tileLink, { maxZoom: this.maxZoom }).addTo(this.map);
+    L.tileLayer(this.tileLink, { maxZoom: 20 }).addTo(this.map);
 
     this.markerClusterGroup = L.markerClusterGroup({
       showCoverageOnHover: true,
@@ -84,7 +86,7 @@ export class MapmarkersComponent {
         icon: this.mapIcon
       });
 
-      this.map.setView([ lat, lng ], this.maxZoom - 2);
+      this.map.setView([ lat, lng ], this.zoom);
       this.markerClusterGroup.addLayer(marker);
     });
   }
@@ -92,15 +94,14 @@ export class MapmarkersComponent {
   onAddMarkers(): void {   
     this.markers.forEach(markerData => {       
       const { latitude, longitude, name }: any = markerData;
+
       const marker = L.marker([ latitude, longitude ], {
         icon: this.mapIcon
       }).bindTooltip(name, {
         permanent: false,
         direction: 'top',
         opacity: 0.9
-      });
-            
-      this.map.setView([ latitude, longitude ], this.maxZoom - 2);
+      });            
 
       this.markerClusterGroup.addLayer(marker);
       
@@ -109,6 +110,8 @@ export class MapmarkersComponent {
         const screen: any = this.markers.find(marker => marker.latitude === lat && marker.longitude === lng);
         this.selectedScreen.emit(screen);
       })
+      
+      this.map.setView([ latitude, longitude ], this.zoom);
     });
   }
 }

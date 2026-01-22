@@ -15,7 +15,7 @@
             [showLocation]="true"
             [showScreenStatus]="true"
           />
-          @if (isSelecAll) {
+          @if (hasSelectedScreens) {
             <p-button label="Clear" (onClick)="selectMultipleScreens.set([])" severity="danger" outlined />
           }
         </div>
@@ -52,8 +52,8 @@
               <tr class="text-sm" [pSelectableRow]="item">
                 <td><p-tableCheckbox [value]="item" /></td>
                 <td>
-                  <p-tag [value]="item?.screenStatus?.toUpperCase() || 'N/A'" [icon]="'pi ' + utils.getIcon(item?.screenStatus ?? '')"
-                    [severity]="utils.getStatus(item?.screenStatus ?? '')" />
+                  <p-tag [value]="item.screenStatus?.toUpperCase() || 'N/A'" [icon]="'pi ' + utils.getIcon(item.screenStatus ?? '')"
+                    [severity]="utils.getStatus(item.screenStatus ?? '')" />
                 </td>
                 <td>
                   <div class="flex items-center gap-4">
@@ -67,13 +67,13 @@
                     <p class="font-semibold">{{ item.name }}</p>
                   </div>
                 </td>
-                <td><p-tag [value]="item?.displayStatus?.toUpperCase() || 'OFF'" [severity]="utils.getStatus(item?.displayStatus ?? 'OFF')" /></td>
+                <td><p-tag [value]="item.displayStatus?.toUpperCase() || 'OFF'" [severity]="utils.getStatus(item.displayStatus ?? 'OFF')" /></td>
                 <td>
                   <div class="flex gap-2">
-                    @if (item?.content) {
+                    @if (item.content) {
                       <div class="flex flex-col">
                         <p>{{ item.contentName }}</p>
-                        <p class="text-gray-500">{{ utils.onGetLastUpdatedLabel(item.content?.updatedAt) }}</p>
+                        <p class="text-gray-500">{{ utils.onGetLastUpdatedLabel(item.content.updatedAt) }}</p>
                       </div>
                       <!-- <p-tag
                         [value]="item?.content?.status?.toUpperCase()"
@@ -146,7 +146,7 @@
           <ng-template #header>
             <p class="text-sm font-semibold">Controls:</p>
           </ng-template>
-          <app-screen-controls [selectMultipleScreens]="selectMultipleScreens" />
+          <app-screen-controls [selectMultipleScreens]="selectMultipleScreens" (onScreenControlChange)="onScreenControlChange($event)" />
         </p-fieldset>
         <p-fieldset [toggleable]="isMobile" [collapsed]="isMobile">
           <ng-template #header>

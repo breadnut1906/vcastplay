@@ -40,7 +40,8 @@
                     <div class="w-full h-50 md:h-full">
                         @if (loadingAddressSignal()) { <p-progress-bar mode="indeterminate" /> }
                         <!-- @else { <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" /> } -->
-                        @if (screenForm.valid) { <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" /> }
+                        <!-- @if (screenForm.valid) {  } -->
+                        <app-mapmarkers [markers]="[ screenForm.value ]" (selectedScreen)="onGetLocation($event)" [zoom]="18" [zoomControl]="true" />
                     </div>
                 </div>
             </div>
@@ -59,7 +60,7 @@
                         <p>Resolution:</p>
                         <p>{{ screen.resolution }}</p>
                     </div>
-                    <p-button class="m-2" label="View More" size="small" severity="info" text fluid />
+                    <p-button class="m-2" (onClick)="isShowInfo.set(true)" label="View More" size="small" severity="info" text fluid />
                 </div>
                 <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
                     <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Groupings</span>
@@ -184,3 +185,6 @@
         <textarea name="description" id="description" placeholder="Description" formControlName="description" rows="5" pTextarea></textarea>
     </div>
 </ng-template>
+
+
+<app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" [isAdmin]="true" />

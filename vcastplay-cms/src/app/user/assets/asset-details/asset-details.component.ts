@@ -227,10 +227,7 @@ export class AssetDetailsComponent {
         this.assetService.onUpdateAssets(id, { ...data, ...dateTime, duration: time }).subscribe({
           next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }),
           error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to update asset!' }),
-          complete: () => {
-            this.router.navigate([ '/assets/asset-library' ]);
-            this.assetForm.reset();
-          }
+          complete: () => this.router.navigate([ '/assets/asset-library' ])
         });
       },
     })
@@ -269,6 +266,10 @@ export class AssetDetailsComponent {
 
   onClickCancel() {
     this.router.navigate([ '/assets/asset-library' ]);
+  }
+
+  formControl(fieldName: string) {
+    return this.utils.getFormControl(this.assetForm, fieldName);
   }
 
   get asset() {

@@ -21,13 +21,13 @@
         <div class="flex gap-3 items-center justify-center lg:justify-end">
             <p class="text-sm">Controls:</p>
             <div class="flex-wrap flex gap-3">
-                <p-button (onClick)="onClickOpenScreen()"
+                <p-button (onClick)="onClickSendCommand('open')"
                     icon="pi pi-play" pTooltip="Open" tooltipPosition="bottom" size="small" fluid />
-                <p-button (onClick)="onClickCloseScreen()"
+                <p-button (onClick)="onClickSendCommand('close')"
                     icon="pi pi-times-circle" pTooltip="Close" tooltipPosition="bottom" size="small" fluid />
-                <p-button (onClick)="onClickRestartScreen()"
+                <p-button (onClick)="onClickSendCommand('restart')"
                     icon="pi pi-refresh" pTooltip="Restart" tooltipPosition="bottom" size="small" fluid />
-                <p-button (onClick)="onClickShutdownScreen()"
+                <p-button (onClick)="onClickSendCommand('shutdown')"
                     icon="pi pi-power-off" pTooltip="Shutdown" tooltipPosition="bottom" size="small" fluid />
                 <p-button (onClick)="onClickBroadCastMessage()" 
                     icon="pi pi-megaphone" pTooltip="Broadcast Message" tooltipPosition="bottom" size="small" fluid />

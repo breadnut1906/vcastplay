@@ -44,45 +44,38 @@ export class AssetPreviewComponent {
     clearTimeout(this.fbTimerId);  
     clearTimeout(this.ytTimerId);
     if (changes['asset'] && changes['asset'].currentValue) {
-      const type = changes['asset'].currentValue.type
-      switch (type) {
-        case 'facebook':
-          this.onFacebookLoad();
-          break;
-        case 'youtube':
-            this.onYoutubeLoad();
-            break;
-        default:
-          this.onMediaLoad(type);
-          break;
-      }
+      if (this.isFacebook) this.onFacebookLoad();
+      else if (this.isYoutube) this.onYoutubeLoad();
+      else this.onMediaLoad(this.asset.type);
     }
   }
 
   async onMediaLoad(type: string) {
     const items: any = await this.indexedDB.getAllItems();
-    const file: any = items.find((item: any) => item.file.name == this.asset.name);      
+    const file: any = items.find((item: any) => item.name == this.asset.name);      
     if (!file) return;
 
-    const tempLink = URL.createObjectURL(file.blob);
+    const tempLink = URL.createObjectURL(file.url);
+    console.log(tempLink);
+    
     switch (type) {
       case 'video':
         const video = this.videoRef?.nativeElement;          
         video.src = tempLink;
         video.currentTime = 0;
         video.preload = 'auto';
-        video.muted = true;
         video.play();
         break;
       case 'audio':
         const audio = this.audioRef?.nativeElement;
         audio.src = tempLink;
+        audio.load()
         audio.currentTime = 0;
         audio.preload = 'auto';
-        audio.muted = true;
+        audio.play();
         break;
       case 'image':
-        const image = this.imageRef?.nativeElement;
+        const image = this.imageRef?.nativeElement;        
         image.src = tempLink;
         break;
     }
@@ -92,7 +85,7 @@ export class AssetPreviewComponent {
     await this.ytService.onLoadSDK()
     this.ytTimerId = setTimeout(async () => {
       const ytPlayer = this.ytPlayerRef?.nativeElement;
-      const { videoId } = this.utils.onGetEmbedUrl(this.asset.link);
+      const { videoId } = this.utils.onGetEmbedUrl(this.asset.url);
       if (!ytPlayer) return;
       
       const player = await new YT.Player(ytPlayer, {
@@ -186,5 +179,15 @@ export class AssetPreviewComponent {
     } catch (err) {
       console.warn('FB Player init failed', err);
     }
+  }
+  
+  get isFacebook() {
+    const url = this.asset.url;
+    return typeof url === 'string' && url.includes('facebook') && !url.startsWith('blob:');
+  }
+  
+  get isYoutube() {
+    const url = this.asset.url;
+    return typeof url === 'string' && url.includes('youtube') && !url.startsWith('blob:');
   }
 }

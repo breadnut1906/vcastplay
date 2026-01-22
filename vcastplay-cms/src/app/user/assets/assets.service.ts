@@ -57,29 +57,6 @@ export class AssetsService {
     { icon: 'pi pi-table', label: 'Grid' },
     { icon: 'pi pi-list', label: 'List' },
   ]
-
-  assetForm: FormGroup = new FormGroup({
-    id: new FormControl(0, { nonNullable: true }),
-    code: new FormControl(null),
-    name: new FormControl(null, [Validators.required]),
-    type: new FormControl(null),
-    url: new FormControl(null),
-    categoryId: new FormControl(null, [Validators.required]),
-    subCategoryId: new FormControl(null, [Validators.required]),
-    thumbnail: new FormControl(null),
-    duration: new FormControl(10, { nonNullable: true }),
-    sizeKb: new FormControl(null),
-    orientation: new FormControl(null),
-    dimension: new FormControl(null),
-    availability: new FormControl<boolean>(false),
-    start: new FormControl(null),
-    end: new FormControl(null),
-    isAllDay: new FormControl<boolean>(false, { nonNullable: true }),
-    isAllWeekdays: new FormControl<boolean>(false, { nonNullable: true }),
-    weekdays: new FormControl<string[]>([], { nonNullable: true }),
-    hours: new FormControl<string[]>([], { nonNullable: true }),
-    audienceTag: new FormControl(null),
-  }, { validators: [this.dateRangeValidator()] })
   
   assetFilterForm: FormGroup = new FormGroup({
     dateRange: new FormControl(null),

@@ -60,6 +60,7 @@ export class ScreenDetailsComponent {
     loadedPage: new Set<number>()
   }
 
+  isShowInfo = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   formBuilder = inject(FormBuilder);
   screenForm = this.formBuilder.group({
@@ -86,7 +87,8 @@ export class ScreenDetailsComponent {
     location: [null],
     landmark: [null],
     tags: [[]],
-    info: [null]
+    info: [null],
+    adminScreenId:[0],
   })
 
   ngOnInit() {
@@ -94,7 +96,9 @@ export class ScreenDetailsComponent {
     this.route.queryParams.subscribe(params => {
       const { id } = params;
       if (this.selectedScreen()) {
+        // from verify screen
         this.screenForm.patchValue(this.selectedScreen());
+        this.onGetLocation({ latitude: 14.6090, longitude: 121.0223 });
       } else {
         if (id) {
           this.isEditMode.set(true);
@@ -119,6 +123,7 @@ export class ScreenDetailsComponent {
     this.screenService.onGetScreenById(id).subscribe({
       next: (res: any) => {
         if (!res) this.router.navigate([ '/screens/screen-registration' ]);
+        this.selectedScreen.set(res);
         const { latitude, longitude, hours, groupId }: any = res || {};
         const hour = hours?.map((hour: any) => ({ ...hour, start: new Date(hour.start), end: new Date(hour.end), oldEnd: hour.end })) || [];
         this.screenForm.patchValue({ ...res, hours: hour });

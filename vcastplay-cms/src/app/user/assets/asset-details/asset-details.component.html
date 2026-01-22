@@ -45,11 +45,13 @@
                         }
 
                         <div class="grid grid-cols-2 gap-4">
-                            <p-select id="category" [options]="categoryOptions.items()" optionLabel="name" optionValue="id" formControlName="categoryId" appendTo="body"
+                            <p-select id="category" [options]="categoryOptions.items()" optionLabel="name" optionValue="id" formControlName="categoryId" appendTo="body" 
+                                [ngClass]="{ 'ng-invalid ng-dirty': formControl('categoryId').invalid && formControl('categoryId').touched }"
                                 [loading]="categoryOptions.loader" (onChange)="onLoadSubCategories($event.value)" placeholder="Category"
                                 (onLazyLoad)="onLazyLoadCategories($event)" [virtualScrollItemSize]="38" virtualScroll filter fluid lazy />
 
                             <p-select id="subCategory" [options]="subCategoryOptions.items()" optionLabel="name" optionValue="id" formControlName="subCategoryId" appendTo="body"
+                                [ngClass]="{ 'ng-invalid ng-dirty': formControl('subCategoryId').invalid && formControl('subCategoryId').touched }"
                                 [loading]="subCategoryOptions.loader" (onLazyLoad)="onLazyLoadSubCategories($event)" placeholder="Sub Category"
                                 [virtualScrollItemSize]="38" virtualScroll filter fluid lazy />
                         </div>

@@ -225,14 +225,14 @@ export class PlaylistPreviewComponent {
   }
 
   onIFrameLoad(item: Assets) {
-    if (item.type == 'web') return item.link;
+    if (item.type == 'web') return item.url;
     else return '';
   }
   
   async onYoutubeLoad() {
     this.ytTimerId = setTimeout(async () => {
       const item = this.currentItem();
-      const { videoId } = this.utils.onGetEmbedUrl(item.link);
+      const { videoId } = this.utils.onGetEmbedUrl(item.url);
 
       this.ytPlayersRef.forEach((player: any) => {
         const playerEl = player.nativeElement;

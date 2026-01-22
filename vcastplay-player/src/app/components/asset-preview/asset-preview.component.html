@@ -3,11 +3,42 @@
         <img #image class="absolute left-0 top-0 h-full w-full object-fit" loading="lazy" [alt]="asset.name">
     }
     @case('video') {
-        <video #video class="absolute left-0 top-0 h-full w-full object-contain" [loop]="true" preload="metadata"
+        <video #video class="absolute left-0 top-0 h-full w-full object-fill" [loop]="true" preload="metadata"
             [controls]="false" [playsInline]="true" [autoplay]="autoPlay" [muted]="true"></video>
     }
-    @case ('web') {
-        <iframe #iframe class="w-full h-full object-fit" [src]="asset.link | safeurl" frameborder="0"
+    @case ('audio') {
+        <div class="relative h-full w-full flex items-center justify-center gap-4">
+            <li class="!text-7xl !text-white pi pi-volume-up"></li>
+            <audio #audio class="absolute left-0 top-0 h-full w-full" controlsList="nodownload noplaybackrate"
+                [controls]="showControls" [autoplay]="true" [crossOrigin]="true" preload="auto"></audio>
+        </div>
+    }
+    @case ('html') {
+        <iframe #iframe class="w-full h-full object-fit" [src]="asset.url | safeurl" frameborder="0"
+            allow="autoplay; encrypted-media; compute-pressure; picture-in-picture" scrolling="no" ></iframe>
+    }
+    @case ('link') {
+        @if (isFacebook) {
+            <div #fbPlayer class="relative flex flex-1 items-center justify-center h-full w-full overflow-hidden">
+                <div
+                    class="fb-video flex items-center justify-center w-full h-full pointer-events-none"
+                    [attr.data-href]="asset.url"
+                    data-autoplay="true"
+                    data-show-text="false"
+                    data-allowfullscreen="false"
+                    data-muted="true"
+                    data-lazy="true"
+                ></div>
+            </div>
+        } @else if (isYoutube) {
+            <div #ytPlayer class="absolute left-0 top-0 h-full w-full"></div>
+        } @else {
+            <iframe class="w-full h-full object-fit" [src]="asset.url | safeurl" frameborder="0"
+                allow="autoplay; encrypted-media; compute-pressure; picture-in-picture" scrolling="no" ></iframe>
+        }
+    }
+    <!-- @case ('web') {
+        <iframe #iframe class="w-full h-full object-fit" [src]="asset.url | safeurl" frameborder="0"
             allow="autoplay; encrypted-media; compute-pressure; picture-in-picture" scrolling="no" ></iframe>
     }
     @case ('youtube') {
@@ -17,7 +48,7 @@
         <div #fbPlayer class="relative flex flex-1 items-center justify-center h-full w-full overflow-hidden">
             <div
                 class="fb-video flex items-center justify-center w-full h-full pointer-events-none"
-                [attr.data-href]="asset.link"
+                [attr.data-href]="asset.url"
                 data-autoplay="true"
                 data-show-text="false"
                 data-allowfullscreen="false"
@@ -25,12 +56,5 @@
                 data-lazy="true"
             ></div>
         </div>
-    }
-    @case ('audio') {
-        <div class="relative h-full w-full flex items-center justify-center gap-4">
-            <li class="!text-7xl !text-white pi pi-volume-up"></li>
-            <audio class="absolute left-0 top-0 h-full w-full" controlsList="nodownload noplaybackrate"
-                [controls]="showControls" [autoplay]="true" [crossOrigin]="true" preload="auto"></audio>
-        </div>
-    }
+    } -->
 }

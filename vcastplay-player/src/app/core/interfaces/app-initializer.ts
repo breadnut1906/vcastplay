@@ -37,12 +37,10 @@ export function initializeApp() {
         switch (platform) {
           case 'android':
             playerService.onSendDataToAndroid(body);
-            playerService.onGetAndroidInformation();
-            console.log('Android Details:', playerService.androidData());
-            const newResolution = playerService.androidData().resolution;
-            const newOrientation = playerService.androidData().orientation;
-            
-            const androidInfo = playerService.androidData();
+            const android: any = await playerService.onGetAndroidInformation();
+            const newResolution = android.resolution;
+            const newOrientation = android.orientation;
+            const androidInfo = android;
             
             Object.assign(body, { resolution: newResolution, orientation: newOrientation, info: androidInfo });
             break;

@@ -1,46 +1,126 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment.development';
+import { Observable } from 'rxjs';
+import { StorageService } from './storage.service';
+import { MessageService } from 'primeng/api';
+import { PlayerService } from './player.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WebsocketService {
 
-  socketClient!: Socket;
-  socketUrl: string = environment.socketUrl
+  player = inject(PlayerService);
+  storage = inject(StorageService);
+  message = inject(MessageService);
 
-  constructor() {
-    this.initSocket();
-  }
+  socketClient!: Socket | any;
+  socketUrl: string = environment.socketUrl;
+  screenKey: string = environment.screenKey;
 
-  private initSocket() {
-    this.socketClient = io(this.socketUrl, {
-      transports: ['websocket']
-    });
+  isOnline = signal<boolean>(false);
+
+  constructor() { }
+
+  onInitSocket(path: string, auth: any) {
+    this.socketClient = io(`${this.socketUrl}/${path}`, {
+      transports: ['websocket'],
+      reconnection: true,
+      forceNew: true,
+      auth
+    });    
 
     this.socketClient.on('connect', () => {
-      console.log('connected');
+      console.log(`connected to server: ${path}`);
+      this.isOnline.set(true);
     });
 
     this.socketClient.on('disconnect', () => {
-      console.log('disconnected');
+      console.log('disconnected from server');
+      this.isOnline.set(false);
     });
 
-    this.socketClient.on('error', (error: any) => {
-      console.log('Cannot connect', error);
+    this.socketClient.on('errors', (error: any) => {
+      console.log('Cannot connect to server', error);
     });
+
+    this.socketClient.on('reconnect', () => {
+      console.log('reconnected to server');
+      this.isOnline.set(true);
+    });
+
+    this.socketClient.on('registered', this.onRegister.bind(this));
+    this.socketClient.on('apply', this.onApply.bind(this));
+    this.socketClient.on('open', this.onOpen.bind(this));
+    this.socketClient.on('close', this.onClose.bind(this));
+    this.socketClient.on('restart', this.onRestart.bind(this));
+    this.socketClient.on('shutdown', this.onShutdown.bind(this));
   }
 
-  onEmit(event: string, data: any) {
-    this.socketClient.emit(event, data);
+  onRegister(data: any, tenantId: any) {
+    this.storage.set('tenantId', tenantId);
+    this.storage.set('deviceId', data.id);
+
+    this.onChangeSocket(`tenant/screens`, {
+      'x-api-key': this.screenKey,
+      'x-tenant-id': tenantId,
+      'deviceId': data.id
+    });
+
+    this.message.add({ severity:'success', summary: 'Success', detail: 'Device registered successfully!' });
   }
 
-  onListen(event: string) {
-    return new Promise((resolve, reject) => {
-      this.socketClient.on(event, (data: any) => {
-        resolve(data);
-      });
-    })
+  onApply(data: any) {
+    this.player.onSetContent(data);
+  }
+
+  onOpen(data: any) {
+    const { type, ...message } = data;
+    if (!['web'].includes(type)) return;
+    if (type == 'desktop') {
+      this.player.sendApp('notepad');
+      this.message.add({ severity:'success', summary: 'Success', detail: 'Device opened app successfully!' });
+    }
+  }
+
+  onClose(data: any) {
+    const { type, ...message } = data;
+    if (!['web'].includes(type)) return;
+    if (type == 'desktop') {
+      this.player.closeApp('notepad');
+      this.message.add({ severity:'success', summary: 'Success', detail: 'Device closed app successfully!' });
+    }
+  }
+
+  onRestart(data: any) {
+    const { type, ...message } = data;
+    if (!['web'].includes(type)) return;
+    if (type == 'desktop') {
+      this.player.send('restart');
+      this.message.add({ severity:'success', summary: 'Success', detail: 'Device restarted successfully!' });
+    }
+  }
+
+  onShutdown(data: any) {
+    const { type, ...message } = data;
+    if (!['web'].includes(type)) return;
+    if (type == 'desktop') {
+      this.player.send('shutdown');
+      this.message.add({ severity:'success', summary: 'Success', detail: 'Device shutdown successfully!' });
+    }
+  }
+
+  onChangeSocket(path: string, auth: any) {
+    this.onDisconnect();    
+    this.onInitSocket(path, auth);
+  }
+
+  onDisconnect() {
+    if (!this.socketClient) return;
+    this.socketClient.io.opts.reconnection = false;
+    this.socketClient.removeAllListeners();
+    this.socketClient.disconnect();
+    this.socketClient = null;
   }
 }
