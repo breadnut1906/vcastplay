@@ -1,10 +1,10 @@
 {
   "name": "vcastplay-wrapper",
   "version": "1.0.0",
-  "description": "Player app for vcastplay system",
+  "description": "Player app for caltonplay system",
   "main": "main.js",
   "build": {
-    "appId": "com.vcastplay.player",
+    "appId": "com.caltonplay.player",
     "productName": "Calton Player",
     "artifactName": "Calton Player.exe",
     "files": [
@@ -54,7 +54,7 @@
       "installerIcon": "assets/favicon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Vcastplay Player",
+      "shortcutName": "CaltonPlay Player",
       "deleteAppDataOnUninstall": true,
       "runAfterFinish": true
     }

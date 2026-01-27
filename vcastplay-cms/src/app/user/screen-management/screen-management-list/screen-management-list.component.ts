@@ -140,7 +140,7 @@ export class ScreenManagementListComponent {
     const pageNumber = event.first / event.rows + 1;
     const { currentPage, itemsPerPage, ...meta } = this.pagination();
     this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
-    this.screenService.onGetScreenManagement(pageNumber, event.rows);
+    this.onInitializedScreens(pageNumber, event.rows);
   }
 
   onSettingsChange(event: any) {
