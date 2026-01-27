@@ -6,42 +6,44 @@
     [modal]="true"
     [draggable]="false"
 >
-    @if (['desktop'].includes(screen?.type)) {
-        <p-fieldset legend="Display">
-            <form [formGroup]="settingsForm" class="grid grid-cols-12 gap-4">
-                <div class="col-span-4">
-                    <p-floatlabel variant="on">
-                        <p-select [options]="displays" optionLabel="deviceName" optionValue="deviceName" formControlName="mainDisplay" fluid />
-                        <label for="mainDisplay">Main Display</label>
-                    </p-floatlabel>
-                </div>
-                <div class="col-span-4 flex justify-between gap-4">
-                    <p-floatlabel class="w-full" variant="on">
-                        <p-inputnumber formControlName="width" inputId="width" [min]="640" [readonly]="fullscreenMode"
-                            [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
-                        <label for="width">Width</label>
-                    </p-floatlabel>
-                    <p-floatlabel class="w-full" variant="on">
-                        <p-inputnumber formControlName="height" inputId="height" [min]="480" [readonly]="fullscreenMode"
-                            [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
-                        <label for="height">Height</label>
-                    </p-floatlabel>
-                </div>
-                <div class="col-span-4 flex justify-between gap-4">
-                    <p-floatlabel class="w-full" variant="on">
-                        <p-inputnumber formControlName="left" inputId="left" [min]="0" [readonly]="fullscreenMode"
-                            [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
-                        <label for="left">Left</label>
-                    </p-floatlabel>
-                    <p-floatlabel class="w-full" variant="on">
-                        <p-inputnumber formControlName="top" inputId="top" [min]="0" [readonly]="fullscreenMode"
-                            [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
-                        <label for="top">Top</label>
-                    </p-floatlabel>
-                </div>
-            </form>
-        </p-fieldset>
-    }
+    <ng-container *ngIf="screen">
+        @if (['desktop'].includes(screen?.type)) {
+            <p-fieldset legend="Display">
+                <form [formGroup]="settingsForm" class="grid grid-cols-12 gap-4">
+                    <div class="col-span-4">
+                        <p-floatlabel variant="on">
+                            <p-select [options]="displays" optionLabel="deviceName" optionValue="deviceName" formControlName="mainDisplay" fluid />
+                            <label for="mainDisplay">Main Display</label>
+                        </p-floatlabel>
+                    </div>
+                    <div class="col-span-4 flex justify-between gap-4">
+                        <p-floatlabel class="w-full" variant="on">
+                            <p-inputnumber formControlName="width" inputId="width" [min]="640" [readonly]="fullscreenMode"
+                                [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
+                            <label for="width">Width</label>
+                        </p-floatlabel>
+                        <p-floatlabel class="w-full" variant="on">
+                            <p-inputnumber formControlName="height" inputId="height" [min]="480" [readonly]="fullscreenMode"
+                                [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
+                            <label for="height">Height</label>
+                        </p-floatlabel>
+                    </div>
+                    <div class="col-span-4 flex justify-between gap-4">
+                        <p-floatlabel class="w-full" variant="on">
+                            <p-inputnumber formControlName="left" inputId="left" [min]="0" [readonly]="fullscreenMode"
+                                [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
+                            <label for="left">Left</label>
+                        </p-floatlabel>
+                        <p-floatlabel class="w-full" variant="on">
+                            <p-inputnumber formControlName="top" inputId="top" [min]="0" [readonly]="fullscreenMode"
+                                [useGrouping]="false" [inputStyle]="{ width: '5rem' }" showButtons fluid />
+                            <label for="top">Top</label>
+                        </p-floatlabel>
+                    </div>
+                </form>
+            </p-fieldset>
+        }
+    </ng-container>
     <p-fieldset legend="Configuration">
         <form [formGroup]="settingsForm" class="flex flex-col gap-4">
             <div class="flex items-center gap-2">

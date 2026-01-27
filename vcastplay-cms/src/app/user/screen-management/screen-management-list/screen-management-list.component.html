@@ -136,8 +136,8 @@
     <ng-template #footer>
       <div class="flex items-center justify-center lg:justify-between">
         <div class="flex gap-2 items-center text-sm">
-          <p class="hidden lg:block">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
-            to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
+          <p class="hidden lg:block">Showing {{ (paginate.currentPage - 1) * paginate.itemsPerPage + 1 }} 
+            to {{ (paginate.currentPage - 1) * paginate.itemsPerPage + paginate.itemCount }} of {{ paginate.totalItems }} results</p>
 
           @if (hasSelectedScreens) {
             <p class="text-red-500 italic">Selected: {{ selectedScreens.length }} screen(s)</p>
@@ -195,18 +195,17 @@
 
 <app-screen-broadcast-message [showBroadcast]="showBroadcast" (onBroadCastMessage)="onBroadCastMessage($event)" />
 
-<app-screen-settings [screen]="selectedScreen()" [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" />
+<app-screen-settings [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" />
 
 <app-screen-other-info [isShowInfo]="showScreenDetails" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" />
 
-<p-dialog header="Preview" [(visible)]="showScreenshot" styleClass="w-[50rem]" (onHide)="onHidePreview()"
-  [draggable]="false" closable modal>
-  @if (screenShotData().loading) { <p-progressbar mode="indeterminate" /> }
+<p-dialog header="Preview" [(visible)]="showScreenshot" styleClass="w-[50rem]" (onHide)="onHidePreview()" [draggable]="false" closable modal>
+  @if (screenshot.loading) { <p-progressbar mode="indeterminate" /> }
   <div class="relative aspect-video border-2 border-[var(--p-surface-300)] dark:border-[var(--p-surface-700)] bg-stone-800 dark:bg-stone-900
     text-white rounded-lg group ">
-    <ng-container *ngIf="!screenShotData().loading">
+    <ng-container *ngIf="!screenshot.loading">
       <app-asset-preview class="absolute h-full w-full flex items-center justify-center bg-stone-800"
-        [asset]="{ type: 'image', name: screenShotData().fileName }" [link]="publicApi + 'screenshots/' + tenantId + '/' + screenShotData().fileName" />
+        [asset]="{ type: 'image', name: screenshot.fileName }" [link]="publicApi + 'screenshots/' + tenantId + '/' + screenshot.fileName" />
     </ng-container>
   </div>
 </p-dialog>

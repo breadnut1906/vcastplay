@@ -216,4 +216,12 @@ export class ScreenManagementListComponent {
   get tenantId() {
     return this.storage.get('id');
   }
+
+  get screenshot() {
+    return this.screenShotData();
+  }
+
+  get paginate() {
+    return this.pagination();
+  }
 }
