@@ -53,8 +53,8 @@
 <div class="relative shadow-lg rounded-lg h-full flex flex-col" [ngClass]="{ 'shadow-blue-500/50 border border-blue-500': isSelected }">
     <div class="absolute top-0 left-0 flex items-center justify-between w-full p-3 z-20">
         <p-checkbox [(ngModel)]="selectMultipleScreens" [inputId]="screen.name" name="screen" [value]="screen" />
-        <p-tag [value]="screen.screenStatus?.toUpperCase() ?? 'N/A'" [severity]="utils.getStatus(screen.screenStatus ?? '')" 
-            [icon]="'pi ' + utils.getIcon(screen.screenStatus ?? '')" />
+        <p-tag [value]="screen.status?.toUpperCase() || 'DISCONNECTED'" [severity]="utils.getStatus(screen.status || 'DISCONNECTED')" 
+            [icon]="'pi ' + utils.getIcon(screen.status || 'DISCONNECTED')" />
     </div>
     <div class="relative flex items-center rounded-t-lg justify-center h-40 w-full bg-[var(--p-primary-500)] cursor-pointer" (click)="onSelectItem(screen)">
         <div class="absolute inset-0 bg-[var(--p-primary-400)] opacity-50 rounded-t-lg z-10"></div>

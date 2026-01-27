@@ -56,6 +56,7 @@ export class WebsocketService {
     this.socketClient.on('close', this.onReceiveCommand.bind(this, 'close'));
     this.socketClient.on('restart', this.onReceiveCommand.bind(this, 'restart'));
     this.socketClient.on('shutdown', this.onReceiveCommand.bind(this, 'shutdown'));
+    this.socketClient.on('screenshot', this.onReceiveCommand.bind(this, 'screenshot'));
   }
 
   onRegister(data: any, tenantId: any) {
@@ -69,20 +70,41 @@ export class WebsocketService {
     });
 
     this.message.add({ severity:'success', summary: 'Success', detail: 'Device registered successfully!' });
+    this.onEmit('display-status', { status: 'on' })
+    this.onEmit('response-update', { response: `Device registered` })
   }
 
-  onApply(data: any) {
+  onApply(data: any) {    
     this.player.onSetContent(data);
+    this.onEmit('response-update', { response: `Player has started` })
   }
 
-  onReceiveCommand(data: any) {
+  async onReceiveCommand(data: any, subData: any) {
+    console.log(data, subData);
+    
     const platform = this.storage.get('platform');
+    this.onEmit('response-update', { response: `Player ${data}` })
     switch (platform) {
       case 'web':
         console.log('For Web');
         break;
       case 'desktop':
-        this.player.send(data);
+        if (data == 'open') this.onEmit('display-status', { status: 'on' });
+        if (data == 'close') this.onEmit('display-status', { status: 'off' });
+        this.player.sendDesktopCommand(data).then((response: any) => {
+          if (data == 'screenshot') this.player.onConvertBlobToImage(response, subData.userId);
+        });
+        break;
+      case 'android':
+        if (data == 'open') this.onEmit('display-status', { status: 'on' });
+        if (data == 'close') this.onEmit('display-status', { status: 'off' });
+        this.player.onSendDataToAndroid({ data })
+
+        if (data == 'screenshot') {
+          const android: any = await this.player.onGetAndroidInformation();
+          console.log('websokcet service', android);
+        }
+        
         break;
     }
   }
@@ -98,5 +120,9 @@ export class WebsocketService {
     this.socketClient.removeAllListeners();
     this.socketClient.disconnect();
     this.socketClient = null;
+  }
+
+  onEmit(event: string, data: any) {
+    this.socketClient.emit(event, data);
   }
 }

@@ -62,6 +62,7 @@ export class ScreenDetailsComponent {
 
   isShowInfo = signal<boolean>(false);
   isLoading = signal<boolean>(false);
+  isShowSettings = signal<boolean>(false);
   formBuilder = inject(FormBuilder);
   screenForm = this.formBuilder.group({
     id: [null],
@@ -89,6 +90,7 @@ export class ScreenDetailsComponent {
     tags: [[]],
     info: [null],
     adminScreenId:[0],
+    settings: this.settingsForm
   })
 
   ngOnInit() {
@@ -316,6 +318,10 @@ export class ScreenDetailsComponent {
     this.message.add({ severity:'success', summary: 'Success', detail: `${fieldName} copied to clipboard!` });
   }
 
+  onSettingsChange(event: any) {
+    this.screenForm.patchValue({ settings: event });
+  }
+
   formControl(fieldName: string) {
     return this.utils.getFormControl(this.screenForm, fieldName);
   }
@@ -328,4 +334,5 @@ export class ScreenDetailsComponent {
   
   get screen() { return this.screenForm.value as Screen | any }
   get selectedScreen() { return this.screenService.selectedScreen; }
+  get settingsForm() { return this.screenService.settingsForm; }
 }

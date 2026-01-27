@@ -12,7 +12,7 @@ import { ScreenService } from '../../screens/screen.service';
 })
 export class ScreenManagementListItemComponent {
 
-  @Input() screen!: Screen;
+  @Input() screen!: Screen | any;
   @Input() selectMultipleScreens = signal<Screen[]>([]);
   @Input() actionBtn!: TemplateRef<any>;
 

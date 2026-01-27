@@ -4,10 +4,13 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ScreenService } from '../../screens/screen.service';
 import { UtilityService } from '../../../core/services/utility.service';
 import _ from 'lodash';
-import { Screen, ScreenMessage } from '../../screens/screen';
+import { Screen, ScreenItems, ScreenMessage } from '../../screens/screen';
 import { BroadcastService } from '../../settings/broadcast/broadcast.service';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
 import { Pagination } from '../../../shared/interfaces/general';
+import { WebsocketService } from '../../../core/services/websocket.service';
+import { environment } from '../../../../environments/environment.development';
+import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
   selector: 'app-screen-management-list',
@@ -22,9 +25,13 @@ export class ScreenManagementListComponent {
   screenService = inject(ScreenService);
   broadcastService = inject(BroadcastService);
   utils = inject(UtilityService);
+  storage = inject(StorageService);
+  webSocket = inject(WebsocketService);
 
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
+
+  publicApi: string = environment.public;
 
   isLoading = signal<boolean>(false);
   showBroadcast = signal<boolean>(false);
@@ -35,7 +42,35 @@ export class ScreenManagementListComponent {
   selectMultipleScreens = signal<Screen[]>([]);
   pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
 
+  showScreenshot = signal<boolean>(false);
+  screenShotData = signal<any>({
+    deviceId: 0,
+    fileName: '',
+    loading: false,
+  });
+
+  constructor() {}
+    
+  
+
   ngOnInit() {
+    this.socketClient.on('screen:errors', (data: any) => {
+      console.log('screen:errors', data);
+    });
+
+    this.socketClient.on('screen:status', (data: any) => {
+      const status = data.status;
+      this.onUpdateScreenStatus({...data, displayStatus: status == 'connected' ? 'on' : 'off'});
+    });
+
+    this.socketClient.on('screen:display-status', (data: any) => this.onUpdateScreenStatus({ displayStatus: data.status}));
+
+    this.socketClient.on('screen:response', (data: any) => this.onUpdateScreenStatus(data));
+
+    this.socketClient.on('screen:screenshot-received', (data: any) => {
+      this.screenShotData.update(current => ({ ...data, loading: false }));
+    });
+    
     this.onInitializedScreens();
   }
 
@@ -65,10 +100,22 @@ export class ScreenManagementListComponent {
   onFilterChange(event: any) { }
 
   onScreenControlChange(event: any) {
-    switch (event) {
+    switch (event.type) {
       case 'broadcast': this.showBroadcast.set(true); break;
       case 'settings': this.showSettings.set(true); break;
+      // apply contents to selected screens
+      case 'apply':
+        this.onUpdateScreens(event.data);
+        break;
     }
+  }
+
+  onUpdateScreens(screenItems: ScreenItems[]) {
+    screenItems.forEach((item: ScreenItems) => {
+      const index = this.screens().findIndex(screen => screen.id == item.id);
+      if (index !== -1) this.screens()[index] = { ...this.screens()[index], content: item.content };
+    })
+    
   }
 
   onBroadCastMessage(event: any) {
@@ -79,6 +126,13 @@ export class ScreenManagementListComponent {
   //   this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message sent successfully!' });
   //   this.showBroadcast.set(false);
   //   this.selectedArrScreenBroadcastMessage.set([]);
+  }
+
+  onUpdateScreenStatus(data: any) {
+    const id = data.deviceId;    
+    const index = this.screens().findIndex(screen => screen.id == id);    
+    if (index !== -1) this.screens()[index] = { ...this.screens()[index], ...data };
+    this.screens.set([...this.screens()]);
   }
   
   onPageChange(event: any) {
@@ -94,6 +148,14 @@ export class ScreenManagementListComponent {
     this.showSettings.set(false);
   }
 
+  isDisconnected(screen: Screen | any): boolean {
+    return ['disconnected'].includes(screen.status) || !screen.status;
+  }
+
+  isWebPlayer(screen: Screen | any): boolean {
+    return ['web'].includes(screen.type);
+  }
+
   onClickApplyContents() {
     this.message.add({ severity:'success', summary: 'Success', detail: 'Contents applied successfully!' });
   }
@@ -101,6 +163,18 @@ export class ScreenManagementListComponent {
   onClickOpenDetails(screen: Screen) {
     this.selectedScreen.set(screen);
     this.showScreenDetails.set(true);
+  }
+
+  onClickScreenshot(screen: Screen) {
+    this.showScreenshot.set(true);
+    this.screenShotData.update(current => ({ ...current, deviceId: screen.id, loading: true }));
+    this.screenService.onSendCommand(screen.id, screen, 'screenshot').subscribe({
+      next: () => { },
+    });
+  }
+
+  onHidePreview() {
+    this.screenShotData.update(current => ({ ...current, fileName: '', loading: false }));
   }
 
   get isMobile() { return this.utils.isMobile(); }
@@ -129,5 +203,17 @@ export class ScreenManagementListComponent {
 
   get isCheckIndeterminate() {
     return this.selectMultipleScreens().length > 0 && this.selectMultipleScreens().length < this.screens().length;
+  }
+
+  get selectedScreens() {
+    return this.selectMultipleScreens().filter(screen => ['connected'].includes(screen.status));
+  }
+
+  get socketClient() {
+    return this.webSocket.socketClient;
+  }
+
+  get tenantId() {
+    return this.storage.get('id');
   }
 }

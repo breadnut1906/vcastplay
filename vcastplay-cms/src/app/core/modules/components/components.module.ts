@@ -42,7 +42,7 @@ import { ScreenOtherInfoComponent } from '../../../shared/components/screen-othe
 import { ScreenDownloadComponent } from '../../../user/screens/screen-download/screen-download.component';
 import { ScreenDetailsComponent } from '../../../user/screens/screen-details/screen-details.component';
 import { ScreenSelectionComponent } from '../../../user/design-layout/screen-selection/screen-selection.component';
-import { ScreenSettingsComponent } from '../../../user/screen-management/screen-settings/screen-settings.component';
+import { ScreenSettingsComponent } from '../../../shared/components/screen-settings/screen-settings.component';
 import { ScreenBroadcastMessageComponent } from '../../../user/screen-management/screen-broadcast-message/screen-broadcast-message.component';
 import { ScreenManagementListItemComponent } from '../../../user/screen-management/screen-management-list-item/screen-management-list-item.component';
 import { ScreenControlsComponent } from '../../../user/screen-management/screen-controls/screen-controls.component';

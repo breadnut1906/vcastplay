@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { io, Socket } from "socket.io-client";
-import { environment } from '../../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
@@ -8,15 +8,15 @@ import { environment } from '../../../environments/environment.development';
 export class WebsocketService {
 
   socketClient!: Socket;
-  socketUrl: string = environment.server
 
-  constructor() {
-    this.initSocket();
-  }
+  constructor() { }
 
-  private initSocket() {
-    this.socketClient = io(this.socketUrl, {
-      transports: ['websocket']
+  initSocket(socketURL: string, auth?: any) {
+    this.socketClient = io(socketURL, {
+      transports: ['websocket'],
+      reconnection: true,
+      forceNew: true,
+      auth
     });
 
     this.socketClient.on('connect', () => {
@@ -36,11 +36,14 @@ export class WebsocketService {
     this.socketClient.emit(event, data);
   }
 
-  onListen(event: string) {
-    return new Promise((resolve, reject) => {
-      this.socketClient.on(event, (data: any) => {
-        resolve(data);
-      });
-    })
+  onListen(event: string): Observable<any> {
+    return new Observable((subscriber) => {
+      this.socketClient.on(event, (data: any) => subscriber.next(data));
+
+      // cleanup
+      return () => {
+        this.socketClient.off(event);
+      };
+    });
   }
 }

@@ -1,4 +1,4 @@
-const { app, screen, nativeImage, Tray, Menu } = require('electron')
+const { app, screen, nativeImage, Tray, Menu, desktopCapturer } = require('electron')
 const { exec, spawn } = require('child_process')
 
 const os = require('os')
@@ -97,38 +97,13 @@ function onCreateTray(window) {
 }
 
 async function onTakeScreenShot() {
-  const sources = await desktopCapturer.getSources({ types: ['window', 'screen'] })
+  const sources = await desktopCapturer.getSources({
+    types: ['window', 'screen'],
+    thumbnailSize: { width: 1920, height: 1080, scale: 1 } // adjust for max resolution
+  });
 
-  for (const source of sources) {
-    if (source.name === 'Entire Screen' || source.name === 'Screen 1') {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          mandatory: {
-            chromeMediaSource: 'desktop',
-            chromeMediaSourceId: source.id,
-          },
-        },
-      })
-
-      const video = document.createElement('video')
-      video.srcObject = stream
-      await video.play()
-
-      const canvas = document.createElement('canvas')
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-      const image = canvas.toDataURL('image/png')
-      stream.getTracks()[0].stop()
-
-      console.log(image)
-
-      return image
-    }
-  }
+  const screen = sources[0];
+  return screen.thumbnail.resize({ width: 1920, height: 1080 }).toPNG(); // 👀 return file
 }
 
 function onDeleteFolder(folderName) {

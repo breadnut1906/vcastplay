@@ -1,26 +1,27 @@
 <div class="flex flex-col gap-1 h-full">
     <app-breadcrumbs [menu]="pageInfo"></app-breadcrumbs>
-    <div class="flex-1">
-        <p-card styleClass="h-full">
-            <ng-template #header>
-                <div class="mt-4 px-6">
-                    <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
+    <p-card styleClass="h-full" class="flex-1">
+        <ng-template #header>
+            <div class="mt-4 px-6">
+                <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
+            </div>
+        </ng-template>
+        <ng-template #title>
+            <div class="flex gap-4 items-center">
+                <app-screen-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" [showOrientation]="true" />
+                <div class="gap-3 ml-auto hidden md:flex">
+                    <p-button (onClick)="showOTP.set(true)" label="Register" icon="pi pi-plus" [text]="false" outlined />
+                    <p-button (onClick)="showDownload.set(true)" label="Download" icon="pi pi-download" [text]="false" />
                 </div>
-            </ng-template>
-            <ng-template #title>
-                <div class="flex gap-4 items-center">
-                    <app-screen-filter class="w-full md:w-[25rem]" (filterChange)="onFilterChange($event)" [showOrientation]="true" />
-                    <div class="gap-3 ml-auto hidden md:flex">
-                        <p-button (onClick)="showOTP.set(true)" label="Register" icon="pi pi-plus" [text]="false" outlined />
-                        <p-button (onClick)="showDownload.set(true)" label="Download" icon="pi pi-download" [text]="false" />
-                    </div>
-                    <div class="flex gap-2 ml-auto md:hidden">
-                        <p-button (onClick)="showDownload.set(true)" icon="pi pi-download" 
-                            [text]="false" pTooltip="Download" tooltipPosition="bottom" />
-                    </div>
+                <div class="flex gap-2 ml-auto md:hidden">
+                    <p-button (onClick)="showDownload.set(true)" icon="pi pi-download" 
+                        [text]="false" pTooltip="Download" tooltipPosition="bottom" />
                 </div>
-            </ng-template>
-            <div class="relative flex-1 h-full">
+            </div>
+        </ng-template>
+        
+        <div class="flex flex-col gap-4 h-full mt-4 md:mt-0">
+            <div class="hidden lg:block relative flex-1">
                 <div class="absolute top-0 left-0 h-full w-full">
                     <p-table
                         class="hidden lg:block" 
@@ -79,8 +80,8 @@
                                     </div>
                                 </td>
                                 <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
-                                <td><p-tag [value]="item.status || 'active'" [icon]="'pi ' + utils.getIcon(item?.status || 'active')"
-                                    [severity]="utils.getStatus(item?.status || 'active')" /></td>
+                                <td><p-tag [value]="item.status?.toUpperCase() || 'DISCONNECTED'" [icon]="'pi ' + utils.getIcon(item?.status || 'DISCONNECTED')"
+                                    [severity]="utils.getStatus(item?.status || 'DISCONNECTED')" /></td>
                                 <td>
                                     <div class="flex flex-row justify-center gap-2">
                                         <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
@@ -97,35 +98,34 @@
                         </ng-template>
                     </p-table>
                 </div>
-                <div class="relative h-full overflow-y-auto">
-                    <div class="absolute top-0 left-0 w-full h-full">
-                        <div class="block lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-                            @if (!isLoading()) {
-                                @for (item of screens(); track $index) {
-                                    <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
-                                } @empty {
-                                    <div class="flex justify-center items-center p-5 h-100">
-                                        <p>No screens found</p>
-                                    </div>
-                                }
-                            } @else {
-                                @for (item of utils.tableSkeletonRows; track $index) {
-                                    <p-skeleton height="5rem" />
-                                }
-                            }
-                        </div>
-                    </div>
+            </div>
+            
+            <div class="relative flex lg:hidden flex-1 overflow-y-auto">
+                <div class="absolute top-0 left-0 h-full w-full">
+                    @if (!isLoading()) {
+                        @for (item of screens(); track $index) {
+                            <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
+                        } @empty {
+                            <div class="flex justify-center items-center p-5 h-100">
+                                <p>No screens found</p>
+                            </div>
+                        }
+                    } @else {
+                        @for (item of utils.tableSkeletonRows; track $index) {
+                            <p-skeleton height="5rem" />
+                        }
+                    }
                 </div>
             </div>
-            <ng-template #footer>
-                <div class="flex flex-col md:flex-row items-center justify-between pt-4 md:pt-0">
-                    <p class="text-sm">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
-                        to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
-                    <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />
-                </div>
-            </ng-template>
-        </p-card>
-    </div>
+        </div>
+        <ng-template #footer>
+            <div class="flex flex-col md:flex-row items-center justify-between pt-4 md:pt-0">
+                <p class="text-sm">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
+                    to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
+                <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />
+            </div>
+        </ng-template>
+    </p-card>
 </div>
 
 <ng-template #actionBtn let-item>

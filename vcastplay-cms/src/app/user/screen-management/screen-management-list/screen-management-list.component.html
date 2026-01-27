@@ -1,27 +1,54 @@
 <div class="flex flex-col gap-1 h-full">
   <app-breadcrumbs [menu]="pageInfo"></app-breadcrumbs>
-  <div class="flex-1">
-    <p-card styleClass="h-full">
-      <ng-template #header>
-        <div class="mt-4 px-6">
-          <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
+  <p-card styleClass="h-full" class="flex-1">
+    <ng-template #header>
+      <div class="mt-4 px-6">
+        <p class="text-2xl font-semibold">{{ pageInfo[0].label }}</p>
+      </div>
+    </ng-template>
+    <ng-template #title>
+      <div class="flex gap-4 items-center mb-2 justify-between">
+        <app-screen-filter
+          class="w-full md:w-[25rem]"
+          (filterChange)="onFilterChange($event)"
+          [showLocation]="true"
+          [showScreenStatus]="true"
+        />
+        @if (hasSelectedScreens) {
+          <p-button label="Clear" (onClick)="selectMultipleScreens.set([])" severity="danger" outlined />
+        }
+      </div>
+    </ng-template>
+    
+    <div class="relative flex flex-col gap-4 h-full mt-4 md:mt-0">
+      <div class="lg:hidden flex flex-col gap-4 h-full">
+        <div class="flex items-center gap-2">
+          <p-checkbox inputId="all" [ngModel]="isAllChecked()" (onChange)="onClickCheckAll($event.checked)" 
+            [indeterminate]="isCheckIndeterminate" binary />
+          <label for="all">Select All</label>
         </div>
-      </ng-template>
-      <ng-template #title>
-        <div class="flex gap-4 items-center mb-2 justify-between">
-          <app-screen-filter
-            class="w-full md:w-[25rem]"
-            (filterChange)="onFilterChange($event)"
-            [showLocation]="true"
-            [showScreenStatus]="true"
-          />
-          @if (hasSelectedScreens) {
-            <p-button label="Clear" (onClick)="selectMultipleScreens.set([])" severity="danger" outlined />
-          }
+        <div class="relative flex-1 overflow-y-auto">
+          <div class="absolute top-0 left-0 w-full h-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              @if (!isLoading()) {
+                @for (item of screens(); track $index) {
+                  <app-screen-management-list-item [screen]="item" [selectMultipleScreens]="selectMultipleScreens" [actionBtn]="actionBtn" />
+                } @empty {
+                  <div class="flex justify-center items-center p-5 h-100">
+                    <p>No screens found</p>
+                  </div>
+                }
+              } @else {
+                @for (item of utils.tableSkeletonRows; track $index) { <p-skeleton height="5rem" /> }
+              }
+            </div>
+          </div>
         </div>
-      </ng-template>
-      <div class="relative flex-1 h-full">
-        <div class="absolute top-0 left-0 w-full h-full">
+      </div>
+
+      
+      <div class="hidden lg:block relative flex-1">
+        <div class="absolute top-0 left-0 h-full w-full">
           <p-table
             class="hidden lg:block"
             [value]="screens()"
@@ -29,9 +56,9 @@
             selectionMode="multiple"
             [(selection)]="selectMultipleScreens"
             [scrollable]="true"
+            scrollHeight="flex"
             size="small"
             dataKey="id"
-            stripedRows
           >
             <ng-template #header>
               <tr>
@@ -48,12 +75,12 @@
                 </th>
               </tr>
             </ng-template>
-            <ng-template #body let-item>
-              <tr class="text-sm" [pSelectableRow]="item">
-                <td><p-tableCheckbox [value]="item" /></td>
+            <ng-template #body let-item let-rowIndex="rowIndex">
+              <tr class="text-sm" [pSelectableRow]="item" [pSelectableRowDisabled]="isDisconnected(item)">
+                <td><p-tableCheckbox [disabled]="isDisconnected(item)" [value]="item" p/></td>
                 <td>
-                  <p-tag [value]="item.screenStatus?.toUpperCase() || 'OFFLINE'" [icon]="'pi ' + utils.getIcon(item.screenStatus ?? 'OFFLINE')"
-                    [severity]="utils.getStatus(item.screenStatus ?? 'OFFLINE')" />
+                  <p-tag [value]="item.status?.toUpperCase() || 'DISCONNECTED'" [icon]="'pi ' + utils.getIcon(item.status ?? 'DISCONNECTED')"
+                    [severity]="utils.getStatus(item.status ?? 'DISCONNECTED')" />
                 </td>
                 <td>
                   <div class="flex items-center gap-4">
@@ -72,8 +99,8 @@
                   <div class="flex gap-2">
                     @if (item.content) {
                       <div class="flex flex-col">
-                        <p>{{ item.contentName }}</p>
-                        <p class="text-gray-500">{{ utils.onGetLastUpdatedLabel(item.content.updatedAt) }}</p>
+                        <p class="line-clamp-1 truncate md:w-40 lg:w-50" [pTooltip]="item.content.content.name">{{ item.content.content.name }}</p>
+                        <!-- <p class="text-gray-500">{{ utils.onGetLastUpdatedLabel(item.content.updatedAt) }}</p> -->
                       </div>
                       <!-- <p-tag
                         [value]="item?.content?.status?.toUpperCase()"
@@ -85,7 +112,7 @@
                     }
                   </div>
                 </td>
-                <td><p>{{ item.response ?? '-' }}</p></td>
+                <td><p class="text-wrap w-60">{{ item.response ?? '-' }}</p></td>
                 <td><p>{{ utils.onGetLastUpdatedLabel(item.lastSeen) }}</p></td>
                 <td><p>{{ utils.onGetLastUpdatedLabel(item.lastScreenshotAt) }}</p></td>
                 <td>
@@ -103,95 +130,83 @@
               </tr>
             </ng-template>
           </p-table>
-
-          <div class="lg:hidden flex flex-col gap-4 h-full">
-            <div class="flex items-center gap-2">
-              <p-checkbox inputId="all" [ngModel]="isAllChecked()" (onChange)="onClickCheckAll($event.checked)" 
-                [indeterminate]="isCheckIndeterminate" binary />
-              <label for="all">Select All</label>
-            </div>
-            <div class="relative flex-1 overflow-y-auto">
-              <div class="absolute top-0 left-0 w-full h-full">
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  @if (!isLoading()) {
-                    @for (item of screens(); track $index) {
-                      <app-screen-management-list-item [screen]="item" [selectMultipleScreens]="selectMultipleScreens" [actionBtn]="actionBtn" />
-                    } @empty {
-                      <div class="flex justify-center items-center p-5 h-100">
-                        <p>No screens found</p>
-                      </div>
-                    }
-                  } @else {
-                    @for (item of utils.tableSkeletonRows; track $index) { <p-skeleton height="5rem" /> }
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-      <ng-template #footer>
-        <div class="flex items-center justify-center lg:justify-between">
-          <div class="flex gap-2 items-center text-sm">
-            <p class="hidden lg:block">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
-              to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
+    </div>  
+    <ng-template #footer>
+      <div class="flex items-center justify-center lg:justify-between">
+        <div class="flex gap-2 items-center text-sm">
+          <p class="hidden lg:block">Showing {{ (pagination().currentPage - 1) * pagination().itemsPerPage + 1 }} 
+            to {{ (pagination().currentPage - 1) * pagination().itemsPerPage + pagination().itemCount }} of {{ pagination().totalItems }} results</p>
 
-            @if (hasSelectedScreens) {
-              <p class="text-red-500 italic">Selected: {{ selectMultipleScreens().length }} screen(s)</p>
-            }
-          </div>
-          <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />
+          @if (hasSelectedScreens) {
+            <p class="text-red-500 italic">Selected: {{ selectedScreens.length }} screen(s)</p>
+          }
         </div>
-        <p-fieldset [toggleable]="isMobile" [collapsed]="isMobile">
-          <ng-template #header>
-            <p class="text-sm font-semibold">Controls:</p>
-          </ng-template>
-          <app-screen-controls [selectMultipleScreens]="selectMultipleScreens" (onScreenControlChange)="onScreenControlChange($event)" />
-        </p-fieldset>
-        <p-fieldset [toggleable]="isMobile" [collapsed]="isMobile">
-          <ng-template #header>
-            <p class="text-sm font-semibold">Legends:</p>
-          </ng-template>
-          <div class="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6">
-            <div class="flex gap-4 items-center">
-              <div class="flex gap-1 items-center md:justify-center">
-                <p class="text-sm font-semibold">Playing:</p>
-                <p-badge severity="success" [value]="legend.totalPlaying" />
-              </div>
-              <div class="flex gap-1 items-center md:justify-center">
-                <p class="text-sm font-semibold">Disconnected:</p>
-                <p-badge severity="danger" [value]="legend.totalDisconnected" />
-              </div>
-              <div class="flex gap-1 items-center md:justify-center">
-                <p class="text-sm font-semibold">StandBy:</p>
-                <p-badge severity="warn" [value]="legend.totalStandby" />
-              </div>
+        <app-paginator [pagination]="pagination" (onPageChange)="onPageChange($event)" />
+      </div>
+      <p-fieldset [toggleable]="isMobile" [collapsed]="isMobile">
+        <ng-template #header>
+          <p class="text-sm font-semibold">Controls:</p>
+        </ng-template>
+        <app-screen-controls [selectMultipleScreens]="selectMultipleScreens" (onScreenControlChange)="onScreenControlChange($event)" />
+      </p-fieldset>
+      <p-fieldset [toggleable]="isMobile" [collapsed]="isMobile">
+        <ng-template #header>
+          <p class="text-sm font-semibold">Legends:</p>
+        </ng-template>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-6">
+          <div class="flex gap-4 items-center">
+            <div class="flex gap-1 items-center md:justify-center">
+              <p class="text-sm font-semibold">Playing:</p>
+              <p-badge severity="success" [value]="legend.totalPlaying" />
             </div>
-            <div class="md:ml-auto flex gap-6 items-center">
-              <div class="flex gap-1 items-start md:justify-center">
-                <p class="text-sm font-semibold">Approved:</p>
-                <p-badge severity="success" [value]="legend.totalApproved" />
-              </div>
-              <div class="flex gap-1 items-start md:justify-center">
-                <p class="text-sm font-semibold">Disapproved:</p>
-                <p-badge severity="danger" [value]="legend.totalDisapproved" />
-              </div>
+            <div class="flex gap-1 items-center md:justify-center">
+              <p class="text-sm font-semibold">Disconnected:</p>
+              <p-badge severity="danger" [value]="legend.totalDisconnected" />
+            </div>
+            <div class="flex gap-1 items-center md:justify-center">
+              <p class="text-sm font-semibold">StandBy:</p>
+              <p-badge severity="warn" [value]="legend.totalStandby" />
             </div>
           </div>
-        </p-fieldset>
-      </ng-template>
-    </p-card>
-  </div>
+          <div class="md:ml-auto flex gap-6 items-center">
+            <div class="flex gap-1 items-start md:justify-center">
+              <p class="text-sm font-semibold">Approved:</p>
+              <p-badge severity="success" [value]="legend.totalApproved" />
+            </div>
+            <div class="flex gap-1 items-start md:justify-center">
+              <p class="text-sm font-semibold">Disapproved:</p>
+              <p-badge severity="danger" [value]="legend.totalDisapproved" />
+            </div>
+          </div>
+        </div>
+      </p-fieldset>
+    </ng-template>
+  </p-card>
 </div>
 
 <ng-template #actionBtn let-item>
-  <p-button pTooltip="Screenshot" tooltipPosition="bottom" icon="pi pi-camera" severity="success" size="small" />
+  <p-button (onClick)="onClickScreenshot(item)" [disabled]="isDisconnected(item) || isWebPlayer(item)"
+    pTooltip="Screenshot" tooltipPosition="bottom" icon="pi pi-camera" severity="success" size="small" />
   <p-button (onClick)="onClickOpenDetails(item)" pTooltip="View Details" 
     tooltipPosition="bottom" icon="pi pi-info-circle" severity="contrast" size="small" />
 </ng-template>
 
 <app-screen-broadcast-message [showBroadcast]="showBroadcast" (onBroadCastMessage)="onBroadCastMessage($event)" />
 
-<app-screen-settings [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" />
+<app-screen-settings [screen]="selectedScreen()" [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" />
 
 <app-screen-other-info [isShowInfo]="showScreenDetails" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" />
+
+<p-dialog header="Preview" [(visible)]="showScreenshot" styleClass="w-[50rem]" (onHide)="onHidePreview()"
+  [draggable]="false" closable modal>
+  @if (screenShotData().loading) { <p-progressbar mode="indeterminate" /> }
+  <div class="relative aspect-video border-2 border-[var(--p-surface-300)] dark:border-[var(--p-surface-700)] bg-stone-800 dark:bg-stone-900
+    text-white rounded-lg group ">
+    <ng-container *ngIf="!screenShotData().loading">
+      <app-asset-preview class="absolute h-full w-full flex items-center justify-center bg-stone-800"
+        [asset]="{ type: 'image', name: screenShotData().fileName }" [link]="publicApi + 'screenshots/' + tenantId + '/' + screenShotData().fileName" />
+    </ng-container>
+  </div>
+</p-dialog>

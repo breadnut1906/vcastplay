@@ -1,9 +1,8 @@
 import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
-import { ScreenService } from '../../screens/screen.service';
+import { ScreenService } from '../../../user/screens/screen.service';
 import { UtilityService } from '../../../core/services/utility.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { FormBuilder } from '@angular/forms';
 
 @Component({
   selector: 'app-screen-settings',
@@ -13,6 +12,7 @@ import { FormBuilder } from '@angular/forms';
 })
 export class ScreenSettingsComponent {
 
+  @Input() screen!: Screen | any;
   @Input() showSettings = signal<boolean>(false);
   @Output() onSettingsChange = new EventEmitter<any>();
 
@@ -22,25 +22,17 @@ export class ScreenSettingsComponent {
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
 
-  formBuilder = inject(FormBuilder);
-  screenConfigForm = this.formBuilder.group({
-    display: [false],
-    audio: [false],
-    alwaysTop: [false],
-    fullscreen: [false],
-    syncTime: [false],
-    playbackLogging: [false],
-  })
-  // screenConfigForm: FormGroup = new FormGroup({
-  //   display: new FormControl(false),
-  //   audio: new FormControl(false),
-  //   alwaysTop: new FormControl(false),
-  //   fullscreen: new FormControl(false),
-  //   syncTime: new FormControl(false),
-  //   playbackLogging: new FormControl(false),
-  // })
-
   onClickAppy() {
-    this.onSettingsChange.emit(this.screenConfigForm.value);
+    this.onSettingsChange.emit(this.settingsForm.value);
+    this.showSettings.set(false)
+    this.settingsForm.reset();
+  }
+
+  get settingsForm() { return this.screenService.settingsForm; }
+  get displays() { 
+    return this.screen.info?.graphics.displays; 
+  }
+  get fullscreenMode() { 
+    return this.settingsForm.get('fullscreen')?.value;
   }
 }

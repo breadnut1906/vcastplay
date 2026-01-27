@@ -22,7 +22,11 @@ export class UserService {
     const accessToken = `bearer ${this.storage.get('accessToken')}`;
     const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'Authorization': accessToken });
     return headers;
-  }  
+  }
+
+  onCurrentUser() {
+    return this.http.get(`${this.api}tenants/auth/me`, { headers: this.onGetHTTPHeaders() });
+  }
 
   onLoadUsers(page: number = 1, limit: number = 10) {
     return this.http.get(`${this.api}tenants/users?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() })

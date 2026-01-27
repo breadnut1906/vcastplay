@@ -31,7 +31,7 @@ export class ScreenListComponent {
   showDownload = signal<boolean>(false);
   showOTP = signal<boolean>(false);
   // selectedScreen = signal<Screen | null>(null);
-  screens = signal<Screen[]>([]);
+  screens = signal<Screen[] | any[]>([]);
   pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
 
   screenFilters = signal<any>({});

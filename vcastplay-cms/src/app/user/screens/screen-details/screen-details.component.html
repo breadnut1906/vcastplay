@@ -47,7 +47,10 @@
             </div>
             <div class="flex flex-col gap-4 col-span-12 md:col-span-6 lg:col-span-4">
                 <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
-                    <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">Display</span>
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">
+                        <span>Display</span>
+                        <p-button icon="pi pi-cog" (onClick)="isShowSettings.set(true)" />
+                    </div>
                     <div class="flex items-center justify-between gap-4 px-4 py-2 text-sm">
                         <p>Type:</p>
                         <p-tag [value]="screen.type?.toUpperCase() || 'N/A'" severity="success" />
@@ -186,5 +189,6 @@
     </div>
 </ng-template>
 
-
 <app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" [isAdmin]="true" />
+
+<app-screen-settings [screen]="screenForm.value" [showSettings]="isShowSettings" (onSettingsChange)="onSettingsChange($event)" />

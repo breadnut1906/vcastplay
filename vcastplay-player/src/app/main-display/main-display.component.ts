@@ -54,26 +54,35 @@ export class MainDisplayComponent {
   displayOptions: MenuItem[] = [];
 
   constructor(private cdr: ChangeDetectorRef) {
-    const platform = this.storage.get('platform');
 
     effect(() => {
-      console.log(`System has been initialized in ${platform.toUpperCase()}`);
+      const data = this.player.playerContent();
+      if (data) this.webSocket.onEmit('response-update', { response: `Player has started` })
     })
   }
 
   async ngOnInit() {
+    const platform = this.storage.get('platform');
+    console.log(`System has been initialized in ${platform.toUpperCase()}`);
+
     const items = await this.indexedDB.getAllItems();
     if (items.length > 0) {
       this.player.playerContent.set({ type: 'asset', content: items[0] });
+      this.webSocket.onEmit('response-update', { response: `Player has started` })
       this.isPlay.set(true);
     }
   }
 
-  ngOnDestroy() { }
+  ngOnDestroy() {
+    this.webSocket.onEmit('display-status', { status: 'off' })
+  }
 
   async ngAfterViewInit() {
     this.onGetPlayerInformation();
     this.cdr.detectChanges();
+
+    // Send message to CMS that the display is online
+    this.webSocket.onEmit('display-status', { status: 'on' })
   }
 
   // onClikcStopPreview() {

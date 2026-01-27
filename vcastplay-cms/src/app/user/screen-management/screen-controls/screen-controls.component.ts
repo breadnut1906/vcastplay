@@ -86,13 +86,21 @@ export class ScreenControlsComponent {
         complete: () => this.onCheckAllDone()
       })
     })
+    this.onScreenControlChange.emit({ type: 'apply', data: this.screenItems() });
     this.selectedContent.set(null);
     this.selectedContentForm.reset();
   }
 
   onClickSendCommand(command: string) {
+
+    // Checks if any screen is selected
+    if (this.hasSelected) {
+      this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
+      return;
+    }
+    
     this.isSending.set(true);
-    const screens = this.selectMultipleScreens();
+    const screens = this.selectMultipleScreens().filter((screen: any) => ['connected'].includes(screen.status));
     const newScreens: any = Array.from(screens).map((screen: any) => ({ id: screen.id, content: this.selectedContent(), progress: 0, status: 'pending' }));
     this.screenItems.set(newScreens);
 
@@ -121,7 +129,6 @@ export class ScreenControlsComponent {
     })
     this.selectedContent.set(null);
     this.selectedContentForm.reset();
-    this.onScreenControlChange.emit(this.screenItems());
   }
 
   onClickBroadCastMessage() {
@@ -130,7 +137,7 @@ export class ScreenControlsComponent {
       this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
       return;
     }
-    this.onScreenControlChange.emit('broadcast');
+    this.onScreenControlChange.emit({ type: 'broadcast', data: selectedScreens });
   }
 
   onClickOpenSettings() {
@@ -139,7 +146,7 @@ export class ScreenControlsComponent {
       this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
       return;
     }
-    this.onScreenControlChange.emit('settings');
+    this.onScreenControlChange.emit({ type: 'settings', data: selectedScreens });
   }
   
   onSelectionChange(event: any) {
@@ -157,6 +164,8 @@ export class ScreenControlsComponent {
         type: event.type, 
         url: ['facebook', 'youtube', 'link'].includes(event.type) ? event.link 
           : `${this.publicApi}assets/${this.tenantId}/${event.name}`,
+        status: event.status,
+        updatedAt: event.updatedAt
       } 
     });
   }
@@ -175,4 +184,5 @@ export class ScreenControlsComponent {
   get contentType() { return this.screenService.contentType; }
 
   get tenantId() { return this.storage.get('id'); }
+  get hasSelected() { return this.selectMultipleScreens().length == 0; }
 }

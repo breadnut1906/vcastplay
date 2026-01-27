@@ -36,7 +36,7 @@ export interface Screen {
     screenshotOn?: Date;
     onlineOn?: Date;
     registeredAt?: Date;
-    config?: any;
+    settings?: ScreenSettings;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -56,13 +56,18 @@ export interface ScreenMessage {
     updatedOn: Date;
 }
 
-export interface ScreenConfiguration {
-    display: boolean;
-    audio: boolean;
-    alwaysTop: boolean;
-    fullscreen: boolean;
-    syncTime: boolean;
-    playbackLogging: boolean;
+export interface ScreenSettings {
+    display: boolean,
+    audio: boolean,
+    alwaysOnTop: boolean,
+    fullscreen: boolean,
+    syncTime: boolean,
+    playbackLogging: boolean,
+    mainDisplay: any,
+    width: number,
+    height: number,
+    left: number
+    top: number;
 }
 
 export interface ScreenItems {

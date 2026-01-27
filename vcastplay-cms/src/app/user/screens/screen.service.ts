@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Pagination, SelectOption } from '../../shared/interfaces/general';
 import { MenuItem } from 'primeng/api';
 import { environment } from '../../../environments/environment.development';
@@ -19,6 +19,7 @@ export class ScreenService {
   utils = inject(UtilityService);
   http = inject(HttpClient);
 
+  formBuilder = inject(FormBuilder);
   isEditMode = signal<boolean>(false);
 
   private screenSignal = signal<Screen[]>([]);
@@ -41,6 +42,20 @@ export class ScreenService {
     id: new FormControl(null),
     name: new FormControl(null, [ Validators.required]),
     type: new FormControl(null),
+  })
+  
+  settingsForm = this.formBuilder.group({
+    display: [true],
+    audio: [true],
+    alwaysOnTop: [true],
+    fullscreen: [true],
+    syncTime: [true],
+    playbackLogging: [false],
+    mainDisplay: [''],
+    width: [640],
+    height: [480],
+    left: [0],
+    top: [0],
   })
   
   pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });

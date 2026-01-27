@@ -63,7 +63,7 @@ async function createWindow() {
     if (isDev) {
       // 🟢 DEV: Use Angular live server
       // win.loadURL('http://localhost:4200');
-      win.loadURL('http://localhost:50883/');
+      win.loadURL('http://localhost:57959/');
       win.webContents.openDevTools();
     } else {
       // 🟢 PROD: Use built Angular app
@@ -104,6 +104,8 @@ ipcMain.handle('control', async (_event, action, appName) => {
     case 'close':
       await win.hide();
       return true;
+    case 'screenshot':
+      return await systemFunc.onTakeScreenShot();
     default:
       return await systemFunc.onSystemCommand(action, appName);
   }

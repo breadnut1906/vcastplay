@@ -34,6 +34,7 @@ export class AuthService {
     
     this.storage.remove('accessToken');
     this.storage.remove('refreshToken');
+    this.storage.remove('userId');
 
     return Promise.resolve(id);
   }

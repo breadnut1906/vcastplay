@@ -93,7 +93,7 @@ export class LoginComponent {
         next: (res: any) => {
           this.storage.set('accessToken', res.accessToken, remember);
           this.storage.set('refreshToken', res.refreshToken, remember);
-          this.storage.set('admin', JSON.stringify(this.isAdmin), remember);
+          this.storage.set('admin', JSON.stringify(this.isAdmin), true);
           this.router.navigate([ path ]);
         },
         error: (err: any) => {
