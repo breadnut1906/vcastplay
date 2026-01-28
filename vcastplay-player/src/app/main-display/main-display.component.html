@@ -1,5 +1,5 @@
 <div #viewport class="relative flex flex-1 flex-col gap-4 justify-center items-center h-screen group overflow-hidden select-none"
-  [ngClass]="{ 'bg-[var(--p-primary-500)]': !isPlay(), 'bg-stone-800': isPlay() }">
+  [ngClass]="{ 'bg-[var(--p-primary-500)]': !playerContent, 'bg-stone-800': playerContent }">
   <!-- Main Player -->
   <!-- <ng-container *ngIf="currentContent as contentData">
     @switch (contentData?.type) { @case ('design') {
@@ -17,15 +17,20 @@
     } }
   </ng-container> -->
 
-  <ng-container *ngIf="player.playerContent() as data">
+  <ng-container *ngIf="playerContent as data">
     @switch (data.type) {
       @case('asset') {
-        <app-asset-preview class="relative w-full h-full flex items-center justify-center" [asset]="data.content" [autoPlay]="isPlay()" [showControls]="false" />
+        <app-asset-preview class="relative w-full h-full flex items-center justify-center" [asset]="data.content" [autoPlay]="isPlay()" 
+          [autoPlay]="true" [showControls]="false" />
       }
     }
   </ng-container>
 
-  <ng-container *ngIf="!player.playerContent() && !isLoading()">
+  <ng-container *ngIf="playerBroadcast">
+    <app-broadcast-preview />
+  </ng-container>
+
+  <ng-container *ngIf="!playerContent && !isLoading()">
     <div class="absolute top-0 start-0 flex items-center justify-center p-6">
       <img class="w-30" src="assets/vcastplay.png" alt="vcastplay 2.0 logo" />
     </div>
@@ -67,145 +72,3 @@
     <p class="text-sm text-white">{{tenantId}}</p>
   </div>
 </div>
-
-<!-- Remove this code -->
-<!-- <p-dialog
-  header="Settings"
-  [(visible)]="showSettings"
-  [style]="{ width: '20rem' }"
-  [resizable]="false"
-  (onShow)="onShowSettings()"
-  (onHide)="showSettings.set(false)"
-  draggable
-  modal
->
-  <form class="flex flex-col gap-3" [formGroup]="settingsForm">
-    <div class="flex gap-3">
-      <label for="left" class="text-sm">Always On:</label>
-      <p-toggleswitch class="ml-auto" formControlName="alwaysOn" />
-    </div>
-    <div class="flex gap-3">
-      <label for="left" class="text-sm">Audio:</label>
-      <p-toggleswitch class="ml-auto" formControlName="toggleAudio" />
-    </div>
-    <div class="flex gap-3">
-      <label for="left" class="text-sm">Content Logs:</label>
-      <p-toggleswitch class="ml-auto" formControlName="contentLogs" />
-    </div>
-    @if (['desktop'].includes(platform)) {
-    <div class="flex gap-3">
-      <label for="left" class="text-sm">Always On Top:</label>
-      <p-toggleswitch class="ml-auto" formControlName="alwaysOnTop" />
-    </div>
-    <div class="flex gap-3">
-      <label for="fullscreen" class="text-sm">Select Display:</label>
-      <p-select
-        class="ml-auto"
-        formControlName="displayId"
-        [options]="displayOptions"
-        optionLabel="name"
-        optionValue="id"
-        appendTo="body"
-        placeholder="Select display"
-      />
-    </div>
-    <div class="flex gap-3">
-      <label for="fullscreen" class="text-sm">Fullscreen:</label>
-      <p-checkbox
-        class="ml-auto"
-        inputId="fullscreen"
-        label="fullscreen"
-        formControlName="fullscreen"
-        binary
-      />
-    </div>
-    <div class="flex gap-3">
-      <label for="resizable" class="text-sm">Resizable:</label>
-      <p-checkbox
-        class="ml-auto"
-        inputId="resizable"
-        label="resizable"
-        formControlName="resizable"
-        binary
-      />
-    </div>
-    <div class="flex gap-3">
-      <label for="height" class="text-sm">Height:</label>
-      <p-inputnumber
-        class="ml-auto"
-        formControlName="height"
-        size="small"
-        inputId="height"
-        [min]="0"
-        placeholder="height"
-        [useGrouping]="false"
-        [inputStyle]="{ width: '5rem' }"
-        showButtons
-      />
-    </div>
-    <div class="flex gap-3">
-      <label for="width" class="text-sm">Width:</label>
-      <p-inputnumber
-        class="ml-auto"
-        formControlName="width"
-        size="small"
-        inputId="width"
-        [min]="0"
-        placeholder="width"
-        [useGrouping]="false"
-        [inputStyle]="{ width: '5rem' }"
-        showButtons
-      />
-    </div>
-    <div class="flex gap-3">
-      <label for="top" class="text-sm">Top:</label>
-      <p-inputnumber
-        class="ml-auto"
-        formControlName="top"
-        size="small"
-        inputId="top"
-        [min]="0"
-        placeholder="top"
-        [useGrouping]="false"
-        [inputStyle]="{ width: '5rem' }"
-        showButtons
-      />
-    </div>
-    <div class="flex gap-3">
-      <label for="left" class="text-sm">Left:</label>
-      <p-inputnumber
-        class="ml-auto"
-        formControlName="left"
-        size="small"
-        inputId="left"
-        [min]="0"
-        placeholder="left"
-        [useGrouping]="false"
-        [inputStyle]="{ width: '5rem' }"
-        showButtons
-      />
-    </div>
-    } @if (['android'].includes(platform)) {
-    <div class="flex gap-3">
-      <label for="left" class="text-sm mr-auto">Re-Open:</label>
-      <p-button icon="pi pi-times" (onClick)="onClickAndroidBtn('reopen')" />
-    </div>
-    <div class="flex gap-3">
-      <label for="left" class="text-sm mr-auto">Close:</label>
-      <p-button icon="pi pi-times" (onClick)="onClickAndroidBtn('close')" />
-    </div>
-    <div class="flex gap-3">
-      <label for="left" class="text-sm mr-auto">Restart:</label>
-      <p-button icon="pi pi-refresh" (onClick)="onClickAndroidBtn('restart')" />
-    </div>
-    <div class="flex gap-3">
-      <label for="left" class="text-sm mr-auto">Shutdown:</label>
-      <p-button icon="pi pi-power-off" (onClick)="onClickAndroidBtn('shutdown')" />
-    </div>
-    }
-  </form>
-  <ng-template #footer>
-    <p-button label="Clear Logs" severity="secondary" (onClick)="onClickClearLogs()" />
-    <p-button label="Apply" severity="success" (onClick)="onClickApplySettings()" />
-  </ng-template>
-</p-dialog> -->

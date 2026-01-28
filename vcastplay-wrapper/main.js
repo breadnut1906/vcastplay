@@ -63,7 +63,7 @@ async function createWindow() {
     if (isDev) {
       // 🟢 DEV: Use Angular live server
       // win.loadURL('http://localhost:4200');
-      win.loadURL('http://localhost:57959/');
+      win.loadURL('http://localhost:59259/');
       win.webContents.openDevTools();
     } else {
       // 🟢 PROD: Use built Angular app
@@ -114,6 +114,33 @@ ipcMain.handle('control', async (_event, action, appName) => {
 ipcMain.handle('getSystemInfo', async () => {
   return await systemFunc.onGetSystemInfo();
 });
+
+ipcMain.handle('getHealthCheck', async () => {
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  const res = await fetch('http://localhost:8085/data.json', { cache: 'no-store' });
+  const data = await res.json();
+  const root = data?.Children?.[0];
+
+  // CPU
+  const cpu = systemFunc.onGetSystemByText(root, 'cpu')[0];
+
+  const cpuLoadGroup = systemFunc.onGetSystemByChild(cpu, 'Load');
+  const cpuLoad = systemFunc.onGetSystemSensor(cpuLoadGroup, 'CPU Total')?.Value;
+  
+  const cpuTempGroup  = systemFunc.onGetSystemSensor(cpuLoadGroup, 'Temperatures')?.Value;
+  const cpuTemp = systemFunc.onGetSystemSensor(cpu, 'CPU Package')?.Value;
+
+  // Memory
+  const memory = systemFunc.onGetSystemByText(root, 'memory')[0];
+  const memoryLoad = systemFunc.onGetSystemSensor(memory, 'Memory')?.Value;
+  return {
+    cpu,
+    cpuLoad,
+    cpuTemp,
+    memory,
+    memoryLoad
+  };
+})
 
 ipcMain.handle('takeScreenshot', async () => {
   return await systemFunc.onTakeScreenShot();

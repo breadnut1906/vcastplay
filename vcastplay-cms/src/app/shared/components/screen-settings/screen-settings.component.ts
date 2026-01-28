@@ -12,9 +12,11 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 })
 export class ScreenSettingsComponent {
 
-  @Input() screen!: Screen | any;
+  // @Input() screen!: Screen[] | any[];
   @Input() showSettings = signal<boolean>(false);
+
   @Output() onSettingsChange = new EventEmitter<any>();
+  @Output() onClearAllChange = new EventEmitter<any>();
 
   screenService = inject(ScreenService);
   utils = inject(UtilityService);
@@ -28,10 +30,14 @@ export class ScreenSettingsComponent {
     this.settingsForm.reset();
   }
 
-  get settingsForm() { return this.screenService.settingsForm; }
-  get displays() { 
-    return this.screen.info?.graphics.displays; 
+  onClickClearAll() {
+    this.onClearAllChange.emit(true);
   }
+
+  get settingsForm() { return this.screenService.settingsForm; }
+  // get displays() { 
+  //   return this.screen.info?.graphics.displays; 
+  // }
   get fullscreenMode() { 
     return this.settingsForm.get('fullscreen')?.value;
   }

@@ -1,20 +1,21 @@
 import { Component, EventEmitter, inject, Input, Output, signal, ViewChild } from '@angular/core';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { ScreenService } from '../../screens/screen.service';
 import { UtilityService } from '../../../core/services/utility.service';
+import { StorageService } from '../../../core/services/storage.service';
 import { BroadcastService } from '../../settings/broadcast/broadcast.service';
 import { Screen, ScreenItems } from '../../screens/screen';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { ContentSelectionComponent } from '../../../shared/components/content-selection/content-selection.component';
 import { FormBuilder, Validators } from '@angular/forms';
-import { v7 as uuidv7 } from 'uuid';
 import { HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../environments/environment.development';
-import { StorageService } from '../../../core/services/storage.service';
+import { ContentSelectionComponent } from '../../../shared/components/content-selection/content-selection.component';
+import { ScreenSettingsComponent } from '../../../shared/components/screen-settings/screen-settings.component';
+import { ScreenBroadcastMessageComponent } from '../screen-broadcast-message/screen-broadcast-message.component';
 
 @Component({
   selector: 'app-screen-controls',
-  imports: [ PrimengUiModule, ContentSelectionComponent ],
+  imports: [ PrimengUiModule, ContentSelectionComponent, ScreenSettingsComponent, ScreenBroadcastMessageComponent ],
   templateUrl: './screen-controls.component.html',
   styleUrl: './screen-controls.component.scss'
 })
@@ -38,13 +39,19 @@ export class ScreenControlsComponent {
 
   isSending = signal<boolean>(false);
   showContents = signal<boolean>(false);
+  showSettings = signal<boolean>(false);
+  showBroadcast = signal<boolean>(false);
+
   formBuilder = inject(FormBuilder);
   selectedContentForm = this.formBuilder.group({
     id: [''],
     name: ['', [ Validators.required ]],
     type: ['']
   })
+
+  // Assets | Playlist | Schedule | Design Layout
   selectedContent = signal<any>(null);
+
   screenItems = signal<ScreenItems[]>([]);
 
   onClickOpenContents() {
@@ -137,7 +144,8 @@ export class ScreenControlsComponent {
       this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
       return;
     }
-    this.onScreenControlChange.emit({ type: 'broadcast', data: selectedScreens });
+
+    this.showBroadcast.set(true);
   }
 
   onClickOpenSettings() {
@@ -146,7 +154,8 @@ export class ScreenControlsComponent {
       this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
       return;
     }
-    this.onScreenControlChange.emit({ type: 'settings', data: selectedScreens });
+
+    this.showSettings.set(true);
   }
   
   onSelectionChange(event: any) {
@@ -179,10 +188,43 @@ export class ScreenControlsComponent {
     if (finished) this.isSending.set(false);
   }
 
+  onSettingsChange(event: any) {
+    console.log(this.settingsForm.value);
+    
+    this.message.add({ severity:'success', summary: 'Success', detail: 'Settings applied successfully!' });
+    this.showSettings.set(false);
+  }
+
+  onClearAllChange() {
+    this.onClickSendCommand('clear');
+    // this.showSettings.set(false);
+  }
+  
+  onBroadCastMessage(event: any) {
+    if (!event) return;
+    this.selectedContent.set({
+      icon: event.icon,
+      name: event.name,
+      category: event.category,
+      title: event.title,
+      description: event.description,
+      message: event.message,
+      duration: event.duration
+    });
+    this.onClickSendCommand('broadcast');
+  //   const messageArr: ScreenMessage[] = this.selectedArrScreenBroadcastMessage();
+  //   if (messageArr.length == 0) return;
+  //   this.screenService.onBroadCastMessage(messageArr);
+  //   this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message sent successfully!' });
+  //   this.showBroadcast.set(false);
+  //   this.selectedArrScreenBroadcastMessage.set([]);
+  }
+
   get isMobile() { return this.utils.isMobile(); }
   get isTablet() { return this.utils.isTablet(); }
   get contentType() { return this.screenService.contentType; }
 
   get tenantId() { return this.storage.get('id'); }
   get hasSelected() { return this.selectMultipleScreens().length == 0; }
+  get settingsForm() { return this.screenService.settingsForm; }
 }

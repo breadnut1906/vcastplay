@@ -23,13 +23,14 @@ export class PlayerService {
 
     playerContent = signal<Assets | DesignLayout | Playlists | any>(null);
     playerCommand = signal<any>(null);
+    playerBroadcast = signal<any>(null);
+    isStartHealthCheck = signal<boolean>(false);
 
     systemInfo = signal<any>(null);
     playerCode = signal<string>('');
 
     androidData = signal<any>(null);
     dataFromAndroid = signal<any>(null);
-    isContentLogs = signal<any>(null);
 
     playerLoading = signal<boolean>(false);
 
@@ -49,8 +50,6 @@ export class PlayerService {
         }
         this.playerContent.set(data);
     }
-
-    onGetContents() { }
     
     sendDesktopCommand(action: string): Promise<any> {
         return new Promise((resolve, reject) => {
@@ -194,5 +193,20 @@ export class PlayerService {
     onRegisterPlayer(body: any) {
         const headers = new HttpHeaders({ 'Content-Type': 'application/json', 'x-api-key': this.apiKey });
         return this.http.post(`${this.api}admin/screens`, body, { headers });
+    }
+
+    onGetSystemHealthCheck() {
+        // return this.http.get('http://localhost:8085/data.json')
+        return new Promise((resolve, reject) => {
+            window.system.getHealthCheck()
+            .then((response: any) => {
+                console.log(response);
+                resolve(response);
+            })
+            .catch(err => {
+                console.error('Error getting desktop system info:', err);
+                reject(err);
+            });
+        });
     }
 }

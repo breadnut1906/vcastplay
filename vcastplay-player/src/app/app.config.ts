@@ -20,6 +20,7 @@ declare global {
     system: {
       control: (action: string, app?: string) => Promise<string>;
       getSystemInfo: () => Promise<string>;
+      getHealthCheck: () => Promise<any>;
       checkForUpdates: () => void;
       // onUpdateAvailable: (callback: () => void) => void;
       // onUpdateDownloaded: (callback: () => void) => void;

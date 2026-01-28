@@ -6,8 +6,7 @@ import { IndexedDbService } from '../core/services/indexed-db.service';
 import { ComponentsModule } from '../core/modules/components/components.module';
 import { StorageService } from '../core/services/storage.service';
 import { PlatformService } from '../core/services/platform.service';
-import { FormControl, FormGroup } from '@angular/forms';
-import { MenuItem, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { WebsocketService } from '../core/services/websocket.service';
 import { environment } from '../../environments/environment.development';
 
@@ -36,28 +35,15 @@ export class MainDisplayComponent {
   currentContent: any;
   nextCurrent: any;
 
-  settingsForm: FormGroup = new FormGroup({
-    fullscreen: new FormControl(false),
-    resizable: new FormControl(true),
-    top: new FormControl(0),
-    left: new FormControl(0),
-    width: new FormControl(600),
-    height: new FormControl(800),
-    alwaysOn: new FormControl(false),
-    alwaysOnTop: new FormControl(false),
-    contentLogs: new FormControl(false),
-    toggleAudio: new FormControl(false),
-    audio: new FormControl(false),
-    displayId: new FormControl(null),
-  });
-
-  displayOptions: MenuItem[] = [];
-
   constructor(private cdr: ChangeDetectorRef) {
 
     effect(() => {
       const data = this.player.playerContent();
+      const broadcast = this.player.playerBroadcast();
+
       if (data) this.webSocket.onEmit('response-update', { response: `Player has started` })
+
+      if (broadcast) this.webSocket.onEmit('response-update', { response: `Player is broadcasting...` })
     })
   }
 
@@ -69,7 +55,7 @@ export class MainDisplayComponent {
     if (items.length > 0) {
       this.player.playerContent.set({ type: 'asset', content: items[0] });
       this.webSocket.onEmit('response-update', { response: `Player has started` })
-      this.isPlay.set(true);
+      // this.isPlay.set(true);
     }
   }
 
@@ -163,9 +149,9 @@ export class MainDisplayComponent {
 
   get playerCode() { return this.player.playerCode; }
   get systemInfo() { return this.player.systemInfo; }
-  get androidData() { return this.player.androidData; }
-  get playerContent() { return this.player.playerContent; }
-  get isContentLogs() { return this.player.isContentLogs; }
+  get androidData() { return this.player.androidData(); }
+  get playerContent() { return this.player.playerContent(); }
+  get playerBroadcast() { return this.player.playerBroadcast(); }
 
   get platform() { return this.platformService.platform; }
   get dataFromAndroid() { return this.player.dataFromAndroid; }

@@ -191,4 +191,4 @@
 
 <app-screen-other-info [isShowInfo]="isShowInfo" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" [isAdmin]="true" />
 
-<app-screen-settings [screen]="screenForm.value" [showSettings]="isShowSettings" (onSettingsChange)="onSettingsChange($event)" />
+<app-screen-settings [showSettings]="isShowSettings" (onSettingsChange)="onSettingsChange($event)" />

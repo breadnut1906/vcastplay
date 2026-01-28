@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { StorageService } from './storage.service';
 import { MessageService } from 'primeng/api';
 import { PlayerService } from './player.service';
+import { IndexedDbService } from './indexed-db.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ export class WebsocketService {
   player = inject(PlayerService);
   storage = inject(StorageService);
   message = inject(MessageService);
+  indexedDB = inject(IndexedDbService);
 
   socketClient!: Socket | any;
   socketUrl: string = environment.socketUrl;
@@ -51,12 +53,24 @@ export class WebsocketService {
     });
 
     this.socketClient.on('registered', this.onRegister.bind(this));
-    this.socketClient.on('apply', this.onApply.bind(this));
+    
+    this.socketClient.on('apply', (data: any) => this.onApply(data));
+
     this.socketClient.on('open', this.onReceiveCommand.bind(this, 'open'));
     this.socketClient.on('close', this.onReceiveCommand.bind(this, 'close'));
     this.socketClient.on('restart', this.onReceiveCommand.bind(this, 'restart'));
     this.socketClient.on('shutdown', this.onReceiveCommand.bind(this, 'shutdown'));
     this.socketClient.on('screenshot', this.onReceiveCommand.bind(this, 'screenshot'));
+
+    this.socketClient.on('broadcast', (data: any) => this.player.playerBroadcast.set(data));
+
+    this.socketClient.on('enable-health-check', (data: any) => {
+      const { enable } = data;
+      // this.player.isStartHealthCheck.set(enable);
+      this.player.onGetSystemHealthCheck();
+    });
+
+    this.socketClient.on('clear', (data: any) => this.onClearScreen(data));
   }
 
   onRegister(data: any, tenantId: any) {
@@ -74,9 +88,9 @@ export class WebsocketService {
     this.onEmit('response-update', { response: `Device registered` })
   }
 
-  onApply(data: any) {    
+  onApply(data: any) {
+    this.player.playerBroadcast.set(null);
     this.player.onSetContent(data);
-    this.onEmit('response-update', { response: `Player has started` })
   }
 
   async onReceiveCommand(data: any, subData: any) {
@@ -104,9 +118,16 @@ export class WebsocketService {
           const android: any = await this.player.onGetAndroidInformation();
           console.log('websokcet service', android);
         }
-        
         break;
     }
+  }
+
+  onClearScreen(data: any) {
+    this.player.playerContent.set(null);
+    this.player.playerBroadcast.set(null);
+    this.indexedDB.clearItems();
+    this.onEmit('clear', { "message": `Player cleared` })
+    this.onEmit('response-update', { response: `Player cleared` })
   }
 
   onChangeSocket(path: string, auth: any) {

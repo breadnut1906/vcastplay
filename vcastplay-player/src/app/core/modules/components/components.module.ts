@@ -4,6 +4,7 @@ import { ProgressBarComponent } from '../../../components/progress-bar/progress-
 import { AssetPreviewComponent } from '../../../components/asset-preview/asset-preview.component';
 import { PlaylistPreviewComponent } from '../../../components/playlist-preview/playlist-preview.component';
 import { DesignLayoutPreviewComponent } from '../../../components/design-layout-preview/design-layout-preview.component';
+import { BroadcastPreviewComponent } from '../../../components/broadcast-preview/broadcast-preview.component';
 
 const COMPONENT_MODULES = [
   CommonModule,
@@ -11,6 +12,7 @@ const COMPONENT_MODULES = [
   PlaylistPreviewComponent,
   DesignLayoutPreviewComponent,
   ProgressBarComponent,
+  BroadcastPreviewComponent,
 ]
 
 @NgModule({

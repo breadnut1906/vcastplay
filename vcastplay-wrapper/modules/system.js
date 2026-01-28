@@ -200,12 +200,12 @@ async function onGetDisplays() {
 async function onGetCPUTemperature() {
   try {
     await new Promise(resolve => setTimeout(resolve, 3000));
-    const res = await fetch('http://localhost:8085/data.json');
+    const res = await fetch('http://localhost:8085/data.json', { cache: 'no-store' });
     const data = await res.json();
 
     if (!data) return null;
 
-    const temp = onGetCPUPackageTemp(data);
+    const temp = onGetCPUPackageTemp(data, 'CPU Package');
     return temp;
   } catch (error) {
     console.error('onGetCPUTemperature', error);
@@ -213,7 +213,7 @@ async function onGetCPUTemperature() {
   }
 }
 
-function onGetCPUPackageTemp(node, sensorName = 'CPU Package') {
+function onGetCPUPackageTemp(node, sensorName) {
   if (!node) return null;
   
   if (node.Text === sensorName && node.Value.includes('°C')) return node.Value;
@@ -228,6 +228,45 @@ function onGetCPUPackageTemp(node, sensorName = 'CPU Package') {
   return null;
 }
 
+// Get system health performance
+function onGetSystemByText(node, keyword, result = []) {
+  if (!node || typeof node !== 'object') return result;
+
+  if (node.Text?.toLowerCase().includes(keyword.toLowerCase())) {
+    result.push(node);
+  }
+
+  if (Array.isArray(node.Children)) {
+    node.Children.forEach(child =>
+      onGetSystemByText(child, keyword, result)
+    );
+  }
+
+  return result;
+}
+
+function onGetSystemByChild(node, text) {
+  return node?.Children?.find(c => c.Text === text) ?? null;
+}
+
+function onGetSystemSensor(node, sensorName) {
+  if (!node || typeof node !== 'object') return null;
+
+    if (node.Text && node.Text === sensorName) {
+      return node;
+    }
+
+    if (!Array.isArray(node.Children)) return null;
+
+    for (const child of node.Children) {
+      const found = onGetSystemSensor(child, sensorName);
+      if (found) return found;
+    }
+
+    return null;
+}
+ 
+
 module.exports = {
   onGetSystemInfo,
   onSystemCommand,
@@ -238,4 +277,7 @@ module.exports = {
   onSaveContentLogs,
   onDeleteContentLogs,
   onGetDisplays,
+  onGetSystemByText,
+  onGetSystemByChild,
+  onGetSystemSensor
 }

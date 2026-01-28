@@ -59,7 +59,11 @@
 
                                     <div class="flex flex-col">
                                         <p class="text-base font-semibold">
-                                            {{ item.name || item.info.hostname || 'BROWSER' }}
+                                            @switch (item.type) {
+                                                @case('desktop') { {{ item.info.hostname }} }
+                                                @case('android') { ANDROID }
+                                                @default { BROWSER }
+                                            }
                                         </p>
                                         <p class="text-sm">{{ item.code }}</p>
                                     </div>

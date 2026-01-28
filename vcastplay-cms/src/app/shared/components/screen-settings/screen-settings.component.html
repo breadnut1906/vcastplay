@@ -6,7 +6,7 @@
     [modal]="true"
     [draggable]="false"
 >
-    <ng-container *ngIf="screen">
+    <!-- <ng-container *ngIf="screen">
         @if (['desktop'].includes(screen?.type)) {
             <p-fieldset legend="Display">
                 <form [formGroup]="settingsForm" class="grid grid-cols-12 gap-4">
@@ -43,7 +43,7 @@
                 </form>
             </p-fieldset>
         }
-    </ng-container>
+    </ng-container> -->
     <p-fieldset legend="Configuration">
         <form [formGroup]="settingsForm" class="flex flex-col gap-4">
             <div class="flex items-center gap-2">
@@ -93,7 +93,7 @@
     <p-fieldset legend="Preventive Maintenance">
         <div class="flex items-center gap-3">
             <p class="text-sm">Clears the screen contents and schedules for preventive maintenance reasons.</p>
-            <p-button class="ml-auto" label="Clear" />
+            <p-button (onClick)="onClickClearAll()" class="ml-auto" label="Clear" />
         </div>
     </p-fieldset>
     <ng-template #footer>

@@ -34,8 +34,6 @@ export class ScreenManagementListComponent {
   publicApi: string = environment.public;
 
   isLoading = signal<boolean>(false);
-  showBroadcast = signal<boolean>(false);
-  showSettings = signal<boolean>(false);
   showScreenDetails = signal<boolean>(false);
   screens = signal<any[]>([]);
   selectedScreen = signal<Screen | null>(null);
@@ -49,8 +47,7 @@ export class ScreenManagementListComponent {
     loading: false,
   });
 
-  constructor() {}
-    
+  constructor() {}   
   
 
   ngOnInit() {
@@ -60,12 +57,21 @@ export class ScreenManagementListComponent {
 
     this.socketClient.on('screen:status', (data: any) => {
       const status = data.status;
-      this.onUpdateScreenStatus({...data, displayStatus: status == 'connected' ? 'on' : 'off'});
+      const screens = this.selectMultipleScreens().filter(screen => screen.id !== data.deviceId);
+      this.selectMultipleScreens.set(screens);
+      
+      this.onUpdateScreenStatus({
+        ...data, 
+        displayStatus: status == 'connected' ? 'on' : 'off', 
+        response: status == 'connected' ? 'Player connected' : 'Player disconnected'
+      });
     });
 
     this.socketClient.on('screen:display-status', (data: any) => this.onUpdateScreenStatus({ displayStatus: data.status}));
 
     this.socketClient.on('screen:response', (data: any) => this.onUpdateScreenStatus(data));
+
+    this.socketClient.on('screen:clear', (data: any) => this.onClearScreenContent(data));
 
     this.socketClient.on('screen:screenshot-received', (data: any) => {
       this.screenShotData.update(current => ({ ...data, loading: false }));
@@ -101,8 +107,8 @@ export class ScreenManagementListComponent {
 
   onScreenControlChange(event: any) {
     switch (event.type) {
-      case 'broadcast': this.showBroadcast.set(true); break;
-      case 'settings': this.showSettings.set(true); break;
+      // case 'broadcast': this.showBroadcast.set(true); break;
+      // case 'settings': this.showSettings.set(true); break;
       // apply contents to selected screens
       case 'apply':
         this.onUpdateScreens(event.data);
@@ -115,23 +121,19 @@ export class ScreenManagementListComponent {
       const index = this.screens().findIndex(screen => screen.id == item.id);
       if (index !== -1) this.screens()[index] = { ...this.screens()[index], content: item.content };
     })
-    
-  }
-
-  onBroadCastMessage(event: any) {
-    console.log(event);
-  //   const messageArr: ScreenMessage[] = this.selectedArrScreenBroadcastMessage();
-  //   if (messageArr.length == 0) return;
-  //   this.screenService.onBroadCastMessage(messageArr);
-  //   this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message sent successfully!' });
-  //   this.showBroadcast.set(false);
-  //   this.selectedArrScreenBroadcastMessage.set([]);
   }
 
   onUpdateScreenStatus(data: any) {
     const id = data.deviceId;    
     const index = this.screens().findIndex(screen => screen.id == id);    
     if (index !== -1) this.screens()[index] = { ...this.screens()[index], ...data };
+    this.screens.set([...this.screens()]);
+  }
+
+  onClearScreenContent(data: any) {
+    const id = data.deviceId;    
+    const index = this.screens().findIndex(screen => screen.id == id);    
+    if (index !== -1) this.screens()[index] = { ...this.screens()[index], content: null };
     this.screens.set([...this.screens()]);
   }
   
@@ -143,10 +145,10 @@ export class ScreenManagementListComponent {
     this.onInitializedScreens(pageNumber, event.rows);
   }
 
-  onSettingsChange(event: any) {
-    this.message.add({ severity:'success', summary: 'Success', detail: 'Settings applied successfully!' });
-    this.showSettings.set(false);
-  }
+  // onSettingsChange(event: any) {
+  //   this.message.add({ severity:'success', summary: 'Success', detail: 'Settings applied successfully!' });
+  //   this.showSettings.set(false);
+  // }
 
   isDisconnected(screen: Screen | any): boolean {
     return ['disconnected'].includes(screen.status) || !screen.status;
@@ -171,6 +173,12 @@ export class ScreenManagementListComponent {
     this.screenService.onSendCommand(screen.id, screen, 'screenshot').subscribe({
       next: () => { },
     });
+  }
+
+  onClickEnableHealthCheck(screen: Screen) {
+    this.screenService.onSendCommand(screen.id, { enable: 'on' }, 'enable-health-check').subscribe({
+      next: () => { },
+    })
   }
 
   onHidePreview() {

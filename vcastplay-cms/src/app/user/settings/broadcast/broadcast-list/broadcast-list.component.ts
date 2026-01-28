@@ -25,9 +25,7 @@ export class BroadcastListComponent {
 
   filteredMessages = computed(() => this.broadcastService.messages());
 
-  ngOnInit() {
-    this.broadcastService.onLoadMessages();
-  }
+  ngOnInit() { }
 
   onClickAddNew() {
     this.isEditMode.set(false);
@@ -36,11 +34,7 @@ export class BroadcastListComponent {
 
   onClickRefresh() {}
 
-  onClickEdit(message: ScreenMessage) {
-    this.isEditMode.set(true);
-    this.showDetails.set(true);
-    this.broadCastMessageForm.patchValue(message);
-  }
+  onClickEdit(message: ScreenMessage) { }
 
   onClickSave(event: Event) {
     if (this.broadCastMessageForm.invalid) {

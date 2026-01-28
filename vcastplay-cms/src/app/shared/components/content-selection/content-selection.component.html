@@ -115,4 +115,7 @@
         (onPageChange)="onPageChange($event)" [rowsPerPageOptions]="[5, 10, 20, 50, 100]" dropdownAppendTo="body" />
     </div>
   </div>
+  <ng-template #footer>
+    <p-button label="Close" icon="pi pi-times" (onClick)="showContents.set(false)" size="small" severity="secondary" />
+  </ng-template>
 </p-dialog>

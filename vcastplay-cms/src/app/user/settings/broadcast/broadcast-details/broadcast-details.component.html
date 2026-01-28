@@ -1,7 +1,8 @@
 <form class="grid grid-cols-12 gap-4 mt-2" [formGroup]="broadCastMessageForm">
-    <div class="col-span-4">
+    <!-- <div class="col-span-4">
         <p-floatlabel variant="on">
-            <p-select inputId="icon" [options]="icons()" optionLabel="label" optionValue="value" formControlName="icon" appendTo="body" showClear fluid>
+            <p-select inputId="icon" [options]="categories" optionLabel="icon" optionValue="icon" 
+                formControlName="icon" appendTo="body" showClear fluid>
                 <ng-template #selectedItem let-item>
                     <ng-container *ngTemplateOutlet="itemTemplate; context: { $implicit: item }"></ng-container>
                 </ng-template>
@@ -11,35 +12,42 @@
             </p-select>
             <label for="icon">Icon</label>
         </p-floatlabel>
+    </div> -->
+    <div class="col-span-4">
+        <!-- <p-floatlabel variant="on">
+            <p-select inputId="category" [options]="categories" optionLabel="category" optionValue="category" 
+                formControlName="category" appendTo="body" showClear fluid />
+            <label for="category">Category</label>
+        </p-floatlabel> -->
+        <p-floatlabel variant="on">
+            <p-select inputId="category" [options]="categories" optionLabel="category" optionValue="category" 
+                formControlName="category" appendTo="body" showClear fluid>
+                <ng-template #selectedItem let-item>
+                    <ng-container *ngTemplateOutlet="itemTemplate; context: { $implicit: item }"></ng-container>
+                </ng-template>
+                <ng-template #item let-item>
+                    <ng-container *ngTemplateOutlet="itemTemplate; context: { $implicit: item }"></ng-container>
+                </ng-template>
+            </p-select>
+            <label for="category">Category</label>
+        </p-floatlabel>
     </div>
-    <div class="col-span-5">
+    <div class="col-span-8">
         <p-floatlabel variant="on">
             <input id="name" type="text" pInputText formControlName="name" fluid>
             <label for="name">Name</label>
         </p-floatlabel>
     </div>
-    <!-- <div class="col-span-3">
-        <p-floatlabel variant="on">
-            <p-select inputId="category" [options]="filterCategories()" formControlName="category" appendTo="body" showClear fluid />
-            <label for="category">Category</label>
-        </p-floatlabel>
-    </div> -->
     <div class="col-span-4">
         <p-floatlabel variant="on">
             <input id="title" type="text" pInputText formControlName="title" fluid>
             <label for="title">Title</label>
         </p-floatlabel>
     </div>
-    <div class="col-span-8">
+    <div class="col-span-5">
         <p-floatlabel variant="on">
             <input id="description" type="text" pInputText formControlName="description" fluid>
             <label for="description">Description</label>
-        </p-floatlabel>
-    </div>
-    <div class="col-span-12">
-        <p-floatlabel variant="on">
-            <textarea name="message" id="message" rows="10" formControlName="message" pTextarea fluid></textarea>
-            <label for="description">Compose Message:</label>
         </p-floatlabel>
     </div>
     <div class="col-span-3">
@@ -48,11 +56,17 @@
             <label for="duration">Duration</label>
         </p-floatlabel>
     </div>
+    <div class="col-span-12">
+        <p-floatlabel variant="on">
+            <textarea name="message" id="message" rows="10" formControlName="message" pTextarea fluid></textarea>
+            <label for="description">Compose Message:</label>
+        </p-floatlabel>
+    </div>
 </form>
 
 <ng-template #itemTemplate let-item>
     <div class="flex items-center gap-2">
-        <i [ngClass]="'pi ' + item.value"></i>
-        <span>{{ item.label }}</span>
+        <i [ngClass]="'pi ' + item.icon"></i>
+        <span>{{ item.category }}</span>
     </div>
 </ng-template>
