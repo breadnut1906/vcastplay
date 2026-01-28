@@ -1,0 +1,23 @@
+
+<p-dialog header="Health Check" [(visible)]="showHealthCheck" styleClass="w-[50rem] h-[40rem]" (onShow)="onHealthCheck('on')" (onHide)="onHealthCheck('off')" 
+    [resizable]="false" draggable closable modal>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full">
+        <div class="relative flex flex-col gap-4">
+            <p>CPU Usage ({{ cpu?.load || '0 %' }})</p>
+            <div id="cpuChart" #cpuChart class="w-full h-50"></div>
+        </div>
+        <div class="relative flex flex-col gap-4">
+            <p>Memory Usage {{ memory?.used }}/{{ memory?.total }} ({{ memory?.load || '0 %' }})</p>
+            <div id="memoryChart" #memoryChart class="w-full h-50"></div>
+        </div>
+        <div class="md:col-span-2 relative flex flex-col gap-4">
+            <p>Disk Usage</p>
+            <div id="diskChart" #diskChart class="w-full h-50  border border-gray-200"></div>
+            <div class="flex gap-4 text-sm">
+                <p>Read Speed: {{ disk?.readSpeed }}</p>
+                <p>Write Speed: {{ disk?.writeSpeed }}</p>
+            </div>
+        </div>
+    </div>
+</p-dialog>

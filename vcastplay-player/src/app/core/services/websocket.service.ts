@@ -22,6 +22,8 @@ export class WebsocketService {
   screenKey: string = environment.screenKey;
 
   isOnline = signal<boolean>(false);
+  
+  intervalId: any
 
   constructor() { }
 
@@ -64,10 +66,9 @@ export class WebsocketService {
 
     this.socketClient.on('broadcast', (data: any) => this.player.playerBroadcast.set(data));
 
-    this.socketClient.on('enable-health-check', (data: any) => {
+    this.socketClient.on('enable-health-check', async (data: any) => {
       const { enable } = data;
-      // this.player.isStartHealthCheck.set(enable);
-      this.player.onGetSystemHealthCheck();
+      this.onHealthCheck(enable)  
     });
 
     this.socketClient.on('clear', (data: any) => this.onClearScreen(data));
@@ -119,6 +120,32 @@ export class WebsocketService {
           console.log('websokcet service', android);
         }
         break;
+    }
+  }
+
+  onHealthCheck(enable: 'on' | 'off') {
+    const platform = this.storage.get('platform');
+    if (platform == 'web') return;
+    
+    this.player.isStartHealthCheck.set(enable == 'on' ? true : false);
+    if (enable == 'off') {
+      this.onEmit('response-update', { response: `Stopped checking health` })
+      clearInterval(this.intervalId);
+    } else {
+      this.intervalId = setInterval(async () => {
+        switch (platform) {
+          case 'desktop':
+            const health: any = await this.player.onGetSystemHealthCheck();
+            this.onEmit('health', { ...health });
+            break;
+        
+          case 'android':
+            this.player.onSendDataToAndroid({ data: 'health-check' });
+            const android: any = await this.player.onGetAndroidInformation();
+            this.onEmit('health', { ...android });
+            break;
+        }
+      }, 1000);
     }
   }
 

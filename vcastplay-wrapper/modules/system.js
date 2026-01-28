@@ -245,14 +245,14 @@ function onGetSystemByText(node, keyword, result = []) {
   return result;
 }
 
-function onGetSystemByChild(node, text) {
-  return node?.Children?.find(c => c.Text === text) ?? null;
+function onGetSystemByGroup(node, text) {
+  return node?.Children?.find(c => c.Text.toLowerCase().includes(text.toLowerCase())) ?? null;
 }
 
 function onGetSystemSensor(node, sensorName) {
   if (!node || typeof node !== 'object') return null;
 
-    if (node.Text && node.Text === sensorName) {
+    if (node.Text?.toLowerCase() == sensorName.toLowerCase()) {
       return node;
     }
 
@@ -266,6 +266,56 @@ function onGetSystemSensor(node, sensorName) {
     return null;
 }
  
+async function onGetHealthSystem() {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const res = await fetch('http://localhost:8085/data.json', { cache: 'no-store' });
+  const data = await res.json();
+  const root = data?.Children?.[0];
+
+  // ==============================================================================
+  // CPU
+  // ==============================================================================
+  const cpu = onGetSystemByText(root, 'cpu')[0];
+  const cpuLoadGroup = onGetSystemByGroup(cpu, 'Load');
+  const cpuLoad = onGetSystemSensor(cpuLoadGroup, 'CPU Total')?.Value;
+
+  const cpuTempGroup = onGetSystemByGroup(cpu, 'Temperature');
+  const cpuTemp = onGetSystemSensor(cpuTempGroup, 'CPU Package')?.Value;
+
+  // ==============================================================================
+  // Memory
+  // ==============================================================================
+  const memory = onGetSystemByText(root, 'generic memory')[0];
+  const memoryLoadGroup = onGetSystemByGroup(memory, 'Load');
+  const memoryLoad = onGetSystemSensor(memoryLoadGroup, 'Memory')?.Value;
+
+  const memoryDataGroup = onGetSystemByGroup(memory, 'Data');
+  const memoryAvailable = onGetSystemSensor(memoryDataGroup, 'Memory Available')?.Value;
+  const memoryUsed = onGetSystemSensor(memoryDataGroup, 'Memory Used')?.Value;
+  const memoryTotal = ((await si.mem()).total / 1e9).toFixed(2) + ' GB';
+
+  // ==============================================================================
+  // Disk
+  // ==============================================================================
+  const disk = onGetSystemByText(root, 'disk')[0];
+
+  const diskTempGroup = onGetSystemByGroup(disk, 'Temperature');
+  const diskTemp = onGetSystemSensor(diskTempGroup, 'Temperature')?.Value;
+
+  const diskThroughputGroup = onGetSystemByGroup(disk, 'Throughput');
+  const diskRead = onGetSystemSensor(diskThroughputGroup, 'Read Rate')?.Value;
+  const diskWrite = onGetSystemSensor(diskThroughputGroup, 'Write Rate')?.Value;
+
+  const diskLoadGroup = onGetSystemByGroup(disk, 'Load');
+  const diskLoadRead = onGetSystemSensor(diskLoadGroup, 'Read Activity')?.Value;
+  const diskLoadWrite = onGetSystemSensor(diskLoadGroup, 'Write Activity')?.Value;
+
+  return {
+    cpu: { load: cpuLoad, temp: cpuTemp },
+    memory: { load: memoryLoad, available: memoryAvailable, used: memoryUsed, total: memoryTotal },
+    disk: { temp: diskTemp, readSpeed: diskRead, writeSpeed: diskWrite, readLoad: diskLoadRead, writeLoad: diskLoadWrite },
+  };
+}
 
 module.exports = {
   onGetSystemInfo,
@@ -277,7 +327,5 @@ module.exports = {
   onSaveContentLogs,
   onDeleteContentLogs,
   onGetDisplays,
-  onGetSystemByText,
-  onGetSystemByChild,
-  onGetSystemSensor
+  onGetHealthSystem
 }

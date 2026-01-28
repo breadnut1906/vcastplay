@@ -35,6 +35,8 @@ export class ScreenManagementListComponent {
 
   isLoading = signal<boolean>(false);
   showScreenDetails = signal<boolean>(false);
+  showHealthCheck = signal<boolean>(false);
+  screenHealth = signal<any>(null);
   screens = signal<any[]>([]);
   selectedScreen = signal<Screen | null>(null);
   selectMultipleScreens = signal<Screen[]>([]);
@@ -175,10 +177,9 @@ export class ScreenManagementListComponent {
     });
   }
 
-  onClickEnableHealthCheck(screen: Screen) {
-    this.screenService.onSendCommand(screen.id, { enable: 'on' }, 'enable-health-check').subscribe({
-      next: () => { },
-    })
+  onHealthCheck(screen: Screen) {
+    this.selectedScreen.set(screen);
+    this.showHealthCheck.set(true);
   }
 
   onHidePreview() {

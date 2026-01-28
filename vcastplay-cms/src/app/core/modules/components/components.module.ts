@@ -51,6 +51,7 @@ import { ScreenListItemComponent } from '../../../shared/components/screen-list-
 import { UserDetailsComponent } from '../../../shared/components/user-details/user-details.component';
 import { AssetUploadFileComponent } from '../../../user/assets/asset-upload-file/asset-upload-file.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { ScreenHealthStatusComponent } from '../../../shared/components/screen-health-status/screen-health-status.component';
 
 const COMPONENT_MODULES = [
   CommonModule,
@@ -89,6 +90,7 @@ const COMPONENT_MODULES = [
   ScreenDownloadComponent,
   ScreenOtherInfoComponent,
   ScreenListItemComponent,
+  ScreenHealthStatusComponent,
 
   // Playlist Components
   PlaylistContainerComponent,

@@ -25,7 +25,7 @@ async function createWindow() {
     const display = screen.getPrimaryDisplay();
 
     win = new BrowserWindow({
-      alwaysOnTop: true,
+      alwaysOnTop: !isDev,
       fullscreenable: !isDev,
       fullscreen: !isDev,
       autoHideMenuBar: true,
@@ -116,30 +116,7 @@ ipcMain.handle('getSystemInfo', async () => {
 });
 
 ipcMain.handle('getHealthCheck', async () => {
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  const res = await fetch('http://localhost:8085/data.json', { cache: 'no-store' });
-  const data = await res.json();
-  const root = data?.Children?.[0];
-
-  // CPU
-  const cpu = systemFunc.onGetSystemByText(root, 'cpu')[0];
-
-  const cpuLoadGroup = systemFunc.onGetSystemByChild(cpu, 'Load');
-  const cpuLoad = systemFunc.onGetSystemSensor(cpuLoadGroup, 'CPU Total')?.Value;
-  
-  const cpuTempGroup  = systemFunc.onGetSystemSensor(cpuLoadGroup, 'Temperatures')?.Value;
-  const cpuTemp = systemFunc.onGetSystemSensor(cpu, 'CPU Package')?.Value;
-
-  // Memory
-  const memory = systemFunc.onGetSystemByText(root, 'memory')[0];
-  const memoryLoad = systemFunc.onGetSystemSensor(memory, 'Memory')?.Value;
-  return {
-    cpu,
-    cpuLoad,
-    cpuTemp,
-    memory,
-    memoryLoad
-  };
+  return await systemFunc.onGetHealthSystem();
 })
 
 ipcMain.handle('takeScreenshot', async () => {

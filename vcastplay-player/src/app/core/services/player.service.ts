@@ -200,7 +200,6 @@ export class PlayerService {
         return new Promise((resolve, reject) => {
             window.system.getHealthCheck()
             .then((response: any) => {
-                console.log(response);
                 resolve(response);
             })
             .catch(err => {

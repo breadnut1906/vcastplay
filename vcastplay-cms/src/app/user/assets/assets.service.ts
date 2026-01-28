@@ -138,6 +138,10 @@ export class AssetsService {
     return this.http.post(`${this.api}tenants/assets/upload`, formData, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
   }
 
+  onGenerateImage(body: any) {
+    return this.http.post(`${this.api}tenants/assets/generate-image`, body, { headers: this.onGetHTTPHeaders() });
+  }
+
   onGetAssets() {
     if (this.assetSignal().length === 0) this.onLoadAssets()
     return this.assetSignal()

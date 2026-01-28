@@ -35,15 +35,19 @@ export class MainDisplayComponent {
   currentContent: any;
   nextCurrent: any;
 
+
   constructor(private cdr: ChangeDetectorRef) {
 
     effect(() => {
       const data = this.player.playerContent();
       const broadcast = this.player.playerBroadcast();
+      const healthCheck = this.player.isStartHealthCheck();
 
       if (data) this.webSocket.onEmit('response-update', { response: `Player has started` })
 
       if (broadcast) this.webSocket.onEmit('response-update', { response: `Player is broadcasting...` })
+
+      if (healthCheck) this.webSocket.onEmit('response-update', { response: `Player is checking health...` })
     })
   }
 

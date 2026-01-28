@@ -2,59 +2,63 @@
 <p-dialog
   header="🌟 Welcome to Your Creative AI Assistant!"
   [(visible)]="showPrompt"
-  [style]="{ width: '36rem' }"
+  [style]="{ width: '40rem' }"
   [draggable]="false"
   closable
   modal
 >
-  <div class="px-4">
-    @if (step > 0) {
-      <p>This is a preview of the content</p>
-    } @else {
-      <p>
-        Hello! 👋 I'm your AI assistant, here to help you bring your ideas to life. Whether you need
-        to generate an image, create a video, or craft engaging content, I've got you covered. Just
-        tell me what you need — let's get started! 🚀
-      </p>
-    }
-  </div>
-  <ng-template #footer>
-    @if (step > 0) {
-      <div class="flex gap-3">
-        <p-button
-          styleClass="!w-full"
-          label="Back"
-          icon="pi pi-arrow-left"
-          (onClick)="step = 0"
-          text
-          fluid
-        />
-        <p-button
-          styleClass="!w-full"
-          label="Save"
-          icon="pi pi-save"
-          (onClick)="showPrompt.set(false)"
-          fluid
-        />
-      </div>
-    } @else {
-      <div class="flex flex-col gap-3 w-full">
-        <textarea
-          placeholder="Type your prompt here"
-          name="prompt"
-          id="prompt"
-          cols="30"
-          rows="5"
-          pTextarea
-        ></textarea>
-        <p-button
-          styleClass="!w-full"
-          label="Generate"
-          icon="pi pi-send"
-          (onClick)="step = 1"
-          fluid
-        />
-      </div>
-    }
-  </ng-template>
+  <p-stepper [value]="step" [linear]="true" (valueChange)="onStepChanges($event)">
+    <p-step-list>
+      <p-step [value]="1">Prompt</p-step>
+      <p-step [value]="2">Results</p-step>
+    </p-step-list>
+    <p-step-panels>
+      <p-step-panel [value]="1">
+        <ng-template #content let-activateCallback="activateCallback">
+          <div class="flex flex-col gap-8 h-full" [formGroup]="generateForm">
+            <div class="relative p-6 dark:bg-surface-800 dark:shadow-blue-500/50 shadow-lg rounded-lg flex flex-col gap-4 overflow-hidden">
+              <div class="absolute left-0 bottom-[-32px]">
+                <img src="assets/monster.gif" class="w-25 h-25" alt="AI monster">
+              </div>
+              <div class="ml-16 bg-blue-500/50 p-4 rounded-lg">
+                <h2 class="text-lg font-bold">Hello! 👋 I'm your AI assistant</h2>
+                <p class="z-50">
+                  I'm here to help you bring your ideas to life. Whether you need to generate an image, create a video, or craft engaging content, 
+                  I've got you covered. Just tell me what you need — let's get started! 🚀
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-col gap-4">
+              <div class="flex justify-between items-center gap-4">
+                <p-floatlabel class="w-full" variant="on">
+                  <p-select id="size" optionLabel="label" optionValue="value" [options]="size" formControlName="size" appendTo="body" fluid />
+                  <label for="size">Size</label>
+                </p-floatlabel>
+                <p-floatlabel class="w-full" variant="on">
+                  <p-select id="quality" [options]="quality" formControlName="quality" optionLabel="label" optionValue="value" appendTo="body" fluid />
+                  <label for="quality">Quality</label>
+                </p-floatlabel>
+              </div>
+              <textarea placeholder="Type your prompt here" formControlName="prompt" name="prompt" id="prompt" cols="30" rows="5" pTextarea></textarea>
+                <div class="flex justify-end">
+                  <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" [disabled]="generateForm.invalid"
+                    (onClick)="activateCallback(2)" size="small" />
+                </div>
+            </div>
+          </div>
+        </ng-template>  
+      </p-step-panel>
+      <p-step-panel [value]="2">
+        <ng-template #content let-activateCallback="activateCallback">
+          <div class="flex flex-col gap-4 h-full">
+            <p>Results</p>
+            <div class="flex justify-between">
+                <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)"  size="small"/>
+                <p-button label="Upload" icon="pi pi-arrow-right" iconPos="right" (onClick)="onUploadAssets()"  size="small"/>
+            </div>
+          </div>
+        </ng-template>
+      </p-step-panel>
+    </p-step-panels>
+  </p-stepper>
 </p-dialog>

@@ -288,12 +288,12 @@ export class UtilityService {
     return moment(date).tz(timeZone)
   }
 
-  formatSize(bytes: number) {
+  formatSize(bytes: number, showSuffix: boolean = true) {
     const k = 1024
     const dm = 0
     const sizes: any = this.config.translation.fileSizeTypes
     if (bytes == 0) {
-      return `0 ${sizes[0]}`
+      return showSuffix ? `0 ${sizes[0]} ` : '0'
     }
 
     const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -301,7 +301,7 @@ export class UtilityService {
       ? parseFloat((bytes / Math.pow(k, i)).toFixed(dm))
       : 0
 
-    return `${formattedSize} ${sizes[i]}`
+    return showSuffix ? `${formattedSize} ${sizes[i]}` : `${formattedSize}`
   }
 
   timeConversion(ms: number, isReadable: boolean = false): string {
