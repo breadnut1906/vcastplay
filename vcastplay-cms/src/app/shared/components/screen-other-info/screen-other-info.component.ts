@@ -33,5 +33,5 @@ export class ScreenOtherInfoComponent {
     return (disk.used / disk.size) * 100
   }
 
-  get screenData() { return this.screen(); }
+  get screenData() { return this.screen() }
 }
