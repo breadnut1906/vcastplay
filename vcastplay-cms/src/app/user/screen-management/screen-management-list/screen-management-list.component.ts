@@ -35,8 +35,6 @@ export class ScreenManagementListComponent {
 
   isLoading = signal<boolean>(false);
   showScreenDetails = signal<boolean>(false);
-  showHealthCheck = signal<boolean>(false);
-  screenHealth = signal<any>(null);
   screens = signal<any[]>([]);
   selectedScreen = signal<Screen | null>(null);
   selectMultipleScreens = signal<Screen[]>([]);
@@ -50,7 +48,6 @@ export class ScreenManagementListComponent {
   });
 
   constructor() {}   
-  
 
   ngOnInit() {
     this.socketClient.on('screen:errors', (data: any) => {
@@ -126,9 +123,11 @@ export class ScreenManagementListComponent {
   }
 
   onUpdateScreenStatus(data: any) {
-    const id = data.deviceId;    
+    const id = data.deviceId;
+    const response = data.response;    
+    const progress = typeof parseFloat(response) == 'number' ? parseFloat(response) : 0
     const index = this.screens().findIndex(screen => screen.id == id);    
-    if (index !== -1) this.screens()[index] = { ...this.screens()[index], ...data };
+    if (index !== -1) this.screens()[index] = { ...this.screens()[index], ...data, progress };
     this.screens.set([...this.screens()]);
   }
 
@@ -176,12 +175,6 @@ export class ScreenManagementListComponent {
       next: () => { },
     });
   }
-
-  onHealthCheck(screen: Screen) {
-    this.selectedScreen.set(screen);
-    this.showHealthCheck.set(true);
-  }
-
   onHidePreview() {
     this.screenShotData.update(current => ({ ...current, fileName: '', loading: false }));
   }
@@ -193,9 +186,9 @@ export class ScreenManagementListComponent {
   get selectedArrScreenBroadcastMessage() { return this.broadcastService.selectedArrScreenBroadcastMessage; }
 
   get legend() {
-    const totalPlaying = this.screens().filter(screen => screen.status == 'playing').length;
-    const totalDisconnected = this.screens().filter(screen => screen.status == 'disconnect').length;
-    const totalStandby = this.screens().filter(screen => screen.status == 'standby').length;
+    const totalPlaying = this.screens().filter(screen => screen.status == 'connected' && screen.content).length;
+    const totalDisconnected = this.screens().filter(screen => screen.status == 'disconnected').length;
+    const totalStandby = this.screens().filter(screen => screen.status == 'connected' && !screen.content).length;
     const totalApproved = this.screens().filter(screen => screen.approvalStatus == 'approved').length;
     const totalDisapproved = this.screens().filter(screen => screen.approvalStatus == 'disapproved').length;
 

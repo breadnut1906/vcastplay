@@ -202,22 +202,11 @@ export class ScreenControlsComponent {
   
   onBroadCastMessage(event: any) {
     if (!event) return;
-    this.selectedContent.set({
-      icon: event.icon,
-      name: event.name,
-      category: event.category,
-      title: event.title,
-      description: event.description,
-      message: event.message,
-      duration: event.duration
-    });
-    this.onClickSendCommand('broadcast');
-  //   const messageArr: ScreenMessage[] = this.selectedArrScreenBroadcastMessage();
-  //   if (messageArr.length == 0) return;
-  //   this.screenService.onBroadCastMessage(messageArr);
-  //   this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message sent successfully!' });
-  //   this.showBroadcast.set(false);
-  //   this.selectedArrScreenBroadcastMessage.set([]);
+    this.selectMultipleScreens().forEach((screen: Screen | any) => {
+      this.screenService.onBroadcast(screen.id, event.id).subscribe({
+        next: (res: any) => {}
+      });
+    })
   }
 
   get isMobile() { return this.utils.isMobile(); }

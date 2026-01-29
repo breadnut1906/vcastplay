@@ -50,10 +50,8 @@ export interface ScreenMessage {
     description: string;
     message: string;
     duration: number;
-    isDisplayed: boolean;
-    displayedOn: Date;
-    createdOn: Date;
-    updatedOn: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface ScreenSettings {

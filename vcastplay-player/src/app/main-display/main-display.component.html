@@ -20,17 +20,17 @@
   <ng-container *ngIf="playerContent as data">
     @switch (data.type) {
       @case('asset') {
-        <app-asset-preview class="relative w-full h-full flex items-center justify-center" [asset]="data.content" [autoPlay]="isPlay()" 
-          [autoPlay]="true" [showControls]="false" />
+        <app-asset-preview class="relative w-full h-full flex items-center justify-center" [asset]="data.content" [autoPlay]="true" [showControls]="false" />
       }
     }
   </ng-container>
 
-  <ng-container *ngIf="playerBroadcast">
+  <div class="transition duration-500 ease-in-out" *ngIf="showBroadcastMessage as message"
+    [ngClass]="{ 'opacity-100': message, 'opacity-0': !message }">
     <app-broadcast-preview />
-  </ng-container>
+  </div>
 
-  <ng-container *ngIf="!playerContent && !isLoading()">
+  <ng-container *ngIf="!playerContent">
     <div class="absolute top-0 start-0 flex items-center justify-center p-6">
       <img class="w-30" src="assets/vcastplay.png" alt="vcastplay 2.0 logo" />
     </div>
@@ -52,18 +52,17 @@
     }
 
     <div class="absolute h-full w-full flex flex-col gap-4 items-center justify-center text-center">
-      <p class="text-5xl md:text-8xl font-bold text-white tracking-[1.25rem] md:tracking-[1.75rem]">{{ systemInfo()?.code }}</p>
+      <p class="text-5xl md:text-8xl font-bold text-white tracking-[1.25rem] md:tracking-[1.75rem]">{{ playerCode }}</p>
       <p class="text-xs md:text-sm text-gray-400">Enter this Player ID in the 
         <a href="http://192.168.4.203:8041/screens/screen-registration" class="hover:text-blue-500 text-white">Registration</a> to register the player.
       </p>
     </div>
   </ng-container>  
 
-  <ng-container *ngIf="isLoading()">
-    <div class="absolute bottom-0 right-0 flex flex-col gap-4 items-center justify-center text-center z-70 p-2">
+  <ng-container *ngIf="isUploading">
+    <div class="absolute bottom-0 left-0 flex flex-col gap-4 items-center justify-center text-center z-70 p-2">
       <p class="text-xl font-bold text-white w-full">
         Loading Content...
-        {{loadingProgress() | number: '1.0-0'}}
       </p>
     </div>
   </ng-container>

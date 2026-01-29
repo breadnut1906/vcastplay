@@ -1,11 +1,19 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { ScreenMessage } from '../../screens/screen';
 import { FormControl, FormGroup } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { StorageService } from '../../../core/services/storage.service';
+import { environment } from '../../../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BroadcastService {
+
+  storage = inject(StorageService);
+  http = inject(HttpClient);
+  
+  api: string = environment.api;
 
   private messageSignal = signal<ScreenMessage[]>([]);
   messages = computed(() => this.messageSignal());
@@ -49,24 +57,31 @@ export class BroadcastService {
     message: new FormControl(null),
     duration: new FormControl(5, { nonNullable: true }),
   });
+  
+  onGetHTTPHeaders() {
+    const tenantId = this.storage.get('id');
+    const accessToken = `bearer ${this.storage.get('accessToken')}`;
+    const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'Authorization': accessToken });
+    return headers;
+  }
 
   constructor() { }
 
-  onLoadMessages() {
-    this.messageSignal.set([])
-    this.totalRecords.set(this.messageSignal().length);
+  onLoadMessages(page: number = 1, limit: number = 10) {
+    return this.http.get(`${this.api}tenants/broadcast?page=${page}&limit=${limit}`, { headers: this.onGetHTTPHeaders() });
   }
 
-  onGetMessages() {
-    if (this.messageSignal().length === 0) this.onLoadMessages();
-    return this.messageSignal();
-  }
-
-  onSaveMessage(message: ScreenMessage) {
+  onSaveMessage(id: number, message: ScreenMessage, mode: boolean = false) {
     /**Call POST/PATCH user API */
+    if (!mode) {
+      return this.http.post(`${this.api}tenants/broadcast`, message, { headers: this.onGetHTTPHeaders() });
+    } else {
+      return this.http.patch(`${this.api}tenants/broadcast/${id}`, message, { headers: this.onGetHTTPHeaders() });
+    }
   }
 
   onDeleteMessage(message: ScreenMessage) {
     /**Call DELETE user API */
+    return this.http.delete(`${this.api}tenants/broadcast/${message.id}`, { headers: this.onGetHTTPHeaders() });
   }
 }

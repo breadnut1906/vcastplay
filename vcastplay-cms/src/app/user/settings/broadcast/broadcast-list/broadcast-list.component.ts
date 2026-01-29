@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { PrimengUiModule } from '../../../../core/modules/primeng-ui/primeng-ui.module';
 import { ScreenService } from '../../../screens/screen.service';
 import { ComponentsModule } from '../../../../core/modules/components/components.module';
@@ -6,6 +6,7 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { UtilityService } from '../../../../core/services/utility.service';
 import { BroadcastService } from '../broadcast.service';
 import { ScreenMessage } from '../../../screens/screen';
+import { Pagination } from '../../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-broadcast-list',
@@ -23,9 +24,37 @@ export class BroadcastListComponent {
   confirmation = inject(ConfirmationService);
   message = inject(MessageService);
 
-  filteredMessages = computed(() => this.broadcastService.messages());
+  broadcast = signal<ScreenMessage[]>([]);
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
+  isLoading = signal<boolean>(false);
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.onInitializedBroadcast();
+  }
+
+  onInitializedBroadcast(page: number = 1, limit: number = 10) {
+    this.isLoading.set(true);
+    this.broadcastService.onLoadMessages().subscribe({
+      next: (res: any) => {
+        this.broadcast.set(res.items);
+        this.pagination.set(res.meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.isLoading.set(false)
+    });
+  }
+
+  onPageChange(event: any) {
+    const rows = event.rows;
+    const pageNumber = event.first / event.rows + 1;
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.onInitializedBroadcast(pageNumber, event.rows);
+  }
+
+  onBroadCastMessageChange(event: any) {
+    if (event) this.onInitializedBroadcast();
+  }
 
   onClickAddNew() {
     this.isEditMode.set(false);
@@ -34,37 +63,10 @@ export class BroadcastListComponent {
 
   onClickRefresh() {}
 
-  onClickEdit(message: ScreenMessage) { }
-
-  onClickSave(event: Event) {
-    if (this.broadCastMessageForm.invalid) {
-      this.broadCastMessageForm.markAllAsTouched();
-      this.message.add({ severity: 'error', summary: 'Error', detail: 'Please input required fields (*)' });
-      return;
-    }
-
-    this.confirmation.confirm({
-      target: event.target as EventTarget,
-      message: 'Do you want to save changes?',
-      closable: true,
-      closeOnEscape: true,
-      header: 'Confirm Save',
-      icon: 'pi pi-info-circle',
-      rejectButtonProps: {
-        label: 'Cancel',
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptButtonProps: {
-        label: 'Save',
-      },
-      accept: () => {
-        this.broadcastService.onSaveMessage(this.broadCastMessageForm.value);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message saved successfully!' });
-        this.showDetails.set(false);
-        this.broadCastMessageForm.reset();
-      },
-    })
+  onClickEdit(message: ScreenMessage) {
+    this.isEditMode.set(true);
+    this.showDetails.set(true);
+    this.broadCastMessageForm.patchValue(message);
   }
 
   onClickDelete(message: ScreenMessage, event: any) {
@@ -85,8 +87,11 @@ export class BroadcastListComponent {
         severity: 'danger',
       },
       accept: () => {
-        this.broadcastService.onDeleteMessage(message);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message deleted successfully!' });
+        this.broadcastService.onDeleteMessage(message).subscribe({
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Broadcast message deleted successfully!' }),
+          error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+          complete: () => this.onInitializedBroadcast()
+        })
       },
       reject: () => { }
     })
@@ -95,6 +100,12 @@ export class BroadcastListComponent {
   onClickCancel() {
     this.showDetails.set(false);
     this.broadCastMessageForm.reset();
+  }
+  
+  categories(screenMessage: ScreenMessage): any {
+    const category = this.broadcastService.broadcastCategories;
+    const cat = category.find(cat => cat.category.toLowerCase() == screenMessage.category.toLowerCase());
+    return cat
   }
 
   get rows() { return this.broadcastService.rows; }

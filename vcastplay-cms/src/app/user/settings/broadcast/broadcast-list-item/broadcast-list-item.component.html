@@ -1,21 +1,25 @@
 <p-card>
     <ng-template #title>
         <div class="flex gap-2 items-center">
-            <div class="flex gap-2">
-                <p class="text-sm md:text-lg font-semibold">{{ item.name }}</p>
-                <p-tag [value]="item.category" />
-            </div>
+            <!-- <div class="flex gap-2"> -->
+                <!-- <p-tag [value]="item.category" styleClass="!bg-[{{}}]" /> -->
+                <div class="flex gap-2 items-center text-sm p-2 rounded shadow" [ngClass]="'bg-[' + categories(item)?.color + ']'">
+                    <i class="pi {{item.icon}}"></i>
+                    <p>{{ item.category }}</p>
+                </div>
+                <!-- <p class="text-sm md:text-lg font-semibold">{{ item.name }}</p> -->
+            <!-- </div> -->
             <div class="flex gap-2 items-center ml-auto">
                 <i class="pi pi-clock" [style]="{ 'font-size': '0.75rem'}"></i>
-                <p class="ml-auto text-sm italic">{{ utils.onGetLastUpdatedLabel(item.updatedOn) }}</p>
+                <p class="ml-auto text-sm italic">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p>
             </div>
         </div>
     </ng-template>
     <p-divider />
-    <div class="flex flex-col my-5 gap-5">
+    <div class="flex flex-col gap-5">
         <div class="flex flex-col gap-2">
-            <p class="font-medium">{{ item.title }}</p>
-            <p class="text-xs md:text-sm">{{ item.description }}</p>
+            <p class="font-medium">Title: {{ item.title }}</p>
+            <p class="text-xs md:text-sm">Description: {{ item.description }}</p>
         </div>
         <div class="flex flex-col gap-3">
             <p class="text-xs italic">message:</p>

@@ -4,8 +4,8 @@
     </ng-template>
     <ng-template #content>
         <div class="flex flex-col gap-4">
-            <ng-container *ngIf="screen.info as info">
-                @switch (screen.type) {
+            <ng-container *ngIf="screenData.info as info">
+                @switch (screenData.type) {
                     @case ('web') {
                         <p class="text-sm"><span class="font-semibold">Browser Type: </span>{{ info.userAgent }}</p>
                         <p class="text-sm"><span class="font-semibold">Platform: </span>{{ info.platform }}</p>
@@ -15,7 +15,7 @@
                         <p class="text-sm"><span class="font-semibold">IP Address: </span>{{ info.ip }}</p>
                         <p class="text-sm"><span class="font-semibold">Operating System: </span>{{ info.os }}</p>
                         <p class="text-sm"><span class="font-semibold">Memory (RAM): </span>{{ info.ram }}</p>
-                        @if (screen.type == 'desktop') {
+                        @if (screenData.type == 'desktop') {
                             <p class="text-sm"><span class="font-semibold">CPU: </span>{{ info.cpu }} <span class="font-bold">({{ info.cpuTemp || '0 \u00B0C' }})</span></p>
                             <ng-container *ngIf="info.graphics as gpu">
                                 <p class="text-sm"><span class="font-semibold">Graphics Card: </span>{{ gpu.controllers[0].model }}</p>
@@ -54,14 +54,14 @@
             @if (!isAdmin) {
                 <p-divider [align]="'left'"><span class="font-semibold">Operational Schedules</span></p-divider>
                 <div class="flex flex-col gap-4">
-                    @if (screen.isAllDay) {
+                    @if (screenData.isAllDay) {
                         <p-tag value="All Day" severity="success" />
                     } @else {
                         <div class="flex flex-col gap-5">
                             <div class="flex flex-col gap-4">
                                 <p class="text-xs italic">Weekdays:</p>
                                 <div class="flex flex-wrap gap-3">
-                                    @for (days of screen.weekdays; track $index) {
+                                    @for (days of screenData.weekdays; track $index) {
                                         <p-chip [label]="days" class="text-sm" />
                                     } @empty {
                                         <p class="italic text-gray-400 text-sm">No Data</p>
@@ -71,7 +71,7 @@
                             <div class="flex flex-col gap-3">
                                 <p class="text-xs italic">Hours:</p>
                                 <div class="flex whitespace-nowrap gap-3 w-full overflow-x-auto min-w-full">
-                                    @for (hour of screen.hours; track $index) {
+                                    @for (hour of screenData.hours; track $index) {
                                         <p-chip [label]="hourFormat(hour)" class="text-sm" />
                                     } @empty {
                                         <p class="italic text-gray-400 text-sm">No Data</p>
@@ -85,23 +85,30 @@
                 <div class="flex flex-col gap-6">
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-semibold">Location:</p>
-                        <p class="text-sm font-normal">{{ screen.location || '-' }}</p>
+                        <p class="text-sm font-normal">{{ screenData.location || '-' }}</p>
                     </div>
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-semibold">Landmarks:</p>
-                        <p class="text-sm font-normal">{{ screen.landmark || '-' }}</p>
+                        <p class="text-sm font-normal">{{ screenData.landmark || '-' }}</p>
                     </div>
                 </div>
                 <p-divider [align]="'left'"><span class="font-semibold">Address</span></p-divider>
                 <div class="flex flex-col gap-3">
                     <div class="flex gap-3">
                         <i class="pi pi-map-marker"></i>
-                        <p class="text-sm font-semibold">{{ screen.fullAddress || '-' }}</p>
+                        <p class="text-sm font-semibold">{{ screenData.fullAddress || '-' }}</p>
                     </div>
-                    <app-mapmarkers [ngClass]="{ 'h-30': screen.type == 'desktop', 'h-50': screen.type == 'web' }" [markers]="[ screen ]" 
+                    <app-mapmarkers [ngClass]="{ 'h-30': screenData.type == 'desktop', 'h-50': screenData.type == 'web' }" [markers]="[ screenData ]" 
                         [zoom]="17" [readOnly]="true" />
                 </div>
             }
         </div>
     </ng-template>
+    @if (screenData?.type == 'desktop') {
+        <ng-template #footer>
+            <p-button class="w-full" (onClick)="showHealthCheck.set(true)" label="Task Manager" fluid />
+        </ng-template>
+    }
 </p-drawer>
+
+<app-screen-health-status [showHealthCheck]="showHealthCheck" [selectedScreen]="screen" />

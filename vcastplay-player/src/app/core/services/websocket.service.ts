@@ -64,7 +64,7 @@ export class WebsocketService {
     this.socketClient.on('shutdown', this.onReceiveCommand.bind(this, 'shutdown'));
     this.socketClient.on('screenshot', this.onReceiveCommand.bind(this, 'screenshot'));
 
-    this.socketClient.on('broadcast', (data: any) => this.player.playerBroadcast.set(data));
+    this.socketClient.on('broadcast', (data: any) => this.player.onBroadcastMessage(data, this.socketClient));
 
     this.socketClient.on('enable-health-check', async (data: any) => {
       const { enable } = data;
@@ -91,7 +91,7 @@ export class WebsocketService {
 
   onApply(data: any) {
     this.player.playerBroadcast.set(null);
-    this.player.onSetContent(data);
+    this.player.onSetContent(data, this.socketClient);
   }
 
   async onReceiveCommand(data: any, subData: any) {

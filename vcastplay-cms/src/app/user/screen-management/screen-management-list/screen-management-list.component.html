@@ -111,7 +111,13 @@
                     }
                   </div>
                 </td>
-                <td><p class="text-wrap w-60">{{ item.response ?? '-' }}</p></td>
+                <td>
+                  @if (item.progress && (item.progress < 100 || item.progress > 0)) {
+                    <p-progressBar mode="determinate" [value]="item.progress"></p-progressBar>
+                  } @else {
+                    <p class="text-wrap w-60">{{ item.response ?? '-' }}</p>
+                  }
+                </td>
                 <td><p>{{ utils.onGetLastUpdatedLabel(item.lastSeen) }}</p></td>
                 <td><p>{{ utils.onGetLastUpdatedLabel(item.lastScreenshotAt) }}</p></td>
                 <td>
@@ -188,15 +194,11 @@
 <ng-template #actionBtn let-item>
   <p-button (onClick)="onClickScreenshot(item)" [disabled]="isDisconnected(item) || isWebPlayer(item)"
     pTooltip="Screenshot" tooltipPosition="bottom" icon="pi pi-camera" severity="success" size="small" />
-  <p-button (onClick)="onHealthCheck(item)" [disabled]="isDisconnected(item) || isWebPlayer(item)"
-    pTooltip="Health Check" tooltipPosition="bottom" icon="pi pi-heart-fill" severity="danger" size="small" />
   <p-button (onClick)="onClickOpenDetails(item)" pTooltip="View Details" 
     tooltipPosition="bottom" icon="pi pi-info-circle" severity="contrast" size="small" />
 </ng-template>
 
-<app-screen-other-info [isShowInfo]="showScreenDetails" [screen]="selectedScreen()" (isShowInfoChange)="selectedScreen.set(null)" />
-
-<app-screen-health-status [showHealthCheck]="showHealthCheck" [selectedScreen]="selectedScreen" />
+<app-screen-other-info [isShowInfo]="showScreenDetails" [screen]="selectedScreen" (isShowInfoChange)="selectedScreen.set(null)" />
 
 <p-dialog header="Preview" [(visible)]="showScreenshot" styleClass="w-[50rem]" (onHide)="onHidePreview()" [draggable]="false" closable modal>
   @if (screenshot.loading) { <p-progressbar mode="indeterminate" /> }

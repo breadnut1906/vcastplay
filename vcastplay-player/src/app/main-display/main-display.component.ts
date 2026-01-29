@@ -8,7 +8,7 @@ import { StorageService } from '../core/services/storage.service';
 import { PlatformService } from '../core/services/platform.service';
 import { MessageService } from 'primeng/api';
 import { WebsocketService } from '../core/services/websocket.service';
-import { environment } from '../../environments/environment.development';
+// import { environment } from '../../environments/environment.development';
 
 @Component({
   selector: 'app-main-display',
@@ -26,14 +26,14 @@ export class MainDisplayComponent {
   player = inject(PlayerService);
   utils = inject(UtilsService);
   
-  screenKey: string = environment.screenKey;
+  // screenKey: string = environment.screenKey;
 
-  isPlay = signal<boolean>(false);
-  isLoading = signal<boolean>(false);
-  showSettings = signal<boolean>(false);
-  loadingProgress = signal<number>(0);
-  currentContent: any;
-  nextCurrent: any;
+  // isPlay = signal<boolean>(false);
+  // isLoading = signal<boolean>(false);
+  // showSettings = signal<boolean>(false);
+  // loadingProgress = signal<number>(0);
+  // currentContent: any;
+  // nextCurrent: any;
 
 
   constructor(private cdr: ChangeDetectorRef) {
@@ -45,7 +45,7 @@ export class MainDisplayComponent {
 
       if (data) this.webSocket.onEmit('response-update', { response: `Player has started` })
 
-      if (broadcast) this.webSocket.onEmit('response-update', { response: `Player is broadcasting...` })
+      if (broadcast) this.webSocket.onEmit('response-update', { response: `Player has started broadcasting` });
 
       if (healthCheck) this.webSocket.onEmit('response-update', { response: `Player is checking health...` })
     })
@@ -68,8 +68,8 @@ export class MainDisplayComponent {
   }
 
   async ngAfterViewInit() {
-    this.onGetPlayerInformation();
-    this.cdr.detectChanges();
+    // this.onGetPlayerInformation();
+    // this.cdr.detectChanges();
 
     // Send message to CMS that the display is online
     this.webSocket.onEmit('display-status', { status: 'on' })
@@ -135,13 +135,13 @@ export class MainDisplayComponent {
   //   this.player.sendApp('notepad')
   // }
 
-  async onGetPlayerInformation() {
-    const platform = this.storage.get('platform');
-    const uniqueId = this.storage.get('uniqueId');
-    const code = this.storage.get('code');
-    const appVersion = this.storage.get('appVersion');
-    this.systemInfo.set({ uniqueId, platform, code, appVersion });
-  }
+  // async onGetPlayerInformation() {
+  //   const platform = this.storage.get('platform');
+  //   const uniqueId = this.storage.get('uniqueId');
+  //   const code = this.storage.get('code');
+  //   const appVersion = this.storage.get('appVersion');
+  //   this.systemInfo.set({ uniqueId, platform, code, appVersion });
+  // }
   
   trackById(index: number, item: any): any {
     return { id: index, contentId: item.contentId } 
@@ -151,18 +151,22 @@ export class MainDisplayComponent {
 
   get isElectron() { return window.system?.isElectron; }
 
-  get playerCode() { return this.player.playerCode; }
-  get systemInfo() { return this.player.systemInfo; }
-  get androidData() { return this.player.androidData(); }
+  // get playerCode() { return this.player.playerCode; }
+  // get systemInfo() { return this.player.systemInfo; }
+  // get androidData() { return this.player.androidData(); }
   get playerContent() { return this.player.playerContent(); }
   get playerBroadcast() { return this.player.playerBroadcast(); }
 
   get platform() { return this.platformService.platform; }
-  get dataFromAndroid() { return this.player.dataFromAndroid; }
+  // get dataFromAndroid() { return this.player.dataFromAndroid; }
+  get isUploading() { return this.player.isUploading(); }
 
   get isOnline() {
     return this.webSocket.isOnline();
   }
 
   get tenantId() { return this.storage.get('tenantId'); }
+  get playerCode() { return this.storage.get('code'); }
+
+  get showBroadcastMessage() { return this.player.showBroadcastMessage() }
 }

@@ -4,9 +4,12 @@ import { PlatformService } from './platform.service';
 import { environment } from '../../../environments/environment.development';
 import { Assets } from '../interfaces/assets';
 import { DesignLayout } from '../interfaces/design-layout';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpEventType, HttpHeaders } from '@angular/common/http';
 import { IndexedDbService } from './indexed-db.service';
 import { StorageService } from './storage.service';
+import { UploadItem } from '../interfaces/player';
+import { v7 as uuidv7 } from 'uuid';
+import { WebsocketService } from './websocket.service';
 
 @Injectable({
   providedIn: 'root'
@@ -22,33 +25,132 @@ export class PlayerService {
     apiKey: string = environment.apiKey;
 
     playerContent = signal<Assets | DesignLayout | Playlists | any>(null);
-    playerCommand = signal<any>(null);
+    // playerCommand = signal<any>(null);
     playerBroadcast = signal<any>(null);
+
     isStartHealthCheck = signal<boolean>(false);
 
-    systemInfo = signal<any>(null);
-    playerCode = signal<string>('');
+    isUploading = signal<boolean>(false);
+    uploadItems = signal<UploadItem[] | any[]>([]);
 
-    androidData = signal<any>(null);
-    dataFromAndroid = signal<any>(null);
+    // systemInfo = signal<any>(null);
+    // playerCode = signal<string>('');
+
+    // androidData = signal<any>(null);
+    // dataFromAndroid = signal<any>(null);
 
     playerLoading = signal<boolean>(false);
+    
+    showBroadcastMessage = signal<boolean>(false);
+    broadcastTimeout: any;
 
     constructor() { }
 
     onLoadContents() { }
 
-    async onSetContent(data: any) {
-        const type = data.content.type;
+    async onSetContent(data: any, socketClient?: any) {
+        // Assets only: add playlist, design layout and schedule soon
+        this.isUploading.set(true);
         this.indexedDB.clearItems();
+        const { type } = data.content;
+
         if (!['facebook', 'youtube', 'link'].includes(type)) {
-            const res = await fetch(data.content.url);
-            const blob = await res.blob();
-            await this.indexedDB.addItem({ ...data.content, url: blob });
+            this.uploadItems.set([ {  id: uuidv7(), content: data, process: 0, status: 'pending' }]);
+            this.uploadItems().forEach((item) => this.onAddContent(item, socketClient));
         } else {
             await this.indexedDB.addItem(data.content);
+            this.playerContent.set(data);
         }
-        this.playerContent.set(data);
+    }
+
+    onAddContent(item: UploadItem, socketClient?: any) {
+        const data = item.content;     
+        const { url, name } = data.content
+        
+        item.status = 'uploading';
+        socketClient.emit('response-update', { response: `Uploading Started...` })
+        item.sub = this.http.get(url, { responseType: 'blob', reportProgress: true, observe: 'events' }).subscribe({
+            next: (event: any) => {
+                
+                if (event.type == HttpEventType.DownloadProgress && event.total) {
+                    item.progress = Math.round((event.loaded / event.total) * 100);
+                    socketClient.emit('response-update', { response: `${item.progress}%` })
+                }
+
+                if (event.type == HttpEventType.Response) {
+                    item.status = 'success';
+                    item.progress = 100;                    
+                    this.indexedDB.addItem({ ...data.content, url: event.body })
+                    socketClient.emit('response-update', { response: `Upload completed` })
+                    this.playerContent.set(data);
+                }
+            },
+            error: (error: any) => {
+                item.status = 'error';
+                item.progress = 0;
+                item.error = error;
+                console.error(`Upload failed: ${name}`, error);
+                this.indexedDB.addItem({ ...data.content, url: null })
+                this.onCheckAllDone()
+            },
+            complete: () => this.onCheckAllDone()
+        });
+    }
+    
+    onCheckAllDone() {
+        const finished = this.uploadItems().every(i => i.status === 'success' || i.status === 'error' || i.status === 'cancel');
+        if (finished) this.isUploading.set(false);
+    }
+
+    onBroadcastMessage(data: any, socketClient?: any) {
+        this.playerBroadcast.set(data);
+        this.showBroadcastMessage.set(true);
+        this.broadcastTimeout = setTimeout(() => {
+            this.showBroadcastMessage.set(false)
+            socketClient.emit('response-update', { response: `Broadcast completed` })
+        }, data.duration * 1000);
+    }
+    
+    onConvertBlobToImage(blob: any, userId: any) {
+        const deviceId = this.storage.get('deviceId');
+        const tenantId = this.storage.get('tenantId');
+
+        const newBlob = new Blob([blob], { type: 'image/png' });
+        const file = new File([newBlob], `screenshot-${Date.now()}.png`, { type: 'image/png' });
+        
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+        
+
+        const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'x-api-key': this.apiKey });
+        this.http.post(`${this.api}tenants/screens/upload-screenshot/${deviceId}/${userId}`, formData, { headers }).subscribe(res => console.log(res));        
+    }
+
+    onRegisterPlayer(body: any) {
+        const headers = new HttpHeaders({ 'Content-Type': 'application/json', 'x-api-key': this.apiKey });
+        return this.http.post(`${this.api}admin/screens`, body, { headers });
+    }
+    
+    /**
+     * =======================================================================
+     * Browser functions
+     * =======================================================================
+     */
+    onGetBrowserInformation() {
+        const { appVersion, appName, platform, userAgent }: any = navigator;
+        const height = screen.height;
+        const width = screen.width;
+        const orientation = height < width ? 'landscape' : 'portrait';
+        return { appVersion, appName, platform, userAgent, height, width, orientation };
+    }
+
+    /**
+     * =======================================================================
+     * Desktop functions
+     * =======================================================================
+     */
+    onSendDataToDesktop(data: any) {
+        window.system.onSendContentLogs(JSON.stringify(data));
     }
     
     sendDesktopCommand(action: string): Promise<any> {
@@ -91,41 +193,24 @@ export class PlayerService {
         });
     }
 
-    onConvertBlobToImage(blob: any, userId: any) {
-        const deviceId = this.storage.get('deviceId');
-        const tenantId = this.storage.get('tenantId');
-
-        const newBlob = new Blob([blob], { type: 'image/png' });
-        const file = new File([newBlob], `screenshot-${Date.now()}.png`, { type: 'image/png' });
-        
-        const formData = new FormData();
-        formData.append("file", file, file.name);
-        
-
-        const headers = new HttpHeaders({ 'x-tenant-id': tenantId, 'x-api-key': this.apiKey });
-        this.http.post(`${this.api}tenants/screens/upload-screenshot/${deviceId}/${userId}`, formData, { headers }).subscribe(res => console.log(res));        
+    onGetSystemHealthCheck() {
+        return new Promise((resolve, reject) => {
+            window.system.getHealthCheck()
+            .then((response: any) => {
+                resolve(response);
+            })
+            .catch(err => {
+                console.error('Error getting desktop system info:', err);
+                reject(err);
+            });
+        });
     }
-    
-    // onGetAndroidInformation(): Promise<void> {
-    //     return new Promise((resolve, reject) => {
-    //         (window as any).AndroidBridge = (window as any).AndroidBridge || {};
 
-    //         // Android → JS callback
-    //         (window as any).AndroidBridge.onDeviceDetails = (data: any) => {
-    //             resolve(data);
-    //             console.log('Received from android device details:', data);
-    //         };
-
-    //         // JS → Android request
-    //         if (typeof (window as any).AndroidBridge.requestDeviceDetails === 'function') {
-    //             (window as any).AndroidBridge.requestDeviceDetails();
-    //         } else {
-    //             console.warn('AndroidBridge.requestDeviceDetails not available yet');
-    //         }
-
-    //         // resolve();
-    //     });
-    // }
+    /**
+     * =======================================================================
+     * Android functions
+     * =======================================================================
+     */
     onGetAndroidInformation(): Promise<any> {
 
         return new Promise((resolve) => {
@@ -167,14 +252,6 @@ export class PlayerService {
             waitForBridge();
         });
     }
-    
-    onGetBrowserInformation() {
-        const { appVersion, appName, platform, userAgent }: any = navigator;
-        const height = screen.height;
-        const width = screen.width;
-        const orientation = height < width ? 'landscape' : 'portrait';
-        return { appVersion, appName, platform, userAgent, height, width, orientation };
-    }
 
     onSendDataToAndroid(data: any) {
         if ((window as any).AndroidBridge && typeof (window as any).AndroidBridge.sendCommand === 'function') {
@@ -184,28 +261,5 @@ export class PlayerService {
         } else {
             console.warn('AndroidBridge not available.');
         }
-    }
-    
-    onSendDataToDesktop(data: any) {
-        window.system.onSendContentLogs(JSON.stringify(data));
-    }
-
-    onRegisterPlayer(body: any) {
-        const headers = new HttpHeaders({ 'Content-Type': 'application/json', 'x-api-key': this.apiKey });
-        return this.http.post(`${this.api}admin/screens`, body, { headers });
-    }
-
-    onGetSystemHealthCheck() {
-        // return this.http.get('http://localhost:8085/data.json')
-        return new Promise((resolve, reject) => {
-            window.system.getHealthCheck()
-            .then((response: any) => {
-                resolve(response);
-            })
-            .catch(err => {
-                console.error('Error getting desktop system info:', err);
-                reject(err);
-            });
-        });
     }
 }

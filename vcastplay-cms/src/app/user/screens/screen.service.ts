@@ -204,6 +204,10 @@ export class ScreenService {
     return this.http.post(`${this.api}tenants/screen-management/${command}/${deviceId}`, data, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
   }
 
+  onBroadcast(deviceId: number, broadcastId: number) {
+    return this.http.post(`${this.api}tenants/screen-management/broadcast/${deviceId}/${broadcastId}`, { }, { headers: this.onGetHTTPHeaders() });
+  }
+
   onDisplayScreen() {
     /**Call POST display screen API */
     console.log('Display screen');

@@ -5,6 +5,7 @@
   [style]="{ width: '40rem' }"
   [draggable]="false"
   closable
+  (onHide)="step = 1"
   modal
 >
   <p-stepper [value]="step" [linear]="true" (valueChange)="onStepChanges($event)">
@@ -15,7 +16,7 @@
     <p-step-panels>
       <p-step-panel [value]="1">
         <ng-template #content let-activateCallback="activateCallback">
-          <div class="flex flex-col gap-8 h-full" [formGroup]="generateForm">
+          <div class="flex flex-col gap-4 h-full" [formGroup]="generateForm">
             <div class="relative p-6 dark:bg-surface-800 dark:shadow-blue-500/50 shadow-lg rounded-lg flex flex-col gap-4 overflow-hidden">
               <div class="absolute left-0 bottom-[-32px]">
                 <img src="assets/monster.gif" class="w-25 h-25" alt="AI monster">
@@ -28,6 +29,7 @@
                 </p>
               </div>
             </div>
+            <p-divider>Prompt</p-divider>
             <div class="flex flex-col gap-4">
               <div class="flex justify-between items-center gap-4">
                 <p-floatlabel class="w-full" variant="on">
@@ -50,11 +52,21 @@
       </p-step-panel>
       <p-step-panel [value]="2">
         <ng-template #content let-activateCallback="activateCallback">
-          <div class="flex flex-col gap-4 h-full">
-            <p>Results</p>
+          <div class="flex flex-col gap-4 h-full" [formGroup]="generateForm">
+            @if (isGenerating()) {
+              <div class="relative w-full h-[15rem]">
+                <p-skeleton height="15rem" styleClass="w-full" />
+                <div class="absolute top-0 left-0 bottom-[-32px] w-full h-full flex flex-col items-center justify-center">
+                  <img src="assets/pencil.gif" class="w-15 h-15" alt="AI monster">
+                  <p>Generating Asset...</p>
+                </div>
+              </div>
+            } @else {
+              <img [src]="url()" alt="AI generated asset" class="object-contain w-full h-[20rem]" >
+            }
             <div class="flex justify-between">
-                <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)"  size="small"/>
-                <p-button label="Upload" icon="pi pi-arrow-right" iconPos="right" (onClick)="onUploadAssets()"  size="small"/>
+                <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" [disabled]="isGenerating()"  size="small"/>
+                <p-button label="Upload" icon="pi pi-arrow-right" iconPos="right" (onClick)="onUploadAssets()" [disabled]="isGenerating()" size="small"/>
             </div>
           </div>
         </ng-template>

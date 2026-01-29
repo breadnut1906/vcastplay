@@ -175,11 +175,14 @@ export class AssetListComponent {
 
   onFilterChange(event: any) { }
 
-  onPageChange(event: any) {    
+  onPageChange(event: any) {
     const rows = event.rows;
     const pageNumber = event.first / event.rows + 1;
-    this.onInitializedAssets(pageNumber, rows);
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.onInitializedAssets(pageNumber, event.rows);
   }
+
   isShowDialogChange(event: any) {
     this.isEdit.set(false);
     this.selectedAsset.set(null);
