@@ -1,7 +1,7 @@
-import { Component, inject, Input, signal } from '@angular/core';
+import { Component, inject, Input, signal, ViewChild } from '@angular/core';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { FormBuilder, Validators } from '@angular/forms';
-import { MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { AssetsService } from '../assets.service';
 import { environment } from '../../../../environments/environment.development';
 import { StorageService } from '../../../core/services/storage.service';
@@ -19,6 +19,7 @@ export class AssetAiGenerateComponent {
   assetService = inject(AssetsService);
   storage = inject(StorageService);
   message = inject(MessageService);
+  confirmation = inject(ConfirmationService);
 
   isGenerating = signal<boolean>(false);
   assetData = signal<any>({})
@@ -35,7 +36,7 @@ export class AssetAiGenerateComponent {
     { label: 'Low', value: 'low' },
   ]
 
-  step: number = 1;
+  step = signal<number>(1);
   publicApi: string = environment.public;
   url = signal<string>('');
   formBuilder = inject(FormBuilder);
@@ -68,16 +69,41 @@ export class AssetAiGenerateComponent {
     }
   }
 
-  onUploadAssets() {
+  onUploadAssets(event: any) {
     const { asset, ...data } = this.generateForm.value
-    this.assetService.onSaveAssets(asset).subscribe({
-      next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset saved successfully!' }),
-      error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to save asset!' }),
-      complete: () => {
-        this.generateForm.reset();
-        this.showPrompt.set(false)
-      }
-    });
+    
+    this.confirmation.confirm({
+      target: event.target as EventTarget,
+      message: 'Do you want to upload this asset?',
+      closable: true,
+      closeOnEscape: true,
+      header: 'Confirm Save',
+      icon: 'pi pi-info-circle',
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Save',
+      },
+      accept: () => {
+      this.assetService.onSaveAssets(asset).subscribe({
+        next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset saved successfully!' }),
+        error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to save asset!' }),
+        complete: () => {
+          this.generateForm.reset();
+          this.showPrompt.set(false)
+        }
+      });
+      },
+    })
+  }
+
+  onClosePrompt() {    
+    this.step.set(1);
+    this.generateForm.reset();
+    this.showPrompt.set(false)
   }
 
   get tenantId() {

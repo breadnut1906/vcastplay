@@ -3,7 +3,7 @@
         <div class="flex gap-3 items-center w-full" [formGroup]="selectedContentForm">
             <p-inputgroup>
                 <p-inputgroup-addon>
-                    <p-button label="Assign Content" severity="info" (onClick)="onClickOpenContents()" size="small" outlined />
+                    <p-button label="Assign Content" severity="info" (onClick)="onClickOpenContents()" size="small" text />
                 </p-inputgroup-addon>
                 <input id="name" type="text" placeholder="Content" formControlName="name" pSize="small" readonly pInputText>
                 <p-inputgroup-addon>
@@ -21,13 +21,13 @@
         <div class="flex gap-3 items-center justify-center lg:justify-end">
             <p class="text-sm">Controls:</p>
             <div class="flex-wrap flex gap-3">
-                <p-button (onClick)="onClickSendCommand('open')"
+                <p-button (onClick)="onClickSendCommand($event, 'open')"
                     icon="pi pi-play" pTooltip="Open" tooltipPosition="bottom" size="small" fluid />
-                <p-button (onClick)="onClickSendCommand('close')"
+                <p-button (onClick)="onClickSendCommand($event, 'close')"
                     icon="pi pi-times-circle" pTooltip="Close" tooltipPosition="bottom" size="small" fluid />
-                <p-button (onClick)="onClickSendCommand('restart')"
+                <p-button (onClick)="onClickSendCommand($event, 'restart')"
                     icon="pi pi-refresh" pTooltip="Restart" tooltipPosition="bottom" size="small" fluid />
-                <p-button (onClick)="onClickSendCommand('shutdown')"
+                <p-button (onClick)="onClickSendCommand($event, 'shutdown')"
                     icon="pi pi-power-off" pTooltip="Shutdown" tooltipPosition="bottom" size="small" fluid />
                 <p-button (onClick)="onClickBroadCastMessage()" 
                     icon="pi pi-megaphone" pTooltip="Broadcast Message" tooltipPosition="bottom" size="small" fluid />
@@ -42,6 +42,6 @@
 <app-content-selection [showContents]="showContents" #contents [selectedTypes]="['asset']" (contentType)="onContentTypeChange($event)" 
     (selectedContents)="onSelectionChange($event)" />
 
-<app-screen-settings [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" (onClearAllChange)="onClearAllChange()" />
+<app-screen-settings [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" (onClearAllChange)="onClearAllChange($event)" />
 
 <app-screen-broadcast-message [showBroadcast]="showBroadcast" (onBroadCastMessage)="onBroadCastMessage($event)" />

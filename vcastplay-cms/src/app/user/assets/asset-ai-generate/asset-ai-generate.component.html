@@ -5,10 +5,10 @@
   [style]="{ width: '40rem' }"
   [draggable]="false"
   closable
-  (onHide)="step = 1"
+  (onHide)="onClosePrompt()"
   modal
 >
-  <p-stepper [value]="step" [linear]="true" (valueChange)="onStepChanges($event)">
+  <p-stepper [(value)]="step" [linear]="true" (valueChange)="onStepChanges($event)">
     <p-step-list>
       <p-step [value]="1">Prompt</p-step>
       <p-step [value]="2">Results</p-step>
@@ -66,7 +66,7 @@
             }
             <div class="flex justify-between">
                 <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" [disabled]="isGenerating()"  size="small"/>
-                <p-button label="Upload" icon="pi pi-arrow-right" iconPos="right" (onClick)="onUploadAssets()" [disabled]="isGenerating()" size="small"/>
+                <p-button label="Upload" icon="pi pi-arrow-right" iconPos="right" (onClick)="onUploadAssets($event)" [disabled]="isGenerating()" size="small"/>
             </div>
           </div>
         </ng-template>

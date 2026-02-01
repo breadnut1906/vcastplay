@@ -98,44 +98,62 @@ export class ScreenControlsComponent {
     this.selectedContentForm.reset();
   }
 
-  onClickSendCommand(command: string) {
+  onClickSendCommand(event: any, command: string) {
 
     // Checks if any screen is selected
     if (this.hasSelected) {
       this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one screen.' });
       return;
     }
-    
-    this.isSending.set(true);
-    const screens = this.selectMultipleScreens().filter((screen: any) => ['connected'].includes(screen.status));
-    const newScreens: any = Array.from(screens).map((screen: any) => ({ id: screen.id, content: this.selectedContent(), progress: 0, status: 'pending' }));
-    this.screenItems.set(newScreens);
 
-    this.screenItems().forEach((item: ScreenItems) => {
-      item.status = 'sending';
-      item.sub = this.screenService.onSendCommand(item.id, item.content, command).subscribe({
-        next: (event: any) => {
-          if (event.type == HttpEventType.UploadProgress && event.total) {
-            item.progress = Math.round((event.loaded / event.total) * 100);
-          }
+    this.confirmation.confirm({
+      target: event.target as EventTarget,
+      message: `Do you want to ${command.toUpperCase()} all selected screens?`,
+      closable: true,
+      closeOnEscape: true,
+      header: 'Confirm Save',
+      icon: 'pi pi-info-circle',
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Save',
+      },
+      accept: () => {
+        this.isSending.set(true);
+        const screens = this.selectMultipleScreens().filter((screen: any) => ['connected'].includes(screen.status));
+        const newScreens: any = Array.from(screens).map((screen: any) => ({ id: screen.id, content: this.selectedContent(), progress: 0, status: 'pending' }));
+        this.screenItems.set(newScreens);
 
-          if (event.type == HttpEventType.Response) {
-            item.status = 'success';
-            item.progress = 100;
-          }
-        },
-        error: (error: any) => {
-          item.status = 'error';
-          item.progress = 0;
-          item.error = error;
-          console.error(`Upload failed: ${item.content.name}`, error);
-          this.onCheckAllDone()
-        },
-        complete: () => this.onCheckAllDone()
-      })
+        this.screenItems().forEach((item: ScreenItems) => {
+          item.status = 'sending';
+          item.sub = this.screenService.onSendCommand(item.id, item.content, command).subscribe({
+            next: (event: any) => {
+              if (event.type == HttpEventType.UploadProgress && event.total) {
+                item.progress = Math.round((event.loaded / event.total) * 100);
+              }
+
+              if (event.type == HttpEventType.Response) {
+                item.status = 'success';
+                item.progress = 100;
+              }
+            },
+            error: (error: any) => {
+              item.status = 'error';
+              item.progress = 0;
+              item.error = error;
+              console.error(`Upload failed: ${item.content.name}`, error);
+              this.onCheckAllDone()
+            },
+            complete: () => this.onCheckAllDone()
+          })
+        })
+        this.selectedContent.set(null);
+        this.selectedContentForm.reset();
+      },
     })
-    this.selectedContent.set(null);
-    this.selectedContentForm.reset();
   }
 
   onClickBroadCastMessage() {
@@ -195,8 +213,8 @@ export class ScreenControlsComponent {
     this.showSettings.set(false);
   }
 
-  onClearAllChange() {
-    this.onClickSendCommand('clear');
+  onClearAllChange(event: any) {
+    this.onClickSendCommand(event, 'clear');
     // this.showSettings.set(false);
   }
   
