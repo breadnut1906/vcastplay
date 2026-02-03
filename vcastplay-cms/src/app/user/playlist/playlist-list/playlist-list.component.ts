@@ -7,6 +7,7 @@ import { UtilityService } from '../../../core/services/utility.service';
 import { Playlist } from '../playlist';
 import { Router } from '@angular/router';
 import { Menu } from 'primeng/menu';
+import { Pagination } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-playlist-list',
@@ -34,25 +35,30 @@ export class PlaylistListComponent {
   message = inject(MessageService);
   router = inject(Router);
 
+  playlists = signal<Playlist[] | any[]>([]);
+  playlist = signal<Playlist | any>(null);
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
+  isLoading = signal<boolean>(false);
+
   showPreview = signal<boolean>(false);
   showApprove = signal<boolean>(false);
 
-  previewContent = signal<Playlist | any>(null);;
-
-  playlistFilters = signal<any>(this.playlistFilterForm.valueChanges);
-  filterPlaylist = computed(() => {
-    const { status, keywords, isAuto } = this.playlistFilters();
-    const playlists = this.playlistService.playlists();
-    return playlists.filter(playlist => {
-      const matchStatus = !status || playlist.status == status;
-      const matchIsAuto = isAuto == null || playlist.isAuto == isAuto;
-      const matchKeywords = !keywords || playlist.name.toLowerCase().includes(keywords.toLowerCase()) || playlist.description.toLowerCase().includes(keywords.toLowerCase());
-      return matchStatus && matchKeywords && matchIsAuto;
-    })
-  })
+  previewContent = signal<Playlist | any>(null);
 
   ngOnInit() {
-    this.playlistService.onGetPlaylists();
+    this.onInitializePlaylists();
+  }
+
+  onInitializePlaylists(page: number = 1, limit: number = 10) {
+    this.isLoading.set(true);
+    this.playlistService.onLoadPlaylist(page, limit).subscribe({
+      next: (res: any) => {
+        this.playlists.set(res.items);
+        this.pagination.set(res.meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.isLoading.set(false)
+    })
   }
 
   onClickAddNew() {
@@ -60,9 +66,7 @@ export class PlaylistListComponent {
   }
 
   onClickEdit(playlist: Playlist) {
-    this.isEditMode.set(true);
-    this.playlistForm.patchValue(playlist);
-    this.router.navigate([ '/playlist/playlist-details' ]);
+    this.router.navigate([ '/playlist/playlist-details'], { queryParams: { id: playlist.id }} );
   }
 
   onClickDelete(playlist: any, event: Event) {
@@ -83,10 +87,11 @@ export class PlaylistListComponent {
         severity: 'danger',
       },
       accept: () => {
-        this.playlistService.onDeletePlaylist(playlist);
-        this.message.add({ severity:'success', summary: 'Success', detail: 'Playlist deleted successfully!' });
-        this.selectedPlaylist.set(null);
-        this.playlistForm.reset();
+        this.playlistService.onDeletePlaylist(playlist).subscribe({
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Playlist deleted successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete playlist!' }),
+          complete: () => this.onInitializePlaylists()
+        });
       },
       reject: () => { }
     })
@@ -98,9 +103,17 @@ export class PlaylistListComponent {
     this.message.add({ severity:'success', summary: 'Success', detail: 'Playlist duplicated successfully!' });
   }
 
-  onClickPreview(playlist: any) {
-    this.showPreview.set(true);
-    this.previewContent.set({ ...playlist, loop: true });
+  /**
+   * Click event handler for the preview button. Retrieves the playlist
+   * with the given id and displays its content in a dialog.
+   * @param playlist The playlist object to be previewed.
+   */
+  onClickPreview(item: Playlist | any) {
+    this.playlistService.onGetPlaylistById(item.id).subscribe({
+      next: (res: any) => this.playlist.set(res[0]),
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.showPreview.set(true)
+    })
   }
 
   onClickOptions(event: Event, playlist: Playlist, menu: Menu) {
@@ -110,19 +123,19 @@ export class PlaylistListComponent {
 
   onClickShowApproved(event: any, item: any, popup: any) {
     popup.toggle(event);
-    this.playlistForm.patchValue(item);
+    // this.playlistForm.patchValue(item);
   }
 
   onClickConfirmApproved(event: Event, popup: any, type: string) {
-    const { approvedInfo, ...info } = this.playlistForm.value;
-    if (approvedInfo.remarks === '') {
-      this.message.add({ severity: 'error', summary: 'Error', detail: 'Remarks is required!' });
-      return;
-    }
-    this.showApprove.set(false);
-    this.playlistService.onApprovePlaylist(this.playlistForm.value, type);
-    this.playlistForm.reset();
-    popup.hide();
+    // const { approvedInfo, ...info } = this.playlistForm.value;
+    // if (approvedInfo.remarks === '') {
+    //   this.message.add({ severity: 'error', summary: 'Error', detail: 'Remarks is required!' });
+    //   return;
+    // }
+    // this.showApprove.set(false);
+    // this.playlistService.onApprovePlaylist(this.playlistForm.value, type);
+    // this.playlistForm.reset();
+    // popup.hide();
   }
 
   onClickCloseApproved(event: Event, popup: any) {
@@ -142,33 +155,39 @@ export class PlaylistListComponent {
       return;
     };
     this.filteredAssets.set(contents);
-    this.playlistForm.patchValue({ contents });
+    // this.playlistForm.patchValue({ contents });
     this.showContents.set(false);
-    this.playlistService.onSavePlaylist({ ...this.playlistForm.value, duration: this.totalDuration(), isAuto: true });
+    // this.playlistService.onSavePlaylist({ ...this.playlistForm.value, duration: this.totalDuration(), isAuto: true });
     this.message.add({ severity:'success', summary: 'Success', detail: `New playlist created with ${contents.length} contents` });
   }
 
-  onFilterChange(event: any) { 
-    this.playlistFilters.set(event.filters);
+  onFilterChange(event: any) {  }
+  
+  onPageChange(event: any) {
+    const rows = event.rows;
+    const pageNumber = event.first / event.rows + 1;
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.onInitializePlaylists(pageNumber, event.rows);
   }
 
   get rows() { return this.playlistService.rows; }
   get first() { return this.playlistService.first; }
-  get playlists() { return this.playlistService.playlists; }
+  // get playlists() { return this.playlistService.playlists; }
   get isEditMode() { return this.playlistService.isEditMode; }
   get activeStep() { return this.playlistService.activeStep; }
   get showContents() { return this.playlistService.showContents; }
   get totalRecords() { return this.playlistService.totalRecords; }
-  get playlistForm() { return this.playlistService.playListForm; }
+  // get playlistForm() { return this.playlistService.playListForm; }
   get playListValue() { return this.playlistService.playListForm.value; }
   get categoryForm() { return this.playlistService.categoryForm; }
-  get totalDuration() { return this.playlistService.totalDuration; }
+  // get totalDuration() { return this.playlistService.totalDuration; }
   get selectedAssets() { return this.playlistService.selectedAssets; }
   get filteredAssets() { return this.playlistService.filteredAssets; }
   get selectedPlaylist() { return this.playlistService.selectedPlaylist; }
   
-  get status() { return this.playlistForm.get('status'); }
-  get approvedInfo() { return this.playlistForm.get('approvedInfo'); }
+  // get status() { return this.playlistForm.get('status'); }
+  // get approvedInfo() { return this.playlistForm.get('approvedInfo'); }
 
   get playlistFilterForm() { return this.playlistService.playlistFilterForm; }
 }

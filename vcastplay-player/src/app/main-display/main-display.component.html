@@ -1,26 +1,13 @@
 <div #viewport class="relative flex flex-1 flex-col gap-4 justify-center items-center h-screen group overflow-hidden select-none"
   [ngClass]="{ 'bg-[var(--p-primary-500)]': !playerContent, 'bg-stone-800': playerContent }">
-  <!-- Main Player -->
-  <!-- <ng-container *ngIf="currentContent as contentData">
-    @switch (contentData?.type) { @case ('design') {
-      <app-design-layout-preview 
-        class="flex-1 h-full w-full flex items-center justify-center"
-        [ngClass]="{ 'opacity-100': isPlay(), 'opacity-0': !isPlay() }"
-        [viewport]="viewport"
-        [designLayout]="contentData"
-        [isPlaying]="isPlay()"
-      />
-    } @case('playlist') {
-      <app-playlist-preview class="relative w-full h-full group bg-stone-800 text-white rounded-lg" [playlist]="contentData" [isAutoPlay]="true" />
-    } @default {
-      <app-asset-preview class="relative w-full h-full flex items-center justify-center" [asset]="contentData" [autoPlay]="isPlay()" [showControls]="false" />
-    } }
-  </ng-container> -->
-
-  <ng-container *ngIf="playerContent as data">
+  
+  <ng-container *ngIf="currentContent as data;">
     @switch (data.type) {
       @case('asset') {
         <app-asset-preview class="relative w-full h-full flex items-center justify-center" [asset]="data.content" [autoPlay]="true" [showControls]="false" />
+      } 
+      @case ('playlist') {
+        <app-playlist-preview class="absolute left-0 top-0 w-full h-full" [playlist]="data.content" />
       }
     }
   </ng-container>

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, forwardRef, inject, Input, Output, QueryList, signal, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, inject, Input, Output, QueryList, signal, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { Playlist } from '../playlist';
 import { Assets } from '../../assets/assets';
 import { DesignLayout } from '../../design-layout/design-layout';
@@ -9,20 +9,22 @@ import { PlaylistService } from '../playlist.service';
 import { FacebookSDKService } from '../../../core/services/facebook-sdk.service';
 import { DesignLayoutPreviewComponent } from '../../design-layout/design-layout-preview/design-layout-preview.component';
 import { YoutubeSdkService } from '../../../core/services/youtube-sdk.service';
+import { environment } from '../../../../environments/environment.development';
+import { StorageService } from '../../../core/services/storage.service';
 
 declare const FB: any;
 declare const YT: any;
 
 @Component({
   selector: 'app-playlist-player',
-  imports: [ PrimengUiModule, SafeurlPipe, forwardRef(() => DesignLayoutPreviewComponent) ],
+  imports: [ PrimengUiModule, SafeurlPipe, ], //forwardRef(() => DesignLayoutPreviewComponent) 
   templateUrl: './playlist-player.component.html',
   styleUrl: './playlist-player.component.scss',
 })
 export class PlaylistPlayerComponent {
 
-  @Input() playlist!: Playlist;
-  @Input() isAutoPlay: boolean = false;
+  @Input() playlist!: Playlist | any;
+  @Input() isAutoPlay = false;
 
   @Output() onCurrentItemChange = new EventEmitter<Assets | DesignLayout | any>();
   @Output() isPlayingChange = new EventEmitter<boolean>();
@@ -31,13 +33,16 @@ export class PlaylistPlayerComponent {
   // @ViewChild('ytPlayer') ytPlayerRef!: ElementRef<HTMLDivElement>;
 
   @ViewChildren('ytPlayer') ytPlayersRef!: QueryList<ElementRef<HTMLDivElement>>[];
-  @ViewChildren('fbPlayer') fbPlayersRef!: ElementRef<HTMLDivElement>[];
+  @ViewChildren('fbPlayer') fbPlayersRef: QueryList<ElementRef<HTMLDivElement>>[] = [];
 
   playlistService = inject(PlaylistService);
+  storage = inject(StorageService);
   utils = inject(UtilityService);
   fbService = inject(FacebookSDKService);
   ytService = inject(YoutubeSdkService);
+  cdr = inject(ChangeDetectorRef);
 
+  publicURL = environment.public;
   isPlaying = signal<boolean>(false);
   isTransitioning = signal<boolean>(false);
   isFacebookLoading = signal<boolean>(false);
@@ -51,7 +56,7 @@ export class PlaylistPlayerComponent {
   private transitionId: any;
   private fbTimerId: any;
   private ytTimerId: any;
-  
+  private fbPlayers = new Set<any>();
 
   ngOnInit() {
     this.onInitPlaylist();
@@ -72,15 +77,15 @@ export class PlaylistPlayerComponent {
   }
 
   async onInitPlaylist(fromChange: boolean = false) {
-    const contents: number = this.playlist?.contents.length || 0;
+    const entries: number = this.playlist?.entries.length || 0;
     this.onClearTimeout();
     this.onStopAllMedias();
     this.currentIndex.set(0);
     await this.ytService.onLoadSDK();
     await this.fbService.onLoadSDK();
 
-    if (contents > 0 && this.isAutoPlay) {
-      this.currentItem.set(this.playlist.contents[0]);
+    if (entries > 0 && this.isAutoPlay) {
+      this.currentItem.set(this.playlist.entries[0]);
       if (this.isAutoPlay || (fromChange && this.isPlaying())) {
         this.onStartPlayback();
       }
@@ -88,20 +93,25 @@ export class PlaylistPlayerComponent {
   }
 
   onStartPlayback() {
-    const contents: number = this.playlist.contents.length;
-    if (contents == 0) return;
+    const entries: number = this.playlist.entries.length;
+    if (entries == 0) return;
     this.isPlaying.set(true);
-    this.currentItem.set(this.playlist.contents[this.currentIndex()]);
+    this.currentItem.set(this.playlist.entries[this.currentIndex()]);
 
-    if (['image', 'web', 'design'].includes(this.currentItem().type)) this.onImageLoaded(this.currentItem());
-    if (this.currentItem().type == 'audio') this.onAudioLoad();
-    if (this.currentItem().type == 'video') this.onVideoLoad();
-    if (this.currentItem().type == 'facebook') this.onFacebookLoad();
-    if (this.currentItem().type == 'youtube') this.onYoutubeLoad();
+    const { asset } = this.currentItem();
+    
+    if (['image', 'html', 'design', 'link'].includes(asset.type)) this.onImageLoaded(this.currentItem());
+    
+    if (['audio'].includes(asset.type)) this.onAudioLoad();
+    if (['video'].includes(asset.type)) this.onVideoLoad();
+
+    if (asset.link) {
+      if (asset.link.includes('facebook.com') || asset.link.includes('fb.watch')) this.onFacebookLoad();
+      if (asset.link.includes('youtube.com') || asset.link.includes('youtu.be')) this.onYoutubeLoad();
+    }
+
     this.onCurrentItemChange.emit(this.currentItem());
     this.isPlayingChange.emit(true);
-
-    // this.onPreloadNextItem();
   }
 
   onStopPlayback() {
@@ -117,17 +127,17 @@ export class PlaylistPlayerComponent {
   }
 
   onNextItem() {
-    const { type, hasGap } = this.playlist.transition;
-    const typeDuration = type ? 300 : 0;
-    const gapDuration = hasGap ? 1500 : 0;
+    const { transition, isBlackGap } = this.playlist;
+    const typeDuration = transition ? 300 : 0;
+    const gapDuration = isBlackGap ? 1500 : 0;
     this.onClearTimeout();
     
     this.currentItem.set(null);
     this.transitionId = setTimeout(() => {
 
       this.gapId = setTimeout(() => {
-        const isLoop: boolean = this.playlist.loop;
-        const contents: number = this.playlist.contents.length;
+        const isLoop: boolean = this.playlist.isLoop;
+        const contents: number = this.playlist.entries.length;
 
         let nextIndex: number = this.currentIndex() + 1;
 
@@ -141,13 +151,22 @@ export class PlaylistPlayerComponent {
         }
 
         this.currentIndex.set(nextIndex);
-        this.currentItem.set(this.playlist.contents[nextIndex]);
+        this.currentItem.set(this.playlist.entries[nextIndex]);
         
-        if (['image', 'web', 'design'].includes(this.currentItem().type)) this.onImageLoaded(this.currentItem());
-        if (this.currentItem().type == 'audio') this.onAudioLoad();
-        if (this.currentItem().type == 'video') this.onVideoLoad();
-        if (this.currentItem().type == 'facebook') this.onFacebookLoad();
-        if (this.currentItem().type == 'youtube') this.onYoutubeLoad();
+        const { asset } = this.currentItem();
+        if (['image', 'html', 'design', 'link'].includes(asset.type)) this.onImageLoaded(this.currentItem());
+        if (['audio'].includes(asset.type)) this.onAudioLoad();
+        if (['video'].includes(asset.type)) this.onVideoLoad();
+        if (asset.link) {
+          if (asset.link.includes('facebook.com') || asset.link.includes('fb.watch')) this.onFacebookLoad();
+          if (asset.link.includes('youtube.com') || asset.link.includes('youtu.be')) this.onYoutubeLoad();
+        }
+        
+        // if (['image', 'web', 'design'].includes(this.currentItem().type)) this.onImageLoaded(this.currentItem());
+        // if (this.currentItem().type == 'audio') this.onAudioLoad();
+        // if (this.currentItem().type == 'video') this.onVideoLoad();
+        // if (this.currentItem().type == 'facebook') this.onFacebookLoad();
+        // if (this.currentItem().type == 'youtube') this.onYoutubeLoad();
 
         this.onCurrentItemChange.emit(this.currentItem());
         // this.onPreloadNextItem();
@@ -158,16 +177,16 @@ export class PlaylistPlayerComponent {
   }
 
   onPreloadNextItem() {
-    const nextIndex = (this.currentIndex() + 1) % this.playlist.contents.length;
-    this.nextPreloadedItem.set(this.playlist.contents[nextIndex]);
+    const nextIndex = (this.currentIndex() + 1) % this.playlist.entries.length;
+    this.nextPreloadedItem.set(this.playlist.entries[nextIndex]);
   }
 
   onVideoLoad() {
-    const content: Assets | DesignLayout | any = this.currentItem();
+    const content: any = this.currentItem();
     Promise.resolve().then(() => {
       const videos = document.querySelectorAll('video');
       for (const v of videos) {
-        if (v.id == content.contentId) {
+        if (v.id == content.sequence) {
           v.currentTime = 0;
           v.muted = false;
           v.play()
@@ -177,22 +196,22 @@ export class PlaylistPlayerComponent {
   }
 
   // For Image and Web links
-  onImageLoaded(item: Assets) {
+  onImageLoaded(item: any) {
     const duration = item.duration * 1000 || 5000;    
     this.timerId = setTimeout(() => this.onNextItem(), duration);
   }
 
-  onIFrameLoad(item: Assets) {
-    if (item.type == 'web') return item.link;
+  onIFrameLoad(item: any) {
+    if (item.asset.type == 'web') return item.asset.link;
     else return '';
   }
 
   onAudioLoad() {
-    const content: Assets | DesignLayout | any = this.currentItem();
+    const content: any = this.currentItem();
     Promise.resolve().then(() => {
       const audios = document.querySelectorAll('audio');
       for (const a of audios) {
-        if (a.id == content.contentId) {
+        if (a.id == content.sequence) {
           a.currentTime = 0;
           a.play();
         }
@@ -203,13 +222,13 @@ export class PlaylistPlayerComponent {
   async onYoutubeLoad() {
     this.ytTimerId = setTimeout(async () => {
       const item = this.currentItem();
-      const { videoId } = this.utils.onGetEmbedUrl(item.link);
+      const { videoId } = this.utils.onGetEmbedUrl(item.asset.link);
 
       this.ytPlayersRef.forEach((player: any) => {
         const playerEl = player.nativeElement;
         if (!playerEl) return;
 
-        if (item.contentId == playerEl.id) {
+        if (item.sequence == playerEl.id) {
 
           if (playerEl._ytInstance && playerEl._ytInstance.destroy) {
             playerEl._ytInstance.destroy();
@@ -250,17 +269,32 @@ export class PlaylistPlayerComponent {
 
       this.fbPlayersRef.forEach(async (player: any) => {
 
-        const playerEl = player.nativeElement;        
+        const playerEl = player.nativeElement;
         if (!playerEl) return;
+        this.fbService.onFacebookParse(playerEl);
 
-        if (item.contentId == playerEl.id) {
+        if (item.sequence == playerEl.id) {
           try {
             await FB.Event.unsubscribe('xfbml.ready');
-            await FB.Event.subscribe('xfbml.ready', async (msg: any) => {     
+            await FB.Event.subscribe('xfbml.ready', async (msg: any) => {
               this.isFacebookLoading.set(false);
               if (msg.type === 'video' && msg.instance) {
                 fbPlayer = msg.instance;
                 fbPlayer.play();
+              
+                const iframe = playerEl.querySelector('iframe');
+                
+                if (iframe) {
+                  const orientation = iframe.offsetWidth > iframe.offsetHeight ? 'landscape' : 'portrait';
+                  const scale = orientation == 'landscape' ? 1 : playerEl.clientHeight / iframe.clientHeight;
+                  iframe.style.position = 'absolute';
+                  iframe.style.top = '50%';
+                  iframe.style.left = '50%';
+                  iframe.style.transformOrigin = 'center center';
+                  iframe.style.border = 'none';
+                  iframe.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                  iframe.setAttribute('allow', 'accelerometer; ambient-light-sensor; camera; encrypted-media; fullscreen; geolocation; gyroscope; magnetometer; microphone; payment; picture-in-picture');
+                }
                 
                 fbPlayer.subscribe('finishedPlaying', () => {
                   fbPlayer.pause();
@@ -277,19 +311,6 @@ export class PlaylistPlayerComponent {
               console.warn('FB Player error:', err);
               this.onNextItem()
             });
-            this.fbService.onFacebookParse(playerEl);
-
-            const iframe = playerEl.querySelector('iframe');
-            if (iframe) {
-              const orientation = iframe.offsetWidth > iframe.offsetHeight ? 'landscape' : 'portrait';
-              const scale = orientation == 'landscape' ? 1 : playerEl.clientHeight / iframe.clientHeight;
-              iframe.style.position = 'absolute';
-              iframe.style.top = '50%';
-              iframe.style.left = '50%';
-              iframe.style.transformOrigin = 'center center';
-              iframe.style.border = 'none';
-              iframe.style.transform = `translate(-50%, -50%) scale(${scale})`;
-            }
 
           } catch (err) {
             console.warn('FB Player init failed', err);
@@ -297,13 +318,15 @@ export class PlaylistPlayerComponent {
           }
         }
       })
+
+      this.cdr.detectChanges();
     }, 20);
   }
 
   onActiveTransitionClass() {
-    const { type } = this.playlist.transition;
-    switch (type) {
-      case 'fade-in':
+    const { transition } = this.playlist;
+    switch (transition) {
+      case 'fade':
         return `opacity-0 animate-fade-in`;
       case 'slide-up':
         return `transform animate-slide-up`;
@@ -334,9 +357,26 @@ export class PlaylistPlayerComponent {
       media.muted = true;
       media.pause();
     });
+
+    // this.fbPlayersRef.forEach((player: any) => {
+    //   const playerEl = player.nativeElement;
+    //   if (!playerEl) return;
+    //   console.log(playerEl);
+      
+    // })
   }
 
-  trackById(index: number, item: Assets | DesignLayout | any) {
-    return item.contentId;
+  trackById(index: number, item: any) {
+    return item.sequence;
   }
+
+  isFacebook(item: Assets) { 
+    return item.link.includes('facebook.com') || item.link.includes('fb.watch');
+  }
+
+  isYoutube(item: Assets) { 
+    return item.link.includes('youtube.com') || item.link.includes('youtu.be');
+  }
+
+  get tenantId() { return this.storage.get('id'); }
 }

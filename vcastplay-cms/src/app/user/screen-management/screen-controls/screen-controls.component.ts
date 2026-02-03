@@ -12,6 +12,7 @@ import { environment } from '../../../../environments/environment.development';
 import { ContentSelectionComponent } from '../../../shared/components/content-selection/content-selection.component';
 import { ScreenSettingsComponent } from '../../../shared/components/screen-settings/screen-settings.component';
 import { ScreenBroadcastMessageComponent } from '../screen-broadcast-message/screen-broadcast-message.component';
+import { PlaylistService } from '../../playlist/playlist.service';
 
 @Component({
   selector: 'app-screen-controls',
@@ -29,6 +30,7 @@ export class ScreenControlsComponent {
 
   screenService = inject(ScreenService);
   broadcastService = inject(BroadcastService);
+  playlistService = inject(PlaylistService);
   utils = inject(UtilityService);
   storage = inject(StorageService);
 
@@ -183,18 +185,31 @@ export class ScreenControlsComponent {
       return;
     }
     this.selectedContentForm.patchValue({ id: event.id, name: event.name, type: event.type });
-    this.selectedContent.set({ 
-      type: this.contentType(), 
-      content: { 
-        id: event.id, 
-        name: event.name, 
-        type: event.type, 
-        url: ['facebook', 'youtube', 'link'].includes(event.type) ? event.link 
-          : `${this.publicApi}assets/${this.tenantId}/${event.name}`,
-        status: event.status,
-        updatedAt: event.updatedAt
-      } 
-    });
+    if (this.contentType() == 'asset') {
+      this.selectedContent.set({ 
+        type: this.contentType(), 
+        content: {
+          name: event.name, 
+          type: event.type, 
+          url: ['facebook', 'youtube', 'link'].includes(event.type) ? event.link 
+            : `${this.publicApi}assets/${this.tenantId}/${event.name}`,
+          status: event.status,
+          updatedAt: event.updatedAt
+        } 
+      });
+    } else if (this.contentType() == 'playlist') {
+      this.playlistService.onGetPlaylistById(event.id).subscribe({
+        next: (res: any) => {
+          const data = res[0];
+          this.selectedContent.set({ type: this.contentType(), content: data });
+        },
+        error: (error: any) => {
+          this.selectedContent.set(null);
+          this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message })
+        }
+      })
+    }
+
   }
 
   onContentTypeChange(event: any) {

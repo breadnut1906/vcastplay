@@ -34,7 +34,7 @@ export interface ContentItems {
 export interface ScheduleContentItems {
     id: string;
     title: string;
-    extendedProps: Assets | Playlist | DesignLayout;
+    extendedProps: Assets | Playlist | DesignLayout | any;
     start: string;
     end: string;
     backgroundColor: string;

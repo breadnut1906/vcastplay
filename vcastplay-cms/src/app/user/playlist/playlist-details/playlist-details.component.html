@@ -4,49 +4,27 @@
     <ng-template #title>
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <p-button
-            (onClick)="onClickCancel()"
-            icon="pi pi-arrow-left"
-            pTooltip="Back"
-            tooltipPosition="bottom"
-            size="small"
-            text
-          />
-          <p class="text-sm md:text-xl font-semibold">
-            {{ isEditMode() ? 'Edit Playlist' : 'New Playlist' }}
-          </p>
-          @if (isEditMode()) {
-          <p-tag
-            [value]="formControl('status').value?.toUpperCase()"
-            [icon]="'pi ' + utils.getIcon(formControl('status').value)"
-            [severity]="utils.getStatus(formControl('status').value)"
-          />
-          }
+          <p-button (onClick)="onClickCancel()" icon="pi pi-arrow-left"
+            pTooltip="Back" tooltipPosition="bottom" size="small" text />
+          <p class="text-sm md:text-xl font-semibold">{{ isEdit() ? 'Edit Playlist' : 'New Playlist' }}</p>
+          <!-- @if (isEditMode()) {
+            <p-tag [value]="formControl('status').value?.toUpperCase()" [icon]="'pi ' + utils.getIcon(formControl('status').value)"
+              [severity]="utils.getStatus(formControl('approvedStatus').value)"
+            />
+          } -->
         </div>
-        <p-button
-          class="hidden md:flex gap-2"
-          label="Save"
-          icon="pi pi-save"
-          (onClick)="onClickSave($event)"
-        />
+        <p-button class="hidden md:flex gap-2" label="Save" icon="pi pi-save" (onClick)="onClickSave($event)" />
         <p-button class="flex md:hidden gap-2" icon="pi pi-save" (onClick)="onClickSave($event)" />
       </div>
     </ng-template>
     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 h-full py-2">
-      <div class="col-span-1 md:col-span-6 xl:col-span-8 flex flex-col gap-2">
+      <div class="col-span-1 md:col-span-6 xl:col-span-7 flex flex-col gap-2">
         <div class="grid grid-flow-row grid-cols-1 md:grid-cols-12 gap-4">
           <div class="col-span-1 md:col-span-3">
             <p-floatlabel variant="on">
               <label for="name">Name</label>
-              <input
-                id="name"
-                pInputText
-                formControlName="name"
-                [ngClass]="{
-                  'ng-invalid ng-dirty': formControl('name').invalid && formControl('name').touched
-                }"
-                fluid
-              />
+              <input id="name" pInputText formControlName="name"
+                [ngClass]="{ 'ng-invalid ng-dirty': formControl('name').invalid && formControl('name').touched }" fluid />
             </p-floatlabel>
           </div>
           <div class="col-span-1 md:col-span-9 flex justify-between gap-2">
@@ -74,49 +52,31 @@
       </div>
 
       <!-- Assets Lists -->
-      <div class="col-span-1 md:col-span-6 xl:col-span-4">
-        <div class="relative flex flex-col h-80 md:h-full">
-          <app-content-selection
-            class="absolute flex-1 w-full h-full"
-            #contents
-            [selectedTypes]="['asset']"
-            [isSelectable]="false"
-            (selectedContents)="onSelectionChange($event)"
-          />
-        </div>
+      <div class="col-span-1 md:col-span-6 xl:col-span-5">
+        <app-playlist-content (onPlaylistContentChange)="onPlaylistContentChange($event)" />
       </div>
     </div>
     <ng-template #footer>
       <div class="grid grid-cols-1 md:grid-cols-3 md:flex w-full items-center gap-2 md:py-2 py-4">
-        <!-- <div class="flex items-center gap-2">
-          <p-checkbox formControlName="loop" inputId="loop" [readonly]="isPlaying()" binary />
-          <label for="loop" class="text-sm">Loop</label>
-        </div> -->
-        <div class="flex gap-4" formGroupName="transition">
+        <div class="flex gap-4">
           <div class="flex items-center gap-2">
-            <p-checkbox formControlName="hasGap" inputId="hasGap" [readonly]="isPlaying()" binary />
-            <label for="hasGap" class="text-sm">Black Gap</label>
+            <p-checkbox formControlName="isBlackGap" inputId="isBlackGap" [readonly]="isPlaying()" binary />
+            <label for="isBlackGap" class="text-sm">Black Gap</label>
           </div>
           <div class="flex items-center gap-2">
-            <p-select
-              placeholder="Transition"
-              formControlName="type"
-              size="small"
-              optionLabel="label"
-              optionValue="value"
-              [options]="transitionTypes"
-              [readonly]="isPlaying()"
-              [showClear]="!isPlaying()"
+            <p-select placeholder="Transition" formControlName="transition" size="small"
+              optionLabel="label" optionValue="value" [options]="transitionTypes"
+              [readonly]="isPlaying()" [showClear]="!isPlaying()"
             />
           </div>
           <div class="flex items-center gap-2">
-            <label for="speed" class="text-sm">Speed:</label>
+            <label for="transitionSpeed" class="text-sm">Speed:</label>
             <p-inputnumber
-              formControlName="speed"
+              formControlName="transitionSpeed"
               size="small"
-              inputId="speed"
+              inputId="transitionSpeed"
               [min]="0"
-              placeholder="Speed"
+              placeholder="StransitionSpeedpeed"
               [useGrouping]="false"
               [inputStyle]="{ width: '4rem' }"
               [readonly]="isPlaying()"

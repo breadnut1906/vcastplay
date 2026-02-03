@@ -23,6 +23,7 @@ export class PlayerService {
 
     api: string = environment.api;
     apiKey: string = environment.apiKey;
+    publicURL: string = environment.public;
 
     playerContent = signal<Assets | DesignLayout | Playlists | any>(null);
     // playerCommand = signal<any>(null);
@@ -49,23 +50,42 @@ export class PlayerService {
     onLoadContents() { }
 
     async onSetContent(data: any, socketClient?: any) {
-        // Assets only: add playlist, design layout and schedule soon
+        //Assets only: add playlist, design layout and schedule soon
         this.isUploading.set(true);
         this.indexedDB.clearItems();
-        const { type } = data.content;
+        const { type, content } = data;
+        this.storage.set('contentType', type);
 
-        if (!['facebook', 'youtube', 'link'].includes(type)) {
-            this.uploadItems.set([ {  id: uuidv7(), content: data, process: 0, status: 'pending' }]);
-            this.uploadItems().forEach((item) => this.onAddContent(item, socketClient));
+        if (type == 'asset') {
+            this.uploadItems.set([ { id: uuidv7(), content, process: 0, status: 'pending' }]);
+            this.uploadItems().forEach((item) => this.onAddContent(data, item, socketClient));
+            return;
+        } else if (type == 'playlist') {
+            const assets = content.entries.map((item: any) => ({
+                id: item.id,
+                content: {
+                    ...item,
+                    url: `${this.publicURL}assets/${this.tenantId}/${item.asset.name}`,
+                },
+                process: 0,
+                staus: 'pending'
+            }));            
+            this.uploadItems.set(assets);
+            this.uploadItems().forEach((item) => this.onAddContent(data, item, socketClient));
+            return;
         } else {
             await this.indexedDB.addItem(data.content);
             this.playerContent.set(data);
         }
+
+        // if (!['facebook', 'youtube', 'link'].includes(type)) {
+        //     this.uploadItems.set([ {  id: uuidv7(), content: data, process: 0, status: 'pending' }]);
+        //     this.uploadItems().forEach((item) => this.onAddContent(item, socketClient));
+        // } 
     }
 
-    onAddContent(item: UploadItem, socketClient?: any) {
-        const data = item.content;     
-        const { url, name } = data.content
+    onAddContent(data: any, item: UploadItem, socketClient?: any) {  
+        const { url, name } = item.content
         
         item.status = 'uploading';
         socketClient.emit('response-update', { response: `Uploading Started...` })
@@ -80,9 +100,8 @@ export class PlayerService {
                 if (event.type == HttpEventType.Response) {
                     item.status = 'success';
                     item.progress = 100;                    
-                    this.indexedDB.addItem({ ...data.content, url: event.body })
+                    this.indexedDB.addItem({ ...item.content, url: event.body })
                     socketClient.emit('response-update', { response: `Upload completed` })
-                    this.playerContent.set(data);
                 }
             },
             error: (error: any) => {
@@ -90,16 +109,26 @@ export class PlayerService {
                 item.progress = 0;
                 item.error = error;
                 console.error(`Upload failed: ${name}`, error);
-                this.indexedDB.addItem({ ...data.content, url: null })
+                this.indexedDB.addItem({ ...item.content, url: null })
                 this.onCheckAllDone()
             },
-            complete: () => this.onCheckAllDone()
+            complete: () => this.onCheckAllDone(data)
         });
     }
     
-    onCheckAllDone() {
+    onCheckAllDone(data?: any) {
         const finished = this.uploadItems().every(i => i.status === 'success' || i.status === 'error' || i.status === 'cancel');
-        if (finished) this.isUploading.set(false);
+        if (finished) {
+            if (data.type == 'playlist') {
+                const { entries, ...playlist } = data.content;
+                this.storage.set('playlist', JSON.stringify(playlist));
+                this.playerContent.set(data);
+                
+            } else if (data.type == 'asset') {
+                this.playerContent.set(data);
+            }
+            this.isUploading.set(false);
+        }
     }
 
     onBroadcastMessage(data: any, socketClient?: any) {
@@ -262,4 +291,6 @@ export class PlayerService {
             console.warn('AndroidBridge not available.');
         }
     }
+
+    get tenantId() { return this.storage.get('tenantId'); }
 }

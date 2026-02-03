@@ -30,8 +30,8 @@ export class PlaylistContainerComponent {
     effect(() => {
       const content = this.currentPlaying;
       if (content) {
-        const { contents } = this.playlistForm.value;
-        const index = contents.findIndex((item: any) => item.contentId === content.contentId);
+        const { entries } = this.playlistForm.value;
+        const index = entries.findIndex((item: any) => item.sequence === content.sequence);
         this.activeIndex = index;
         this.onScrollContent(index);
       }
@@ -46,24 +46,27 @@ export class PlaylistContainerComponent {
   }
 
   onDropped(event: CdkDragDrop<string[]>) {
-    const { contents } = this.playlistForm.value;
-    const length = contents.length || 0;
+    const { entries } = this.playlistForm.value;
     const { previousIndex, previousContainer, currentIndex, container, item: { data } } = event;
 
     // If the item is from the same container (reordering)
     if (previousContainer == container) {
-      moveItemInArray(contents, previousIndex, currentIndex);
-      this.playlistForm.patchValue({ contents });
+      moveItemInArray(entries, previousIndex, currentIndex);
+      this.playlistForm.patchValue({ entries: this.onSequenceEntries(entries) });
       return;
     }
 
     // Add item    
-    contents.splice(currentIndex, 0, {...data, contentId: length + 1});
-    this.playlistForm.patchValue({ contents });
+    entries.splice(currentIndex, 0, data);
+    this.playlistForm.patchValue({ entries });
   }
 
-  trackByFn(index: number, item: any) { return item.contentId; }
+  onSequenceEntries(entrie: any[]) {
+    return entrie.map((item: any, index: number) => { return { ...item, sequence: index + 1 } });
+  }
 
-  get contents() { return this.playlistForm.get('contents'); }
+  trackByFn(index: number, item: any) { return item.sequence; }
+
+  get entries() { return this.playlistForm.get('entries'); }
   get currentPlaying() { return this.playlistService.currentPlaying(); }
 }

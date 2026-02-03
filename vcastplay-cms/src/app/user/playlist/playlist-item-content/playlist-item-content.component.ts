@@ -6,6 +6,8 @@ import { Playlist } from '../playlist';
 import { Assets } from '../../assets/assets';
 import { DesignLayout } from '../../design-layout/design-layout';
 import { FormGroup } from '@angular/forms';
+import { environment } from '../../../../environments/environment.development';
+import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
   selector: 'app-playlist-item-content',
@@ -16,31 +18,33 @@ import { FormGroup } from '@angular/forms';
 export class PlaylistItemContentComponent {
   
   @Input() playlist!: FormGroup;
-  @Input() content: Assets | DesignLayout | any;
+  @Input() content: any;
   @Input() isPlaying: boolean = false;
 
   showConfig = signal<boolean>(false);
 
-  utils = inject(UtilityService);
+  publicURL = environment.public;
   playlistService = inject(PlaylistService);
+  storage = inject(StorageService);
+  utils = inject(UtilityService);
 
   onCurrentPlaying() {
-    const { contentId } = this.content;
-    return this.currentPlaying?.contentId == contentId;
+    const { sequence } = this.content;
+    return this.currentPlaying?.sequence == sequence;
   }
 
   onClickRemove(content: Assets | DesignLayout) {
-    const { contentId } = content;
-    const { contents, files }: any = this.playlist.value;
+    const { sequence } = content;
+    const { entries }: any = this.playlist.value;
 
-    const newContents = contents.filter((item: any) => item.contentId !== contentId);
-    const newFiles = files.filter((item: any) => item.contentId !== contentId);
-    this.playlist.patchValue({ contents: newContents, files: newFiles });
+    const newEntries = entries.filter((item: any) => item.sequence !== sequence);
+    this.playlist.patchValue({ entries: newEntries });
   }
 
   onClickHide() {
     this.showConfig.set(!this.showConfig());
   }
 
+  get tenantId() { return this.storage.get('id'); }
   get currentPlaying() { return this.playlistService.currentPlaying(); }
 }

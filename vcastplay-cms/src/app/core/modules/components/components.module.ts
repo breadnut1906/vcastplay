@@ -52,6 +52,7 @@ import { UserDetailsComponent } from '../../../shared/components/user-details/us
 import { AssetUploadFileComponent } from '../../../user/assets/asset-upload-file/asset-upload-file.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { ScreenHealthStatusComponent } from '../../../shared/components/screen-health-status/screen-health-status.component';
+import { PlaylistContentComponent } from '../../../user/playlist/playlist-content/playlist-content.component';
 
 const COMPONENT_MODULES = [
   CommonModule,
@@ -98,6 +99,7 @@ const COMPONENT_MODULES = [
   PlaylistListItemComponent,
   PlaylistFilterComponent,
   PlaylistPlayerComponent,
+  PlaylistContentComponent,
 
   // Asset Components
   AssetAiGenerateComponent,

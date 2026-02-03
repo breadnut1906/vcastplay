@@ -17,7 +17,7 @@ export interface DesignLayout {
     isActive: boolean;
     hasPlaylist: boolean;
     screen?: Screen;
-    contentId?: any;
+    sequence?: any;
     files?: any[];
     createdOn: Date;
     updatedOn: Date;

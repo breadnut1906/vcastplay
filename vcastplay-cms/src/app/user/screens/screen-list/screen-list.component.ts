@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import _ from  'lodash';
 import { Pagination } from '../../../shared/interfaces/general';
 import { FormControl } from '@angular/forms';
+import { WebsocketService } from '../../../core/services/websocket.service';
 
 @Component({
   selector: 'app-screen-list',
@@ -19,6 +20,7 @@ export class ScreenListComponent {
 
   pageInfo: MenuItem = [ {label: 'Screens'}, {label: 'Registration'} ];
 
+  webSocket = inject(WebsocketService);
   screenService = inject(ScreenService);
   utils = inject(UtilityService);
   confirmation = inject(ConfirmationService);
@@ -39,6 +41,11 @@ export class ScreenListComponent {
   otpCtrl: FormControl = new FormControl(null);
 
   ngOnInit() {
+    this.socketClient.on('screen:errors', (data: any) => {
+      console.log(data);
+      
+    });
+
     this.onInitializeScreens();
   }
 
@@ -137,4 +144,6 @@ export class ScreenListComponent {
   get isEditMode() { return this.screenService.isEditMode; }
   get selectedScreen() { return this.screenService.selectedScreen; }
   get screenFilterForm() { return this.screenService.screenFilterForm; }
+
+  get socketClient () { return this.webSocket.socketClient; }
 }

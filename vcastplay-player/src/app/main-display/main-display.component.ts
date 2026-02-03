@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
 import { PrimengModule } from '../core/modules/primeng/primeng.module';
 import { UtilsService } from '../core/services/utils.service';
 import { PlayerService } from '../core/services/player.service';
@@ -15,6 +15,7 @@ import { WebsocketService } from '../core/services/websocket.service';
   imports: [ PrimengModule, ComponentsModule, ],
   templateUrl: './main-display.component.html',
   styleUrl: './main-display.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MainDisplayComponent {
 
@@ -25,6 +26,7 @@ export class MainDisplayComponent {
   message = inject(MessageService);
   player = inject(PlayerService);
   utils = inject(UtilsService);
+  cdr = inject(ChangeDetectorRef);
   
   // screenKey: string = environment.screenKey;
 
@@ -32,18 +34,25 @@ export class MainDisplayComponent {
   // isLoading = signal<boolean>(false);
   // showSettings = signal<boolean>(false);
   // loadingProgress = signal<number>(0);
-  // currentContent: any;
+  currentContent: any;
   // nextCurrent: any;
 
 
-  constructor(private cdr: ChangeDetectorRef) {
+  constructor() {
 
     effect(() => {
       const data = this.player.playerContent();
       const broadcast = this.player.playerBroadcast();
       const healthCheck = this.player.isStartHealthCheck();
 
-      if (data) this.webSocket.onEmit('response-update', { response: `Player has started` })
+      if (data) {
+        this.currentContent = null;
+        Promise.resolve().then(() => {
+          this.currentContent = data;
+          this.webSocket.onEmit('response-update', { response: `Player has started` });
+          this.cdr.markForCheck();
+        })
+      }
 
       if (broadcast) this.webSocket.onEmit('response-update', { response: `Player has started broadcasting` });
 
@@ -52,12 +61,22 @@ export class MainDisplayComponent {
   }
 
   async ngOnInit() {
+    const contentType = this.storage.get('contentType');
     const platform = this.storage.get('platform');
     console.log(`System has been initialized in ${platform.toUpperCase()}`);
 
     const items = await this.indexedDB.getAllItems();
     if (items.length > 0) {
-      this.player.playerContent.set({ type: 'asset', content: items[0] });
+      switch (contentType) {
+        case 'asset':
+          this.player.playerContent.set({ type: 'asset', content: items[0] });
+          break;
+      
+        case 'playlist':
+          const playlist = this.storage.get('playlist');
+          this.player.playerContent.set({ type: 'playlist', content: { ...playlist, entries: items} });
+          break;
+      }
       this.webSocket.onEmit('response-update', { response: `Player has started` })
       // this.isPlay.set(true);
     }
@@ -167,6 +186,7 @@ export class MainDisplayComponent {
 
   get tenantId() { return this.storage.get('tenantId'); }
   get playerCode() { return this.storage.get('code'); }
+  get contentType() { return this.storage.get('contentType'); }
 
   get showBroadcastMessage() { return this.player.showBroadcastMessage() }
 }

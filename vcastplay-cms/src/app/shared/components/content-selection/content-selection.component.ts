@@ -25,7 +25,7 @@ export class ContentSelectionComponent {
   
   @Input() showContents = signal<boolean>(false);
   @Input() assetOnly: boolean = false;
-  @Input() selectedTypes: string[] = [];
+  @Input() selectedTypes: string[] = []; // ['asset', 'playlist', 'design', 'schedule']
   @Input() selectionMode: 'single' | 'multiple' = 'single';
   @Input() isSelectable: boolean = true;
   @Input() readonly: boolean = false;
@@ -70,8 +70,15 @@ export class ContentSelectionComponent {
     this.isLoading.set(true);
     switch (type) {
       case 'playlist':
-        return this.contentLists.set(this.playlistService.onGetPlaylists());
-        // break;
+        this.playlistService.onLoadPlaylist(page, limit).subscribe({
+          next: (res: any) => {
+            this.contentLists.set(res.items);
+            this.pagination.set(res.meta);
+          },
+          error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+          complete: () => this.isLoading.set(false)
+        })
+        break;
       case 'design':
         return this.contentLists.set(this.designLayoutService.onGetDesigns());
         // break;
@@ -112,6 +119,11 @@ export class ContentSelectionComponent {
     const { currentPage, itemsPerPage, ...meta } = this.pagination();
     this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
     this.onGetContents(type, pageNumber, rows);
+  }
+
+  onCloseContents() {
+    this.selectionContent.set(null);
+    this.contentTypeControl.setValue('asset');
   }
 
   get contentTypes() { return this.scheduleService.contentTypes; }

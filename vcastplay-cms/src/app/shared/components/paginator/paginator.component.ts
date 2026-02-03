@@ -12,6 +12,7 @@ import { UtilityService } from '../../../core/services/utility.service';
 export class PaginatorComponent {
 
   @Input() pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 })
+  @Input() isSimple: boolean = false;
 
   @Output() onPageChange = new EventEmitter<any>();
 

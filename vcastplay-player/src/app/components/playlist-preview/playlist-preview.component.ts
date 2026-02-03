@@ -15,14 +15,14 @@ declare const YT: any;
 
 @Component({
   selector: 'app-playlist-preview',
-  imports: [ PrimengModule, SafeurlPipe, forwardRef(() => DesignLayoutPreviewComponent) ],
+  imports: [ PrimengModule, SafeurlPipe, ], //forwardRef(() => DesignLayoutPreviewComponent) 
   templateUrl: './playlist-preview.component.html',
   styleUrl: './playlist-preview.component.scss'
 })
 export class PlaylistPreviewComponent {
 
   @Input() playlist!: Playlist;
-  @Input() isAutoPlay: boolean = false;
+  // @Input() isAutoPlay: boolean = false;
 
   @Output() onCurrentItemChange = new EventEmitter<Assets | DesignLayout | any>();
   @Output() isPlayingChange = new EventEmitter<boolean>();
@@ -63,77 +63,77 @@ export class PlaylistPreviewComponent {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (!changes['playlist'].currentValue) this.onStopPlayback();
-    if (changes['playlist'] && changes['playlist'].currentValue && this.isAutoPlay) this.onInitPlaylist(true);
+    //if (!changes['playlist'].currentValue) 
+    if (changes['playlist'] && changes['playlist'].currentValue) this.onInitPlaylist(true);
   }
 
   ngOnDestroy() {
     this.onStopPlayback();
   }
 
-  onClickPlayback() {
-    if (this.isPlaying()) this.onStopPlayback();
-    else this.onStartPlayback();
-  }
-
   async onInitPlaylist(fromChange: boolean = false) {
-    const contents: number = this.playlist?.contents.length || 0;
+    const entries: number = this.playlist?.entries.length || 0;
     this.onClearTimeout();
-    this.currentIndex.set(0);
-
-    if (contents > 0 && this.isAutoPlay) {
-      this.currentItem.set(this.playlist.contents[0]);
-      if (this.isAutoPlay || (fromChange && this.isPlaying())) {
-        this.onStartPlayback();
-      }
+    this.onStopPlayback();
+    // this.currentIndex.set(0);
+    
+    if (entries > 0) {
+      this.currentItem.set(this.playlist.entries[0]);
+      this.onStartPlayback();
     }
   }
 
   onStartPlayback() {
-    const contents: number = this.playlist.contents.length;
-    if (contents == 0) return;
+    const entries: number = this.playlist.entries.length;
+    if (entries == 0) return;
     this.isPlaying.set(true);
-    this.currentItem.set(this.playlist.contents[this.currentIndex()]);
+    this.currentItem.set(this.playlist.entries[this.currentIndex()]);
 
-    if (['image'].includes(this.currentItem().type)) this.onImageLoaded(this.currentItem());
-    if (['design'].includes(this.currentItem().type)) this.onDesignLoad(this.currentItem());
-    if (['video'].includes(this.currentItem().type)) this.onVideoLoad(this.currentItem());
-    if (['audio'].includes(this.currentItem().type)) this.onAudioLoad(this.currentItem());
-    if (['facebook'].includes(this.currentItem().type)) this.onFacebookLoad();
-    if (['youtube'].includes(this.currentItem().type)) this.onYoutubeLoad();
+    const { asset } = this.currentItem();
+    
+    if (['image', 'html', 'design', 'link'].includes(asset.type)) this.onImageLoaded(this.currentItem());
+    
+    if (['audio'].includes(asset.type)) this.onAudioLoad(this.currentItem());
+    if (['video'].includes(asset.type)) this.onVideoLoad(this.currentItem());
+
+    if (asset.link) {
+      if (asset.link.includes('facebook.com') || asset.link.includes('fb.watch')) this.onFacebookLoad();
+      if (asset.link.includes('youtube.com') || asset.link.includes('youtu.be')) this.onYoutubeLoad();
+    }
     
     this.onCurrentItemChange.emit(this.currentItem());
     this.isPlayingChange.emit(true);
   }
 
   onStopPlayback() {
-    this.isPlaying.set(false);
     this.onClearTimeout();
     this.currentIndex.set(0);
     this.currentItem.set(null);
     
     this.onStopAllMedias();
 
+    this.isPlaying.set(false);
     this.onCurrentItemChange.emit(null);
     this.isPlayingChange.emit(false);
   }
 
   onNextItem() {
-    const { type, hasGap } = this.playlist.transition;
-    const typeDuration = type ? 300 : 0;
-    const gapDuration = hasGap ? 1500 : 0;
+    // debugger
+    const { transition, isBlackGap } = this.playlist;
+    const typeDuration = transition ? 300 : 0;
+    const gapDuration = isBlackGap ? 1500 : 0;
     this.onClearTimeout();
     
     this.currentItem.set(null);
     this.transitionId = setTimeout(() => {
 
       this.gapId = setTimeout(() => {
-        const isLoop: boolean = this.playlist.loop;
-        const contents: number = this.playlist.contents.length;
+        const isLoop: boolean = this.playlist.isLoop;
+        const entries: number = this.playlist.entries.length;
 
         let nextIndex: number = this.currentIndex() + 1;
 
-        if (nextIndex >= contents) {
+        if (nextIndex >= entries) {
           if (isLoop) {
             nextIndex = 0;
           } else { 
@@ -143,14 +143,23 @@ export class PlaylistPreviewComponent {
         }
 
         this.currentIndex.set(nextIndex);
-        this.currentItem.set(this.playlist.contents[nextIndex]);
+        this.currentItem.set(this.playlist.entries[nextIndex]);
         
-        if (['image'].includes(this.currentItem().type)) this.onImageLoaded(this.currentItem());
-        if (['design'].includes(this.currentItem().type)) this.onDesignLoad(this.currentItem());
-        if (['video'].includes(this.currentItem().type)) this.onVideoLoad(this.currentItem());
-        if (['audio'].includes(this.currentItem().type)) this.onAudioLoad(this.currentItem());
-        if (['facebook'].includes(this.currentItem().type)) this.onFacebookLoad();
-        if (['youtube'].includes(this.currentItem().type)) this.onYoutubeLoad();
+        const { asset } = this.currentItem();
+        if (['image', 'html', 'design', 'link'].includes(asset.type)) this.onImageLoaded(this.currentItem());
+        if (['audio'].includes(asset.type)) this.onAudioLoad(this.currentItem());
+        if (['video'].includes(asset.type)) this.onVideoLoad(this.currentItem());
+        if (asset.link) {
+          if (asset.link.includes('facebook.com') || asset.link.includes('fb.watch')) this.onFacebookLoad();
+          if (asset.link.includes('youtube.com') || asset.link.includes('youtu.be')) this.onYoutubeLoad();
+        }
+        
+        // if (['image'].includes(this.currentItem().type)) this.onImageLoaded(this.currentItem());
+        // if (['design'].includes(this.currentItem().type)) this.onDesignLoad(this.currentItem());
+        // if (['video'].includes(this.currentItem().type)) this.onVideoLoad(this.currentItem());
+        // if (['audio'].includes(this.currentItem().type)) this.onAudioLoad(this.currentItem());
+        // if (['facebook'].includes(this.currentItem().type)) this.onFacebookLoad();
+        // if (['youtube'].includes(this.currentItem().type)) this.onYoutubeLoad();
 
         this.onCurrentItemChange.emit(this.currentItem());
 
@@ -160,17 +169,17 @@ export class PlaylistPreviewComponent {
   }
 
   onPreloadNextItem() {
-    const nextIndex = (this.currentIndex() + 1) % this.playlist.contents.length;
-    this.nextPreloadedItem.set(this.playlist.contents[nextIndex]);
+    const nextIndex = (this.currentIndex() + 1) % this.playlist.entries.length;
+    this.nextPreloadedItem.set(this.playlist.entries[nextIndex]);
   }
 
-  async onVideoLoad(item: Assets | DesignLayout | any) {
-    const videoSource = await this.onGetCurrentItemSource(item);
+  async onVideoLoad(item: any) {
+    const videoSource = await this.onGetCurrentItemSource(item);    
     if (!videoSource) return;
-
+    
     this.videoRef.forEach((video: any) => {
       const videoEl = video.nativeElement;
-      if (videoEl.id == item.contentId) {        
+      if (videoEl.id == item.sequence) {        
         videoEl.src = videoSource;
         videoEl.currentTime = 0;
         videoEl.muted = false;
@@ -179,13 +188,13 @@ export class PlaylistPreviewComponent {
   }
 
   // For Image and Web links
-  async onImageLoaded(item: Assets | DesignLayout | any) {
+  async onImageLoaded(item: any) {
     const imageSource = await this.onGetCurrentItemSource(item);
     if (!imageSource) return;
     
     this.imageRef.forEach((image: any) => {      
       const imageEl = image.nativeElement;
-      if (imageEl.id == item.contentId) {
+      if (imageEl.id == item.sequence) {
         imageEl.src = imageSource;
       }
     })
@@ -194,7 +203,7 @@ export class PlaylistPreviewComponent {
     this.timerId = setTimeout(() => this.onNextItem(), duration);
   }
   
-  async onAudioLoad(item: Assets | DesignLayout | any) {
+  async onAudioLoad(item: any) {
     // Promise.resolve().then(async () => {
     //   const audios = document.querySelectorAll('audio');
     //   for (const a of audios) {
@@ -211,7 +220,7 @@ export class PlaylistPreviewComponent {
 
     this.audioRef.forEach((audio: any) => {
       const audioEl = audio.nativeElement;
-      if (audioEl.id == item.contentId) {
+      if (audioEl.id == item.sequence) {
         audioEl.src = audioSource;
         audioEl.currentTime = 0;
         // audioEl.play();
@@ -283,6 +292,7 @@ export class PlaylistPreviewComponent {
         const playerEl = player.nativeElement;        
         if (!playerEl) return;
 
+        this.fbService.onFacebookParse(playerEl);
         if (item.contentId == playerEl.id) {
           try {
             await FB.Event.unsubscribe('xfbml.ready');
@@ -292,6 +302,18 @@ export class PlaylistPreviewComponent {
                 fbPlayer = msg.instance;
                 fbPlayer.unmute();
                 fbPlayer.play();
+                
+                const iframe = playerEl.querySelector('iframe');
+                if (iframe) {
+                  const orientation = iframe.offsetWidth > iframe.offsetHeight ? 'landscape' : 'portrait';
+                  const scale = orientation == 'landscape' ? 1 : playerEl.clientHeight / iframe.clientHeight;
+                  iframe.style.position = 'absolute';
+                  iframe.style.top = '50%';
+                  iframe.style.left = '50%';
+                  iframe.style.transformOrigin = 'center center';
+                  iframe.style.border = 'none';
+                  iframe.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                }
                 
                 fbPlayer.subscribe('finishedPlaying', () => {
                   fbPlayer.pause();
@@ -308,19 +330,6 @@ export class PlaylistPreviewComponent {
               console.warn('FB Player error:', err);
               this.onNextItem()
             });
-            this.fbService.onFacebookParse(playerEl);
-
-            const iframe = playerEl.querySelector('iframe');
-            if (iframe) {
-              const orientation = iframe.offsetWidth > iframe.offsetHeight ? 'landscape' : 'portrait';
-              const scale = orientation == 'landscape' ? 1 : playerEl.clientHeight / iframe.clientHeight;
-              iframe.style.position = 'absolute';
-              iframe.style.top = '50%';
-              iframe.style.left = '50%';
-              iframe.style.transformOrigin = 'center center';
-              iframe.style.border = 'none';
-              iframe.style.transform = `translate(-50%, -50%) scale(${scale})`;
-            }
 
           } catch (err) {
             console.warn('FB Player init failed', err);
@@ -331,17 +340,17 @@ export class PlaylistPreviewComponent {
     }, 20);
   }
 
-  async onGetCurrentItemSource(currentItem: Assets | DesignLayout | any) {
-    const file: any = await this.indexDBItems.find((item: any) => item.file.name == currentItem.name);
+  async onGetCurrentItemSource(currentItem: any) {
+    const file: any = await this.indexDBItems.find((item: any) => item.asset.name == currentItem.asset.name);
     if (!file) return null;
 
-    return URL.createObjectURL(file.blob);
+    return URL.createObjectURL(file.url);
   }
 
   onActiveTransitionClass() {
-    const { type } = this.playlist.transition;
-    switch (type) {
-      case 'fade-in':
+    const { transition } = this.playlist;
+    switch (transition) {
+      case 'fade':
         return `opacity-0 animate-fade-in`;
       case 'slide-up':
         return `transform animate-slide-up`;
@@ -379,8 +388,16 @@ export class PlaylistPreviewComponent {
     });
   }
 
-  trackById(index: number, item: Assets | DesignLayout | any) {
-    return item.contentId;
+  trackById(index: number, item: any) {
+    return item.sequence;
+  }
+  
+  isFacebook(item: any) { 
+    return item.link.includes('facebook.com') || item.link.includes('fb.watch');
+  }
+
+  isYoutube(item: any) { 
+    return item.link.includes('youtube.com') || item.link.includes('youtu.be');
   }
 
 }

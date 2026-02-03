@@ -1,4 +1,4 @@
-<p-dialog header="Assign Content" [(visible)]="showContents" styleClass="w-[50rem] h-[40rem]" (onShow)="onInitializedContents()" (onHide)="selectionContent.set(null)"
+<p-dialog header="Assign Content" [(visible)]="showContents" styleClass="w-[50rem] h-[40rem]" (onShow)="onInitializedContents()" (onHide)="onCloseContents()"
   [resizable]="false" [modal]="true" [draggable]="false">
   <div class="relative flex flex-col gap-2 h-full">
     <div class="grid grid-cols-2 gap-4 w-full">
@@ -51,7 +51,7 @@
               <th>Name</th>
               <th>Type</th>
               <th>
-                @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) { Duration } @else if
+                @if (!['schedule', 'clipart', 'playlist'].includes(contentTypeControl.value)) { Duration } @else if
                 (['clipart'].includes(contentTypeControl.value)) { Preview } @else { Description }
               </th>
             </tr>
@@ -88,13 +88,15 @@
                   }
                 </div>
               </td>
-              <td><p-tag [value]="item.type.toUpperCase()" severity="info" /></td>
+              <td><p-tag [value]="item.type?.toUpperCase() || contentTypeControl.value.toUpperCase()" severity="info" /></td>
               <td>
-                @if (!['schedule', 'clipart'].includes(contentTypeControl.value)) {
-                {{ utils.timeConversion(item.duration) }} } @else if
-                (['clipart'].includes(contentTypeControl.value)) {
-                <img [src]="item.link" [alt]="item.name" class="w-12" /> } @else {
-                {{ item.description }} }
+                @if (!['schedule', 'clipart', 'playlist'].includes(contentTypeControl.value)) {
+                  {{ utils.timeConversion(item.duration) }} 
+                } @else if (['clipart'].includes(contentTypeControl.value)) {
+                  <img [src]="item.link" [alt]="item.name" class="w-12" /> 
+                } @else {
+                  {{ item.description }} 
+                }
               </td>
             </tr>
           </ng-template>

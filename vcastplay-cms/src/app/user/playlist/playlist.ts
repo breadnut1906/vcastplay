@@ -4,25 +4,19 @@ import { DesignLayout } from "../design-layout/design-layout";
 import { Assets } from "../assets/assets";
 
 export interface Playlist {
-    id: number;
+    id?: number;
     name: string;
     description: string;
-    type: string;
-    transition: {
-        hasGap: boolean;
-        type: string;
-        speed: number;
-    },
-    contents: Assets[] | DesignLayout[] | any[];
-    loop: boolean;
-    status: string;
-    duration?: number;
     isAuto: boolean;
-    isActive: boolean;
+    isBlackGap: boolean;
+    isLoop: boolean;
+    transition: string;
+    transitionSpeed: number;
+    entries: Assets[] | DesignLayout[] | any[];
+    approvalStatus?: string;
     approvedInfo?: ApprovedInfo;
-    files?: any[];
-    createdOn: Date;
-    updatedOn: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface ContentState {

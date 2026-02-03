@@ -96,7 +96,7 @@ export class AssetListComponent {
   }
 
   onClickAddToPlaylist(item: any, event: Event) {
-    this.playlistService.onGetPlaylists();
+    // this.playlistService.onGetPlaylists();
     this.isShowAddToPlaylist.set(true);
     // this.assetForm.patchValue(item);
   }

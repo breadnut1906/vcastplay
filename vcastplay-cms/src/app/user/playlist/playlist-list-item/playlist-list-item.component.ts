@@ -11,7 +11,7 @@ import { UtilityService } from '../../../core/services/utility.service';
 })
 export class PlaylistListItemComponent {
 
-  @Input() playlist!: Playlist;
+  @Input() playlist!: Playlist | any;
   @Input() actionBtn!: TemplateRef<any>;
 
   utils = inject(UtilityService)

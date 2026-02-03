@@ -1,32 +1,64 @@
-<div #mainPlayer class="relative flex flex-1 items-center justify-center w-full h-full aspect-video overflow-hidden">
-    @for (item of playlist.contents; track trackById($index, item)) {
+<div #mainPlayer class="relative flex flex-1 items-center justify-center w-full h-full overflow-hidden">
+    @for (item of playlist.entries; track trackById($index, item)) {
         <div
             #viewport
             class="absolute inset-0 flex items-center justify-center transition-all ease-in-out"
-            style="--animation-duration: {{ playlist.transition.speed / 10 }}s"
-            [ngClass]="[ currentItem()?.contentId == item.contentId ? onActiveTransitionClass() : 'opacity-0 z-0 pointer-events-none hidden' ]"
+            style="--animation-duration: {{ playlist.transitionSpeed / 10 }}s"
+            [ngClass]="[ currentItem()?.sequence == item.sequence ? onActiveTransitionClass() : 'opacity-0 z-0 pointer-events-none hidden' ]"
         >
 
-            @switch(item.type) {
+            @switch(item.asset?.type) {
                 @case ('image') {
-                    <img class="h-full w-full object-fit inset-0" decoding="async" loading="lazy" [src]="item.link" [alt]="item.name">
+                    <img [id]="item.sequence" class="h-full w-full object-fit inset-0" decoding="async" 
+                        loading="lazy" [src]="publicURL + 'assets/' + tenantId + '/' + item.asset.name | safeurl" [alt]="item.name">
                 }
                 @case('video') {
-                    <video [id]="item.contentId" class="h-full w-full object-fill" preload="metadata"
-                        [src]="item.link" [autoplay]="false" [playsInline]="true" (ended)="onNextItem()"></video>
+                    <video [id]="item.sequence" class="h-full w-full object-fill" preload="metadata"
+                        [src]="publicURL + 'assets/' + tenantId + '/' + item.asset.name | safeurl" [playsInline]="true" (ended)="onNextItem()"></video>
                 }
                 @case ('audio') {
                     <div class="relative h-full w-full flex items-center justify-center gap-4">
                         <li class="!text-9xl !text-white pi pi-volume-up"></li>
-                        <audio [id]="item.contentId" class="absolute left-0 top-0 h-full w-full" controlsList="nodownload noplaybackrate"
-                            [src]="item.link" [controls]="false" [autoplay]="false" [crossOrigin]="true" preload="auto" (ended)="onNextItem()"></audio>
+                        <audio [id]="item.sequence" class="absolute left-0 top-0 h-full w-full" controlsList="nodownload noplaybackrate"
+                            [src]="publicURL + 'assets/' + tenantId + '/' + item.asset.name | safeurl" [controls]="false"
+                            [crossOrigin]="true" preload="auto" (ended)="onNextItem()"></audio>
                     </div>
                 }
                 @case ('web') {
-                    <iframe [id]="item.contentId" [src]="onIFrameLoad(item) | safeurl" class="w-full h-full object-fit" frameborder="0"
+                    <iframe [id]="item.sequence" [src]="onIFrameLoad(item) | safeurl" class="w-full h-full object-fit" frameborder="0"
                         allow="autoplay; encrypted-media; compute-pressure; picture-in-picture" scrolling="no" ></iframe>
                 }
-                @case ('youtube') {
+                @case ('html') {
+                    <iframe [id]="item.sequence" class="w-full h-full object-fit" [src]="item.asset.link | safeurl" frameborder="0"
+                        allow="autoplay; encrypted-media; compute-pressure; picture-in-picture" scrolling="no" ></iframe>
+                }
+                @case ('link') {
+                    @if (isFacebook(item)) {
+                        <div [id]="item.sequence" #fbPlayer class="relative flex items-center justify-center h-full w-full overflow-hidden">
+                            @if (isFacebookLoading()) { 
+                                <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                                    <p-progress-spinner strokeWidth="2" fill="transparent" />
+                                </div>
+                            }
+                            <div
+                                class="fb-video pointer-events-none relative h-full w-full"
+                                [attr.data-href]="item.asset.link"
+                                data-width="auto"
+                                data-autoplay="true"
+                                data-show-text="false"
+                                data-controls="false"
+                                data-allowfullscreen="false"
+                                data-show-captions="false"
+                            ></div>
+                        </div>
+                    } @else if (isYoutube(item)) {
+                        <div [id]="item.sequence" #ytPlayer class="h-full w-full"></div>
+                    } @else {
+                        <iframe [id]="item.sequence" class="w-full h-full object-fit" [src]="item.asset.link | safeurl" frameborder="0"
+                            allow="autoplay; encrypted-media; compute-pressure; picture-in-picture" scrolling="no" ></iframe>
+                    }
+                }
+                <!-- @case ('youtube') {
                     <div [id]="item.contentId" #ytPlayer class="h-full w-full"></div>
                 }
                 @case ('facebook') {                    
@@ -53,7 +85,7 @@
                 @case ('design') {
                     <app-design-layout-preview class="flex-1 h-full w-full flex items-center justify-center" 
                         [viewport]="viewport" [designLayout]="item" [isPlaying]="currentItem()?.contentId == item.contentId" />
-                }
+                } -->
             }
         </div>
     }

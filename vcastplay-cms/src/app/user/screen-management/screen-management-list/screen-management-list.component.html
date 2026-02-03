@@ -98,7 +98,7 @@
                   <div class="flex gap-2">
                     @if (item.content) {
                       <div class="flex flex-col">
-                        <p class="line-clamp-1 truncate md:w-40 lg:w-50" [pTooltip]="item.content.content.name">{{ item.content.content.name }}</p>
+                        <p class="line-clamp-1 truncate md:w-40 lg:w-50" [pTooltip]="item?.content?.content?.name">{{ item?.content?.content?.name }}</p>
                         <!-- <p class="text-gray-500">{{ utils.onGetLastUpdatedLabel(item.content.updatedAt) }}</p> -->
                       </div>
                       <!-- <p-tag

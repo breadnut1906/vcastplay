@@ -155,6 +155,7 @@ export class WebsocketService {
     this.indexedDB.clearItems();
     this.onEmit('clear', { "message": `Player cleared` })
     this.onEmit('response-update', { response: `Player cleared` })
+    this.storage.remove('contentType');
   }
 
   onChangeSocket(path: string, auth: any) {

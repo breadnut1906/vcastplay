@@ -1,0 +1,44 @@
+<div class="flex flex-col gap-4 p-4 border border-gray-300 rounded h-full">
+    <div class="flex items-center justify-between gap-4 w-full">
+        <p-floatlabel class="w-full" variant="on">
+            <p-select id="type" [options]="contentOptions" optionLabel="label" optionValue="value" [formControl]="contentType" appendTo="body" fluid  />
+            <label for="type">Content Type</label>
+        </p-floatlabel>
+        <app-filters class="w-full" />
+    </div>
+    <div class="relative flex-1">
+        <div class="absolute top-0 left-0 w-full h-full">
+            @if (isLoading()) { <p-progressbar mode="indeterminate" /> }
+            <p-table
+                [(selection)]="selectedContent"
+                [value]="contentLists()"
+                selectionMode="single"
+                [scrollable]="true"
+                scrollHeight="flex"
+                size="small"
+                stripedRows
+            >
+                <ng-template #header>
+                    <tr>
+                        <th class="w-[3rem]">Action</th>
+                        <th>Name</th>
+                        <th>Duration</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-item>
+                    <tr class="text-sm">
+                        <td>
+                            <p-button class="w-full" icon="pi pi-plus" size="small" (onClick)="onClickAddContent(item)" fluid />
+                        </td>
+                        <td>
+                            <p class="line-clamp-1" [pTooltip]="item.name" tooltipPosition="bottom">{{ item.name }}</p>
+                        </td>
+                        <td>{{ utils.timeConversion(item.duration) }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+    
+    <app-paginator [pagination]="pagination" [isSimple]="true" (onPageChange)="onPageChange($event)" />
+</div>

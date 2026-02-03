@@ -10,20 +10,19 @@ export interface Playlists {
 
 
 export interface Playlist {
-    id: number;
+    id?: number;
     name: string;
     description: string;
-    type: string;
-    transition: {
-        hasGap: boolean;
-        type: string;
-        speed: number;
-    },
-    contents: any[];
-    loop: boolean;
-    status: string;
-    duration?: number;
     isAuto: boolean;
+    isBlackGap: boolean;
+    isLoop: boolean;
+    transition: string;
+    transitionSpeed: number;
+    entries: any[];
+    approvalStatus?: string;
+    approvedInfo?: any;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface ContentState {

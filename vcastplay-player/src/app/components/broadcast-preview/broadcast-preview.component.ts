@@ -11,6 +11,6 @@ export class BroadcastPreviewComponent {
 
   player = inject(PlayerService)
   
-  get broadcast() { return this.player.playerBroadcast(); }
+  get broadcast() { return this.player.playerBroadcast() || {}; }
 
 }

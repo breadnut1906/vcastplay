@@ -1,12 +1,12 @@
 <div class="relative bg-gray-100 dark:bg-zinc-800 h-[120px] border-2 border-[var(--p-surface-300)] border-dashed p-3 overflow-x-auto">
-    <div class="flex gap-4 h-full playlist-content-lists" cdkDropList [cdkDropListData]="contents?.value" 
+    <div class="flex gap-4 h-full playlist-content-lists" cdkDropList [cdkDropListData]="entries?.value" 
         (cdkDropListDropped)="onDropped($event)" cdkDropListOrientation="horizontal">
-        @for (item of contents?.value; track trackByFn($index, item)) {
+        @for (item of entries?.value; track trackByFn($index, item)) {
             <app-playlist-item-content #playlistContent cdkDrag [content]="item" [playlist]="playlistForm" [isPlaying]="isPlaying"
                 [cdkDragDisabled]="currentPlaying" cdkDragBoundary=".playlist-content-lists" />
         } @empty {
             <div class="flex items-center justify-center h-full absolute top-0 left-0 w-full">
-                <p class="text-gray-400 italic">Drop contents here</p>
+                <p class="text-gray-400 italic">Add Entries here</p>
             </div>
         }
     </div>

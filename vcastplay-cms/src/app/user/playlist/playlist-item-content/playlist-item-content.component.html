@@ -1,9 +1,9 @@
 <div class="relative w-[140px] h-full bg-[var(--p-surface-300)] flex items-center justify-center group cursor-grab"
-    [ngClass]="{ 'shadow-lg shadow-red-600/70': onCurrentPlaying() }" [pTooltip]="content.name">
+    [ngClass]="{ 'shadow-lg shadow-red-600/70': onCurrentPlaying() }" [pTooltip]="content.asset?.name">
 
     <div class="absolute top-0 right-0 h-full w-full z-10 bg-gradient-to-t from-[var(--p-primary-500)] to-transparent ">
         <div class="flex items-center justify-center h-full gap-2 hidden bg-gray-300/60" [ngClass]="{ 'group-hover:flex': !isPlaying}">
-            @if (!['video', 'audio', 'playlist', 'design'].includes(content.type)) {
+            @if (!['video', 'audio', 'playlist', 'design'].includes(content?.type || '')) {
                 <p-button severity="info" icon="pi pi-cog" pTooltip="Configuration" 
                     tooltipPosition="bottom" (onClick)="showConfig.set(true); $event.stopPropagation()" size="small" rounded />
             }
@@ -12,28 +12,29 @@
     </div>
 
     <div class="flex items-center justify-center h-full w-full relative">
-        @switch (content.type) {
+        @switch (content?.asset?.type) {
             @case ('design') {
-                <img [src]="content.thumbnail ?? 'assets/icons/images.png'" [alt]="content.name" class="absolute h-full w-full object-contain">
+                <img [src]="content?.thumbnail ?? 'assets/icons/images.png'" [alt]="content.asset?.name" class="absolute h-full w-full object-contain">
             }
             @case('youtube') { 
-                <img class="w-12" src="assets/socials/youtube.png" [alt]="content.name"> 
+                <img class="w-12" src="assets/socials/youtube.png" [alt]="content.asset?.name"> 
             } 
             @case('facebook') { 
-                <img class="w-12" src="assets/socials/facebook.png" [alt]="content.name"> 
+                <img class="w-12" src="assets/socials/facebook.png" [alt]="content.asset?.name"> 
             }
             @case('audio') {
                 <li class="pi pi-volume-up !text-7xl"></li>
             }
             @default {
-                <img [src]="content.thumbnail" [alt]="content.name" class="w-full h-full object-contain">
+                <img [src]="publicURL + 'assets/' + tenantId + '/thumbnails/' + content.asset?.name.replace('.mp4', '.jpg')" 
+                    [alt]="content.asset?.name" class="w-full h-full object-contain">
             }
         }
     </div>
 
     <div class="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-center text-center text-white w-full mb-1 z-50 px-2">
-        <p class="text-sm font-semibold truncate w-full">{{ content.name }}</p>
-        <p class="font-semibold text-sm">{{ utils.timeConversion(content.duration || 0) }}</p>
+        <p class="text-sm font-semibold truncate w-full">{{ content.asset?.name }}</p>
+        <p class="font-semibold text-sm">{{ utils.timeConversion(content?.duration || 0) }}</p>
     </div>
 
     <div class="w-[140px] outline-dashed outline-2 outline-offset-2 outline-gray-400 z-50" *cdkDragPlaceholder></div>
@@ -45,7 +46,7 @@
     </ng-template>
     <div class="mt-3 flex gap-2 items-center justify-between">
         <p class="font-semibold">Set Duration:</p>
-        <p-inputnumber [(ngModel)]="content.duration" [useGrouping]="false" [disabled]="['audio', 'video'].includes(content.type)" />
+        <p-inputnumber [(ngModel)]="content.duration" [useGrouping]="false" [disabled]="['audio', 'video'].includes(content?.type)" />
     </div>
     <ng-template #footer>
         <div class="float-right flex gap-3">

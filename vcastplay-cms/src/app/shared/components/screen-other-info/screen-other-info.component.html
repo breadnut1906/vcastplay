@@ -106,7 +106,8 @@
     </ng-template>
     @if (screenData?.type == 'desktop') {
         <ng-template #footer>
-            <p-button class="w-full" (onClick)="showHealthCheck.set(true)" [disabled]="screenData.status == 'disconnected'" label="Task Manager" fluid />
+            <p-button class="w-full" (onClick)="showHealthCheck.set(true)" label="Task Manager" 
+                [disabled]="screenData.status == 'disconnected' || !screenData.status" fluid />
         </ng-template>
     }
 </p-drawer>

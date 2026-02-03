@@ -25,8 +25,8 @@ export interface Assets {
     // Audience Tagging
     audienceTags?: any;
 
-    // content id for playlist
-    contentId?: any;
+    // sequence id for playlist
+    sequence?: any;
 }
 
 export interface UploadItem {

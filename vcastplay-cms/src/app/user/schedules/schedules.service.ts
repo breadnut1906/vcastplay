@@ -205,7 +205,7 @@ export class SchedulesService {
   onGetContentDetails(id: any, type: string, eventId: string) {
     switch (type) {
       case 'playlist':
-        const playlist = this.playlistService.onGetPlaylists().find(item => item.id == id);
+        const playlist: any = []; //this.playlistService.onGetPlaylists().find(item => item.id == id);
         if (playlist) {
           this.playlistService.playListForm.patchValue(playlist);
           this.selectedContent.set({ ...playlist, eventId });
