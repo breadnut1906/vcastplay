@@ -74,6 +74,7 @@ export class AssetUploadFileComponent {
   }
 
   async onFileSelectedOrDropped(event: Event | DragEvent) {
+    event.preventDefault();
     try {
       this.isUploading.set(true);
       const files = (event instanceof DragEvent) ? Array.from(event.dataTransfer?.files || []) : (event.target as HTMLInputElement).files as FileList;

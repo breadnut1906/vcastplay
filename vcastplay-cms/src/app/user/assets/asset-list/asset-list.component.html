@@ -24,24 +24,16 @@
               </ng-template>
             </p-selectbutton>
           </div>
-          <p-button
-            (onClick)="showPrompt.set(true)"
-            class="lg:hidden"
-            pTooltip="Generate AI"
-            tooltipPosition="bottom"
-            icon="pi pi-ethereum"
-            size="small"
-          />
           <p-button class="lg:hidden" pTooltip="Upload" tooltipPosition="bottom" (onClick)="onClickAddNew()" icon="pi pi-upload" size="small" />
-          
-          <!-- <p-togglebutton class="ml-auto lg:hidden" [formControl]="selectionModeCtrl" onLabel="Cancel" offLabel="Multiple"  /> -->
+          <p-button (onClick)="showPrompt.set(true)" class="lg:hidden" severity="info"
+            pTooltip="Generate AI" tooltipPosition="bottom" icon="pi pi-ethereum" size="small" />
+          <p-button (onClick)="otherMenu.toggle($event)" class="lg:hidden"
+            pTooltip="More" tooltipPosition="bottom" icon="pi pi-ellipsis-v" size="small" text />
         </div>
-        <div class="ml-auto items-center gap-3 hidden lg:flex">
-          @if (hasSelectedAssets) {
-            <p-button (onClick)="onClickDeleteMultiple($event)" label="Delete" icon="pi pi-trash" severity="danger" outlined />
-          }
-          <p-button (onClick)="showPrompt.set(true)" label="Generate AI" icon="pi pi-ethereum" outlined />
+        <div class="ml-auto items-center gap-2 hidden lg:flex">
           <p-button (onClick)="onClickAddNew()" label="Upload" icon="pi pi-upload" />
+          <p-button (onClick)="showPrompt.set(true)" label="Generate AI" icon="pi pi-ethereum" severity="info" outlined />
+          <p-button (onClick)="otherMenu.toggle($event)" icon="pi pi-ellipsis-v" text />
         </div>
       </div>
     </ng-template>
@@ -56,10 +48,20 @@
       <div class="relative flex lg:hidden flex-1 overflow-y-auto">
         <div class="absolute top-0 left-0 h-full w-full">
           <div class="grid-cols-3 md:grid-cols-4 flex-col gap-4" [ngClass]="{ 'grid': assetViewModeSignal() == 'Grid', 'flex': assetViewModeSignal() == 'List' }">
-            @for (item of assets(); track $index) {
+            @if (!isLoading()) {
+              @for (item of assets(); track $index) {
               <app-asset-list-item [asset]="item" [tenantId]="tenantId" [showDetails]="!isMultipleSeletion"
                 [disableDrag]="true" [showOptions]="!isMultipleSeletion" [isSelected]="isSelected(item.id)" 
                   (onPropertiesChange)="onAssetItemChange($event)" [actionBtn]="actionBtn" />
+              } @empty {
+                <div class="flex justify-center items-center p-5 h-100">
+                  <p>No assets found</p>
+                </div>
+              }
+            } @else {
+              @for (item of utils.tableSkeletonRows; track $index) {
+                <p-skeleton height="12rem" />
+              }
             }
           </div>
         </div>
@@ -67,10 +69,10 @@
 
       <div class="hidden lg:block relative flex-1">
         <div class="absolute top-0 left-0 h-full w-full">
+          @if (isLoading()) { <p-progressbar mode="indeterminate" /> }
           <p-table
             [(selection)]="selectedArrAssets"
             [value]="assets()"
-            [loading]="isLoading()"
             selectionMode="multiple"
             [scrollable]="true"
             scrollHeight="flex"
@@ -98,12 +100,8 @@
                   <div class="relative h-15">
                     <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center">
                       @if(['video', 'image'].includes(item.type)) {
-                      <img
-                        [src]="publicApi + 'assets/' + tenantId + '/thumbnails/' + item.name.replace('.mp4', '.jpg')"
-                        class="max-h-full object-contain"
-                        [alt]="item.name"
-                        loading="lazy"
-                        (error)="utils.onImageError($event)"
+                      <img [src]="publicApi + 'assets/' + tenantId + '/thumbnails/' + item.name.replace('.mp4', '.jpg')" class="max-h-full object-contain"
+                        [alt]="item.name" loading="lazy" (error)="utils.onImageError($event)"
                       />
                       } @else { 
                         @switch (item.type) { 
@@ -185,8 +183,8 @@
 </div>
 
 <p-dialog header="Preview" [(visible)]="isShowPreview" [style]="{ width: '50rem' }" (onHide)="selectedAsset.set(null)" [resizable]="false" modal>
-  <div class="relative aspect-video border-2 border-[var(--p-surface-300)] dark:border-[var(--p-surface-700)] bg-stone-800 dark:bg-stone-900
-    text-white rounded-lg group ">
+  <div class="relative aspect-video border-2 border-[var(--p-surface-300)] dark:border-[var(--p-surface-700)] 
+    bg-stone-800 dark:bg-stone-900 text-white rounded-lg group">
     <ng-container *ngIf="selectedAsset() && isShowPreview()">
       <app-asset-preview class="absolute h-full w-full flex items-center justify-center bg-stone-800"
         [asset]="selectedAsset()" [link]="publicApi + 'assets/' + tenantId + '/' + selectedAsset().name" [showControls]="true" />
@@ -198,10 +196,14 @@
 
 <app-asset-ai-generate [showPrompt]="showPrompt" />
 
-<!-- <app-asset-to-playlist [assetForm]="assetForm" [isShowAddToPlaylist]="isShowAddToPlaylist" /> -->
+<app-asset-to-playlist [dialog]="addToPlaylist" (onSelectedPlaylistChange)="onSelectedPlaylistChange($event)"/>
+
+<app-audience-tag-filters [isShowAudienceTag]="showAudienceTag" (onAudienceTagChange)="onAudienceTagChange($event)" [isDialog]="true" />
 
 <ng-template #actionBtn let-item>
   <p-button (onClick)="onClickEdit(item)" pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="success" size="small" />
   <p-button (onClick)="onClickOpenOptions($event, item, actionMenu)" pTooltip="More" tooltipPosition="bottom" icon="pi pi-cog" severity="contrast" size="small" />
-  <p-menu #actionMenu [model]="actionItems" [popup]="true" appendTo="body" />
 </ng-template>
+
+<p-menu #actionMenu [model]="actionItems" [popup]="true" appendTo="body" />
+<p-menu #otherMenu [model]="otherItems" [popup]="true" appendTo="body" />

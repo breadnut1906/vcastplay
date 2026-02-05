@@ -23,9 +23,9 @@
         <div class="flex flex-col gap-4 h-full mt-4 md:mt-0">
             <div class="hidden lg:block relative flex-1">
                 <div class="absolute top-0 left-0 h-full w-full">
+                    @if (isLoading()) { <p-progressbar mode="indeterminate" /> }
                     <p-table
                         [value]="screens()" 
-                        [loading]="isLoading()"
                         selectionMode="single"
                         [scrollable]="true" 
                         scrollHeight="flex"
@@ -101,19 +101,21 @@
             
             <div class="relative flex lg:hidden flex-1 overflow-y-auto">
                 <div class="absolute top-0 left-0 h-full w-full">
-                    @if (!isLoading()) {
-                        @for (item of screens(); track $index) {
-                            <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
-                        } @empty {
-                            <div class="flex justify-center items-center p-5 h-100">
-                                <p>No screens found</p>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if (!isLoading()) {
+                                @for (item of screens(); track $index) {
+                                    <app-screen-list-item [screen]="item" [actionBtn]="actionBtn" />
+                                } @empty {
+                                    <div class="flex justify-center items-center p-5 h-100">
+                                        <p>No screens found</p>
+                                    </div>
+                                }
+                        } @else {
+                            @for (item of utils.tableSkeletonRows; track $index) {
+                                <p-skeleton height="12rem" />
+                            }
                         }
-                    } @else {
-                        @for (item of utils.tableSkeletonRows; track $index) {
-                            <p-skeleton height="5rem" />
-                        }
-                    }
+                    </div>
                 </div>
             </div>
         </div>

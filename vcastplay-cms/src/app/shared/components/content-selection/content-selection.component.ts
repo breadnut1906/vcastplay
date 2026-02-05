@@ -47,6 +47,15 @@ export class ContentSelectionComponent {
   pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
 
   contentTypeControl: FormControl = new FormControl('asset');
+  
+  contentSignal = signal<string>('asset');
+  contentTypes = signal<any[]>([
+    { label: 'Asset', value: 'asset' },
+    { label: 'Playlist', value: 'playlist' },
+    { label: 'Design Layout', value: 'design' },
+    { label: 'Schdules', value: 'schedule' },
+    { label: 'Clipart', value: 'clipart' },
+  ]);
 
   filtereContentTypes = computed(() => {    
     return this.selectedTypes.length > 0 ? this.contentTypes().filter(type => this.selectedTypes.includes(type.value)) : this.contentTypes();
@@ -83,7 +92,7 @@ export class ContentSelectionComponent {
         return this.contentLists.set(this.designLayoutService.onGetDesigns());
         // break;
       case 'schedule':
-        return this.contentLists.set(this.scheduleService.onGetSchedule());
+        return this.contentLists.set([]);
         // break;
       case 'clipart':
         return this.contentLists.set(this.cliparts);
@@ -108,8 +117,9 @@ export class ContentSelectionComponent {
     // this.audienceTagSignal.set(audienceTag ?? {});
   }
   
-  onSelectionChange(event: any) {    
-    this.selectedContents.emit(event);
+  onSelectionChange(event: any) {
+    const type = this.contentTypeControl.value; 
+    this.selectedContents.emit({ type, content: event });
   }
 
   onPageChange(event: any) {
@@ -125,9 +135,6 @@ export class ContentSelectionComponent {
     this.selectionContent.set(null);
     this.contentTypeControl.setValue('asset');
   }
-
-  get contentTypes() { return this.scheduleService.contentTypes; }
-  get calendarSelectedDate() { return this.scheduleService.calendarSelectedDate; }
   
   get cliparts() { return this.designLayoutService.cliparts; }
 }

@@ -45,8 +45,8 @@ export class MainDisplayComponent {
       const broadcast = this.player.playerBroadcast();
       const healthCheck = this.player.isStartHealthCheck();
 
+      this.currentContent = null;
       if (data) {
-        this.currentContent = null;
         Promise.resolve().then(() => {
           this.currentContent = data;
           this.webSocket.onEmit('response-update', { response: `Player has started` });

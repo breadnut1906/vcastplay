@@ -25,7 +25,7 @@ export class UtilityService {
   groupVisible = signal<boolean>(false);
   categoryVisible = signal<boolean>(false);
   isDarkTheme = signal<boolean>(false)
-  tableSkeletonRows = Array(5).fill({})
+  tableSkeletonRows = Array(6).fill({})
 
   icons = signal<SelectOption[]>([
     { label: 'Envelope', value: 'pi-envelope' },
@@ -335,29 +335,33 @@ export class UtilityService {
     return formGroup.controls[fieldName]
   }
 
-  // getStatus(status: string) {
-  //   const statuses = {
-  //     approved: { status: 'success', icon: 'pi-thumbs-up-fill' },
-  //     active: { status: 'success', icon: 'pi-check-circle' },
-  //     online: { status: 'success', icon: 'pi-check-circle' },
-  //     playing: { status: 'success', icon: 'pi-play-circle' },
-  //     connected: { status: 'success', icon: 'pi-check-circle' },
-  //     on: { status: 'success', icon: 'pi-check-circle' },
-  //     success: { status: 'success', icon: 'pi-check-circle' },
-  //     inactive: { status: 'warn', icon: 'pi-pause-circle' },
-  //     standby: { status: 'warn', icon: 'pi-pause-circle' },
-  //     expiring: { status: 'warn', icon: 'pi-pause-circle' },
-  //     disapproved: { status: 'danger', icon: 'pi-thumbs-down-fill' },
-  //     suspended: { status: 'danger', icon: 'pi-times-circle' },
-  //     offline: { status: 'danger', icon: 'pi-times-circle' },
-  //     disconnected: { status: 'danger', icon: 'pi-times-circle' },
-  //     off: { status: 'danger', icon: 'pi-times-circle' },
-  //     expired: { status: 'danger', icon: 'pi-times-circle' },
-  //     error: { status: 'danger', icon: 'pi-times-circle' },
-  //   }
+  getStatusIcon(status?: string) {
+    const statuses: Record<string, { status: string; icon: string }> = {
+      approved: { status: 'success', icon: 'pi pi-thumbs-up-fill' },
+      active: { status: 'success', icon: 'pi pi-check-circle' },
+      online: { status: 'success', icon: 'pi pi-check-circle' },
+      playing: { status: 'success', icon: 'pi pi-play-circle' },
+      connected: { status: 'success', icon: 'pi pi-check-circle' },
+      on: { status: 'success', icon: 'pi pi-check-circle' },
+      success: { status: 'success', icon: 'pi pi-check-circle' },
 
-  //   return statuses[status.toLowerCase()] || { status: 'secondary', icon: 'pi-question-circle' }
-  // }
+      inactive: { status: 'warn', icon: 'pi pi-pause-circle' },
+      standby: { status: 'warn', icon: 'pi pi-pause-circle' },
+      expiring: { status: 'warn', icon: 'pi pi-pause-circle' },
+
+      disapproved: { status: 'danger', icon: 'pi pi-thumbs-down-fill' },
+      suspended: { status: 'danger', icon: 'pi pi-times-circle' },
+      offline: { status: 'danger', icon: 'pi pi-times-circle' },
+      disconnected: { status: 'danger', icon: 'pi pi-times-circle' },
+      off: { status: 'danger', icon: 'pi pi-times-circle' },
+      expired: { status: 'danger', icon: 'pi pi-times-circle' },
+      error: { status: 'danger', icon: 'pi pi-times-circle' },
+    };
+
+    const key = status?.toLowerCase() ?? '';
+    return statuses[key] ?? { status: 'secondary', icon: 'pi-question-circle' };
+  }
+
 
   getStatus(status: string) {
     switch (status.toLowerCase()) {

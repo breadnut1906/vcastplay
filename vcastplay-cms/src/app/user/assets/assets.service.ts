@@ -162,7 +162,7 @@ export class AssetsService {
   }
 
   onUpdateAssets(id: any, assets: Assets | any) {
-    return this.http.patch(`${this.api}tenants/assets/${id}`, assets, { headers: this.onGetHTTPHeaders() });
+    return this.http.patch(`${this.api}tenants/assets/${id}`, assets, { headers: this.onGetHTTPHeaders(), reportProgress: true, observe: 'events' });
   }
 
   onDeleteAssets(assets: Assets) {

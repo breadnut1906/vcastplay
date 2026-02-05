@@ -78,9 +78,9 @@ export class PlaylistDetailsComponent {
 
   ngOnDestroy(event: Event) {    
     this.isEdit.set(false);
-    this.playlistForm.markAsPristine();
-    this.playlistForm.markAsUntouched();
-    this.playlistForm.reset();
+    // this.playlistForm.markAsPristine();
+    // this.playlistForm.markAsUntouched();
+    // this.playlistForm.reset();
   }
 
   async onClickSave(event: Event) {
@@ -159,7 +159,6 @@ export class PlaylistDetailsComponent {
     return entries.reduce((acc: any, item: any) => acc + item.duration, 0);
   }
 
-  get activeStep() { return this.playlistService.activeStep; }
   get transitionTypes() { return this.playlistService.transitionTypes; }
   get showContents() { return this.playlistService.showContents; }
 

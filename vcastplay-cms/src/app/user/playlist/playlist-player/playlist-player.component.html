@@ -14,7 +14,7 @@
                 }
                 @case('video') {
                     <video [id]="item.sequence" class="h-full w-full object-fill" preload="metadata"
-                        [src]="publicURL + 'assets/' + tenantId + '/' + item.asset.name | safeurl" [playsInline]="true" (ended)="onNextItem()"></video>
+                        [attr.src]="publicURL + 'assets/' + tenantId + '/' + item.asset.name | safeurl" [playsInline]="true" (ended)="onNextItem()"></video>
                 }
                 @case ('audio') {
                     <div class="relative h-full w-full flex items-center justify-center gap-4">

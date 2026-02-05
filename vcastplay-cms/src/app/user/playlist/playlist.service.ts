@@ -23,10 +23,6 @@ export class PlaylistService {
   selectedPlaylist = signal<Playlist | null>(null);
   selectedArrPlaylist = signal<Playlist[]>([]);
 
-  first = signal<number>(0);
-  rows = signal<number>(8);
-  totalRecords = signal<number>(0);
-
   loadingSignal = signal<boolean>(false);
   isEditMode = signal<boolean>(false);
   isPlaying = signal<boolean>(false);
@@ -48,30 +44,6 @@ export class PlaylistService {
     { label: 'Manual', value: false },
     { label: 'Auto', value: true },
   ])
-
-  playListForm: FormGroup = new FormGroup({
-    id: new FormControl(0),
-    name: new FormControl(null, [ Validators.required ]),
-    description: new FormControl(null, [ Validators.required ]),
-    type: new FormControl('playlist', { nonNullable: true, validators: [ Validators.required ] }),
-    transition: new FormGroup({
-      hasGap: new FormControl(false),
-      type: new FormControl(null),
-      speed: new FormControl(5, { nonNullable: true }),
-    }),
-    contents: new FormControl<any[]>([], { nonNullable: true }),
-    status: new FormControl(null),
-    loop: new FormControl(true),
-    approvedInfo: new FormGroup({
-      approvedBy: new FormControl('Admin'),
-      approvedOn: new FormControl(new Date()),
-      remarks: new FormControl(null),
-    }),
-    isAuto: new FormControl(false),
-    isActive: new FormControl(false),
-    duration: new FormControl(0),
-    files: new FormControl([], { nonNullable: true }),
-  })
   
   playlistFilterForm: FormGroup = new FormGroup({
     dateRange: new FormControl(null),
@@ -93,19 +65,6 @@ export class PlaylistService {
     { label: 'Slide Right', value: 'slide-right' },
   ]
 
-  videoElement = signal<HTMLVideoElement | null>(null);
-
-  activeStep = signal<number>(1);
-
-  // totalDuration = (data?: any) => {
-  //   const contents: any[] = data ?? this.contents?.value;
-  //   return contents.reduce((acc: any, item: any) => acc + item.duration, 0);
-  // }
-
-  // for testing
-  private states = new Map<number, ContentState>();
-  preloadContents: { [id: string]: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement } = {};
-
   constructor() { }
   
   onGetHTTPHeaders() {
@@ -121,6 +80,11 @@ export class PlaylistService {
   }
 
   onGetPlaylistById(id: number) {
+    /**CALL GET API */
+    return this.http.get(`${this.api}tenants/playlists/${id}`, { headers: this.onGetHTTPHeaders() });
+  }
+
+  onGetEntriesByPlaylistId(id: number) {
     /**CALL GET API */
     return this.http.get(`${this.api}tenants/playlists/${id}`, { headers: this.onGetHTTPHeaders() });
   }
@@ -165,15 +129,5 @@ export class PlaylistService {
     console.log(content);
   }
   
-  onPageChange(event: any) {
-    this.first.set(event.first);
-    this.rows.set(event.rows);
-  }
-
-  get contents() { return this.playListForm.get('contents'); }
-  get files() { return this.playListForm.get('files'); }
-  get loop() { return this.playListForm.get('loop'); }
-  get transition() { return this.playListForm.get('transition'); }
-
   get tenantId() { return this.storage.get('id'); }
 }

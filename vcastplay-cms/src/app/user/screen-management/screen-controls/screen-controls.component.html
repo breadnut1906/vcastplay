@@ -39,8 +39,7 @@
 </div>
 
 <!-- [selectedTypes]="['asset', 'playlist', 'design', 'schedule']" -->
-<app-content-selection [showContents]="showContents" #contents [selectedTypes]="['asset', 'playlist']" (contentType)="onContentTypeChange($event)" 
-    (selectedContents)="onSelectionChange($event)" />
+<app-content-selection #contents [showContents]="showContents" [selectedTypes]="['asset', 'playlist']" (selectedContents)="onSelectionChange($event)" />
 
 <app-screen-settings [showSettings]="showSettings" (onSettingsChange)="onSettingsChange($event)" (onClearAllChange)="onClearAllChange($event)" />
 

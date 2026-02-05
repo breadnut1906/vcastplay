@@ -20,8 +20,8 @@ export class ScreenDownloadComponent {
 
   showLink = signal<boolean>(false);
 
-  playerLink: string = environment.playerLink;
-  link: FormControl = new FormControl(this.playerLink);
+  player: string = environment.player;
+  link: FormControl = new FormControl(this.player);
 
   onClickDownload(device: string) {
     this.showLink.set(false);

@@ -1,6 +1,18 @@
-<p-dialog header="Audience Tags" [(visible)]="isShowAudienceTag" (onShow)="onShowAudienceTag()" (onHide)="onHideAudienceTag()"
-    [style]="{ width: '50rem', height: '500px' }" [draggable]="false" appendTo="body" modal>
-    <div class="relative flex flex-col gap-5 h-full" [formGroup]="audienceTagInputForm">
+@if (isDialog) {
+    <p-dialog header="Audience Tags" [(visible)]="isShowAudienceTag" (onShow)="onShowAudienceTag()" (onHide)="onHideAudienceTag()"
+        [style]="{ width: '50rem', height: '500px' }" [draggable]="false" appendTo="body" modal>
+        <ng-container *ngTemplateOutlet="audienceTagInput"></ng-container>
+        <ng-template #footer>
+            <p-button label="Close" icon="pi pi-times" (onClick)="isShowAudienceTag.set(false)" size="small" text />
+            <p-button label="Apply" icon="pi pi-check" (onClick)="onClickApply()" size="small" />
+        </ng-template>
+    </p-dialog>
+} @else {
+    <ng-container *ngTemplateOutlet="audienceTagInput"></ng-container>
+}
+
+<ng-template #audienceTagInput>
+    <div class="relative flex flex-col gap-4" [ngClass]="{ 'h-full': isDialog, 'h-[310px]': !isDialog }" [formGroup]="audienceTagInputForm">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
             <div class="col-span-1 md:col-span-5">
                 <p-floatlabel variant="on">
@@ -54,8 +66,4 @@
             </div>
         </div>
     </div>
-    <ng-template #footer>
-        <p-button label="Close" icon="pi pi-times" (onClick)="isShowAudienceTag.set(false)" size="small" text />
-        <p-button label="Apply" icon="pi pi-check" (onClick)="onClickApply()" size="small" />
-    </ng-template>
-</p-dialog>
+</ng-template>

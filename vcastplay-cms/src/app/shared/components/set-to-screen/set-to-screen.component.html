@@ -1,0 +1,74 @@
+<p-dialog
+    [(visible)]="dialog"
+    styleClass="w-[50rem] h-[40rem]"
+    (onShow)="onInitializedScreens()"
+    (onHide)="onCloseContents()"
+    [resizable]="false"
+    [modal]="true"
+    [draggable]="false"
+>
+    <ng-template #header>
+        <p class="text-lg">Set to Screen: <span class="font-bold">{{ content()?.content.name }}</span></p>
+    </ng-template>
+    <div class="flex flex-col w-full h-full gap-4">
+        <app-filters />
+        <div class="relative flex flex-col w-full h-full">
+            <div class="absolute top-0 left-0 w-full h-full">
+                @if (isLoading()) { <p-progressbar mode="indeterminate" /> }
+                <p-table
+                    #screensTable
+                    [value]="screens()"
+                    [(selection)]="selectedScreens"
+                    dataKey="id"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    selectionMode="multiple"
+                    [rows]="pagination().itemsPerPage "
+                    (onPage)="onPageChange($event)"
+                    paginator
+                    stripedRows
+                    size="small"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+                            <th>Screen</th>
+                            <th>Status</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr [pSelectableRow]="item">
+                            <td><p-tableCheckbox [value]="item" [disabled]="isDisconnected(item)" /></td>
+                            <td>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center" [pTooltip]="utils.toTitleCase(item.type)" tooltipPosition="bottom">
+                                        @switch (item.type) {
+                                            @case('desktop') { <i class="pi pi-desktop !font-black !text-2xl !text-blue-500"></i> }
+                                            @case('android') { <i class="pi pi-android !text-2xl !text-lime-500"></i> }
+                                            @default { <i class="pi pi-globe !text-2xl"></i> }
+                                        }
+                                    </div>
+
+                                    <div class="flex flex-col">
+                                        <p class="text-base font-semibold">{{ item.name }}</p>
+                                        <p class="text-sm">{{ item.code }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><p-tag [value]="item.status.toUpperCase()" [icon]="utils.getStatusIcon(item.status).icon" [severity]="utils.getStatusIcon(item.status).status" /></td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    </div>
+    <ng-template #footer>
+        <div class="flex items-center justify-between w-full">
+            <p class="italic text-sm text-gray-400">Select the screen you want to send the content to</p>
+            <div class="flex gap-2">
+                <p-button label="Close" icon="pi pi-times" (onClick)="dialog.set(false)" size="small" severity="secondary" />
+                <p-button label="Apply" icon="pi pi-check" (onClick)="onClickApply($event)" size="small" />
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>

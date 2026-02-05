@@ -29,7 +29,7 @@
                 <div class="flex flex-col border border-gray-200 dark:border-gray-700 rounded">
                     <span class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-800">
                         File Info
-                        <p-tag [value]="asset.type.toUpperCase() || 'N/A'" severity="info" />
+                        <p-tag [value]="asset.type.toUpperCase() || 'N/A'" severity="contrast" />
                     </span>
                     <form class="flex flex-col gap-4 p-4" [formGroup]="assetForm">
                         <p-floatlabel variant="on">
@@ -125,4 +125,4 @@
     </ng-template>
 </p-dialog>
 
-<app-audience-tag-filters [formGroup]="assetForm" [isShowAudienceTag]="showAudienceTag" (onAudienceTagChange)="onAudienceTagChange($event)">
+<app-audience-tag-filters [formGroup]="assetForm" [isShowAudienceTag]="showAudienceTag" (onAudienceTagChange)="onAudienceTagChange($event)" [isDialog]="true" />

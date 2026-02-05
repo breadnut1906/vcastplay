@@ -16,110 +16,77 @@
             </div>
         </ng-template>
         
-        <div class="flex-1">
-            <p-table
-                class="hidden lg:block" 
-                [value]="scheduleServices.loadingSignal() ? utils.tableSkeletonRows : filterSchedules()" 
-                selectionMode="single"
-                [scrollable]="true" 
-                [rows]="rows()"
-                [first]="first()"
-                scrollHeight="flex-1"
-                size="small"
-                (onPage)="scheduleServices.onPageChange($event)"
-                stripedRows
-            >
-                <ng-template #header>
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Date Range</th>
-                        <th>Last Update</th>
-                        <th>Status</th>
-                        <th>
-                            <div class="text-center">Actions</div>
-                        </th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-item>
-                    <tr class="text-sm">
-                        <td>{{ item.name }}</td>
-                        <td>{{ item.description }}</td>
-                        <td>
-                            <p>{{ item.startDate | date: 'mediumDate' }} - {{ item.endDate | date: 'mediumDate' }}</p>
-                        </td>
-                        <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedOn) }}</p></td>
-                        <td><p-tag [value]="item.status.toUpperCase()" [icon]="'pi ' + utils.getIcon(item.status)"
-                            [severity]="utils.getStatus(item.status)" /></td>
-                        <td>
-                            <div class="flex flex-row justify-center gap-2">
-                                <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
+        <div class="flex flex-col gap-4 h-full mt-4 md:mt-0">
+            <div class="hidden lg:block relative flex-1">
+                <div class="absolute top-0 left-0 h-full w-full">
+                    <p-table
+                        [value]="schedules()" 
+                        [loading]="isLoading()"
+                        selectionMode="single"
+                        [scrollable]="true" 
+                        scrollHeight="flex"
+                        size="small"
+                        stripedRows
+                        lazy
+                    >
+                        <ng-template #header>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Date Range</th>
+                                <th>Status</th>
+                                <th>Created On</th>
+                                <th><div class="text-center">Actions</div></th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-item>
+                            <tr class="text-sm">
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.description }}</td>
+                                <td>{{ item.start }} - {{ item.end }}</td>
+                                <td>
+                                    <p-tag [value]="item.approvalStatus || 'PENDING'" [severity]="utils.getStatus(item.approvalStatus || 'PENDING')" 
+                                        [icon]="'pi ' + utils.getIcon(item.approvalStatus || 'PENDING')" />
+                                </td>
+                                <td>{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</td>
+                                <td>
+                                    <div class="flex flex-row justify-center gap-2">
+                                        <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
+                                    </div> 
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+            <div class="relative flex lg:hidden flex-1 overflow-y-auto">
+                <div class="absolute top-0 left-0 h-full w-full">
+                    @if (!isLoading()) {
+                        @for (item of schedules(); track $index) {
+                            <app-schedule-list-item [schedule]="item" [actionBtn]="actionBtn" />
+                        } @empty {
+                            <div class="flex justify-center items-center p-5 h-100">
+                                <p>No screens found</p>
                             </div>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #emptymessage>
-                    <tr>
-                        <td colspan="9" [height]="20">
-                            <div class="flex justify-center p-5"><p class="italic">No Data found</p></div>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-                
-            <div class="block lg:hidden flex flex-col gap-4">
-                @if (!scheduleServices.loadingSignal()) {
-                    @for (item of filterSchedules(); track $index) {
-                        <app-schedule-list-item [schedule]="item" [actionBtn]="actionBtn" />
-                    } @empty {
-                        <div class="flex justify-center items-center p-5 h-100">
-                            <p>No playlists found</p>
-                        </div>
+                        }
+                    } @else {
+                        @for (item of utils.tableSkeletonRows; track $index) {
+                            <p-skeleton height="5rem" />
+                        }
                     }
-                } @else {
-                    @for (item of utils.tableSkeletonRows; track $index) {
-                        <p-skeleton height="5rem" />
-                    }
-                }
+                </div>
             </div>
         </div>
-        <ng-template #footer>
-            <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()"></p-paginator>
-        </ng-template>
     </p-card>
 </div>
 
 <ng-template #actionBtn let-item>
     <p-button (onClick)="onClickEdit(item)" [icon]="!['approved', 'disapproved'].includes(item.status) ? 'pi pi-pencil' : 'pi pi-eye'" 
         [pTooltip]="!['approved', 'disapproved'].includes(item.status) ? 'Edit' : 'View'"  tooltipPosition="bottom" severity="success" size="small" />
-    <p-button icon="pi pi-check-circle" (onClick)="onClickShowApproved($event, item, approved)" pTooltip="Approval" tooltipPosition="bottom"  severity="info" size="small" />
+    <p-button icon="pi pi-check-circle" (onClick)="onClickShowApproved($event, item, null)" disabled pTooltip="Approval" tooltipPosition="bottom"  severity="info" size="small" />
     <p-button icon="pi pi-desktop" pTooltip="Set to screen" tooltipPosition="bottom" severity="warn" size="small" [disabled]="item.status == 'pending'" />
     <p-button icon="pi pi-history" pTooltip="Playlist Usage" tooltipPosition="bottom" severity="danger" size="small" [disabled]="item.status == 'pending'" />
     <p-button (onClick)="onClickOpenOptions($event, item, actionMenu)" pTooltip="More" tooltipPosition="bottom" icon="pi pi-cog" severity="contrast" size="small" />
 </ng-template>
 
 <p-menu #actionMenu [model]="actionItems" [popup]="true" appendTo="body" />
-<p-popover #approved (onHide)="scheduleForm.reset()" appendTo="body" (onHide)="scheduleForm.reset()">
-    <ng-template #content>
-        <div class="flex flex-col gap-3" [formGroup]="scheduleForm">
-            @if (!['approved', 'disapproved'].includes(status?.value)) {
-                <p class="text-sm font-semibold">Approve this playlist?</p>
-                <app-user-approval [approvedForm]="scheduleForm" />
-                <div class="flex gap-2 justify-end">
-                    <p-button label="Disapprove" severity="danger" (onClick)="onClickConfirmApproved($event, approved, 'disapproved')" size="small" outlined />
-                    <p-button label="Approve" (onClick)="onClickConfirmApproved($event, approved, 'approved')" size="small" />
-                </div>
-            } @else {
-                <p class="text-sm font-semibold">Approval Info:</p>
-                <div class="flex flex-col gap-2 w-50">
-                    <p>User: {{ approvedInfo?.value.approvedBy }}</p>
-                    <p>Remarks: {{ approvedInfo?.value.remarks }}</p>
-                </div>
-                <div class="flex gap-2 w-full items-center">
-                    <p-button label="Activate" severity="success" text />
-                    <p-button class="ml-auto" label="Close" (onClick)="onClickCloseApproved($event, approved)" size="small" text />
-                </div>
-            }
-        </div>
-    </ng-template>
-</p-popover>

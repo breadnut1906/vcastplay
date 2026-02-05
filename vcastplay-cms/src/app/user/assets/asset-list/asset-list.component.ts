@@ -7,11 +7,13 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { PlaylistService } from '../../playlist/playlist.service';
-import { Assets } from '../assets';
+import { Assets, UploadItem } from '../assets';
 import { Pagination } from '../../../shared/interfaces/general';
 import { environment } from '../../../../environments/environment.development';
 import { StorageService } from '../../../core/services/storage.service';
 import { catchError, firstValueFrom, of } from 'rxjs';
+import moment from 'moment';
+import { Playlist } from '../../playlist/playlist';
 
 @Component({
   selector: 'app-asset-list',
@@ -40,7 +42,18 @@ export class AssetListComponent {
         { label: 'Preview', icon: 'pi pi-eye', command: ($event: any) => this.isShowPreview.set(true) },
         { label: 'Duplicate', icon: 'pi pi-copy', command: ($event: any) => this.onClickDuplicate(this.selectedAsset(), $event) },
         { label: 'Add to Playlist', icon: 'pi pi-list', command: ($event: any) => this.onClickAddToPlaylist(this.selectedAsset(), $event) },
-        { label: 'Delete', icon: 'pi pi-trash', command: ($event: any) => this.onClickDelete(this.selectedAsset(), $event) }
+        { label: 'Delete', icon: 'pi pi-trash', command: ($event: any) => this.onClickDelete(this.selectedAsset(), $event), styleClass: 'delete-menu-item' },
+      ]
+    }
+  ];
+
+  otherItems: MenuItem[] = [
+    { 
+      label: 'More',
+      items: [
+        { label: 'Add to Playlist', icon: 'pi pi-list', command: ($event: any) => this.onClickMultipleToPlaylist($event) },
+        { label: 'Audience Tag', icon: 'pi pi-users', command: ($event: any) => this.onClickAudienceTag($event) },
+        { label: 'Delete', icon: 'pi pi-trash', command: ($event: any) => this.onClickDeleteMultiple($event), styleClass: 'delete-menu-item' },
       ]
     }
   ];
@@ -55,7 +68,8 @@ export class AssetListComponent {
 
   assetViewModeSignal = signal<string>('Grid');
   isShowPreview = signal<boolean>(false);
-  isShowAddToPlaylist = signal<boolean>(false);
+  addToPlaylist = signal<boolean>(false);
+  showAudienceTag = signal<boolean>(false);
 
   assetViewModeCtrl: FormControl = new FormControl('Grid');
   selectionModeCtrl: FormControl = new FormControl(false);
@@ -90,15 +104,37 @@ export class AssetListComponent {
   }
 
   onClickDuplicate(item: any, event: Event) {
-    this.assetService.onDuplicateAssets(item);
-    this.message.add({ severity:'success', summary: 'Success', detail: 'Asset duplicated successfully!' });
-    this.selectedAsset.set(null);
+    this.confirmation.confirm({
+      target: event.target as EventTarget,
+      message: 'Do you want to duplicate this asset?',
+      closable: true,
+      closeOnEscape: true,
+      header: 'Confirm Duplicate',
+      icon: 'pi pi-info-circle',
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Duplicate',
+      },
+      accept: () => {
+        this.message.add({ severity:'success', summary: 'Success', detail: 'Asset duplicated successfully!' })
+      },
+      reject: () => { }
+    })
   }
 
   onClickAddToPlaylist(item: any, event: Event) {
-    // this.playlistService.onGetPlaylists();
-    this.isShowAddToPlaylist.set(true);
-    // this.assetForm.patchValue(item);
+    this.selectedAsset.set(item);
+    this.addToPlaylist.set(true);
+  }
+
+  onClickMultipleToPlaylist(event: Event) {
+    const selectedAssets: Assets[] = this.selectedArrAssets();
+    if (selectedAssets.length == 0) return this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one asset' });
+    this.addToPlaylist.set(true);
   }
 
   onClickDelete(item: any, event: Event) {
@@ -120,8 +156,8 @@ export class AssetListComponent {
       },
       accept: () => {
         this.assetService.onDeleteAssets(item).subscribe({
-          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'User deleted successfully!' }),
-          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete user!' }),
+          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset deleted successfully!' }),
+          error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to delete asset!' }),
           complete: () => this.onInitializedAssets()
         });
       },
@@ -130,9 +166,12 @@ export class AssetListComponent {
   }
 
   onClickDeleteMultiple(event: Event) {
+    const selectedAssets: Assets[] = this.selectedArrAssets();
+    if (!selectedAssets.length || selectedAssets.length === 0) return this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one asset' });
+
     this.confirmation.confirm({
       target: event.target as EventTarget,
-      message: `Do you want to delete ${this.selectedArrAssets().length} assets?`,
+      message: `Do you want to delete ${selectedAssets.length} assets?`,
       closable: true,
       closeOnEscape: true,
       header: 'Danger Zone',
@@ -147,7 +186,7 @@ export class AssetListComponent {
         severity: 'danger',
       },
       accept: async () => {
-        const result: any = await Promise.all(this.selectedArrAssets().map(item =>
+        const result: any = await Promise.all(selectedAssets.map(item =>
           firstValueFrom(this.assetService.onDeleteAssets(item).pipe(catchError(err => of({ error: err, item })))
         )));
         if (result.some((item: any) => item.error)) {
@@ -171,6 +210,13 @@ export class AssetListComponent {
   onClickOpenOptions(event: Event, item: any, menu: any) {
     this.selectedAsset.set(item);
     menu.toggle(event);
+  }
+
+  onClickAudienceTag(event: Event) {
+    const selectedAssets: Assets[] = this.selectedArrAssets();
+    if (!selectedAssets.length || selectedAssets.length === 0) return this.message.add({ severity:'error', summary: 'Error', detail: 'Please select at least one asset' });
+
+    this.showAudienceTag.set(true);
   }
 
   onFilterChange(event: any) { }
@@ -202,12 +248,34 @@ export class AssetListComponent {
     this.cdr.detectChanges();
   }
 
+  onAudienceTagChange(event: any) {
+    const selectedAssets: Assets[] = this.selectedArrAssets();
+    selectedAssets.forEach((item: Assets) => {
+      this.assetService.onUpdateAssets(item.id, { audienceTags: event }).subscribe({
+        next: (res: any) => {
+          const asset = this.assets().find(asset => asset.id == item.id);
+          if (asset) asset.updatedAt = moment().toISOString();
+        }
+      });
+    })
+    this.selectedArrAssets.set([]);
+  }
+
+  onSelectedPlaylistChange(playlist: Playlist[]) {
+    if (playlist.length == 0) {
+      this.selectedAsset.set(null);
+      return;
+    }
+    
+    const selectedAssets: Assets[] = this.selectedAsset() ? [ this.selectedAsset() ] : this.selectedArrAssets();
+    console.log(selectedAssets, playlist);
+  }
+
   get isMobile() { return this.utils.isMobile(); }
   get isTablet() { return this.utils.isTablet(); }
 
   get showPrompt() { return this.assetService.showPrompt; }
   get assetViewModes() { return this.assetService.assetViewModes; }
-  get assetFilterForm() { return this.assetService.assetFilterForm; }
 
   get tenantId() {
     return this.storage.get('id');

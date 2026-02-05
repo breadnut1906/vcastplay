@@ -5,6 +5,7 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { AssetsService } from '../assets.service';
 import { environment } from '../../../../environments/environment.development';
 import { StorageService } from '../../../core/services/storage.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-asset-ai-generate',
@@ -15,6 +16,8 @@ import { StorageService } from '../../../core/services/storage.service';
 export class AssetAiGenerateComponent {
 
   @Input() showPrompt = signal<boolean>(false);
+
+  subscription: Subscription = new Subscription();
 
   assetService = inject(AssetsService);
   storage = inject(StorageService);
@@ -58,7 +61,7 @@ export class AssetAiGenerateComponent {
     if (data == 2) {
       this.isGenerating.set(true);
       const { asset, ...data } = this.generateForm.value
-      this.assetService.onGenerateImage(data).subscribe({
+      this.subscription = this.assetService.onGenerateImage(data).subscribe({
         next: (res: any) => {
           this.url.set(`${this.publicApi}assets/${this.tenantId}/${res.name}`),
           this.generateForm.patchValue({ asset: res });
@@ -104,6 +107,7 @@ export class AssetAiGenerateComponent {
     this.step.set(1);
     this.generateForm.reset();
     this.showPrompt.set(false)
+    this.subscription.unsubscribe();
   }
 
   get tenantId() {

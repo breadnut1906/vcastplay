@@ -1,0 +1,47 @@
+<p-dialog
+    header="Generate Playlist"
+    [(visible)]="dialog"
+    styleClass="w-[50rem] h-[40rem]"
+    [resizable]="false"
+    [modal]="true"
+    [draggable]="false"
+>
+
+    <p-stepper [(value)]="activeStep" [linear]="true">
+        <p-step-list>
+            <p-step [value]="1">Audience Tags</p-step>
+            <p-step [value]="2">Assets</p-step>
+            <p-step [value]="3">Review</p-step>
+        </p-step-list>
+        <p-step-panels>
+            <p-step-panel [value]="1">
+                <ng-template #content let-activateCallback="activateCallback">
+                    <app-audience-tag-filters [formGroup]="audienceTagForm" (onAudienceTagChange)="onAudienceTagChange($event)" [isDialog]="false" />
+                </ng-template>
+            </p-step-panel>
+            <p-step-panel [value]="2">
+                <ng-template #content let-activateCallback="activateCallback">
+                    <div class="flex flex-col gap-4">
+                        <p>Assets Contents</p>
+                    </div>
+                </ng-template>
+            </p-step-panel>
+            <p-step-panel [value]="3">
+                <ng-template #content let-activateCallback="activateCallback">
+                    <div class="grid grid-cols-1 gap-4 h-full" [formGroup]="playlistForm">
+                        <app-playlist-player class="relative border-2 border-[var(--p-surface-300)] group bg-stone-800 text-white aspect-video" 
+                            [playlist]="playlistForm.value" />
+
+                        <p>Name control</p>
+                    </div>
+                </ng-template>
+            </p-step-panel>
+        </p-step-panels>
+    </p-stepper>
+    <ng-template #footer>
+        <div class="flex justify-between w-full">
+            @if (activeStep > 1) { <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="onPreviousStep()" /> }
+            @if (activeStep < 3) { <p-button class="ml-auto" label="Next" icon="pi pi-arrow-right" iconPos="right" (onClick)="onNextStep()" /> }
+        </div>
+    </ng-template>
+</p-dialog>

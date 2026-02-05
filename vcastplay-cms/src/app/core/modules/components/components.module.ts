@@ -22,11 +22,9 @@ import { DesignLayoutOptionsComponent } from '../../../user/design-layout/design
 import { DesignLayoutPreviewComponent } from '../../../user/design-layout/design-layout-preview/design-layout-preview.component';
 import { DesignLayoutListItemComponent } from '../../../user/design-layout/design-layout-list-item/design-layout-list-item.component';
 import { DesignLayoutToolsComponent } from '../../../user/design-layout/design-layout-tools/design-layout-tools.component';
-import { ScheduleFillersComponent } from '../../../user/schedules/schedule-fillers/schedule-fillers.component';
 import { ScheduleHourListComponent } from '../../../user/schedules/schedule-hour-list/schedule-hour-list.component';
 import { ScheduleFilterComponent } from '../../../user/schedules/schedule-filter/schedule-filter.component';
 import { ScheduleListItemComponent } from '../../../user/schedules/schedule-list-item/schedule-list-item.component';
-import { SchedulesContentListComponent } from '../../../user/schedules/schedules-content-list/schedules-content-list.component';
 import { AudienceTagFiltersComponent } from '../../../shared/components/audience-tag-filters/audience-tag-filters.component';
 import { AssetToPlaylistComponent } from '../../../user/assets/asset-to-playlist/asset-to-playlist.component';
 import { AssetPreviewComponent } from '../../../user/assets/asset-preview/asset-preview.component';
@@ -36,7 +34,6 @@ import { AssetAiGenerateComponent } from '../../../user/assets/asset-ai-generate
 import { PlaylistPlayerComponent } from '../../../user/playlist/playlist-player/playlist-player.component';
 import { PlaylistFilterComponent } from '../../../user/playlist/playlist-filter/playlist-filter.component';
 import { PlaylistListItemComponent } from '../../../user/playlist/playlist-list-item/playlist-list-item.component';
-import { PlaylistSelectContentsComponent } from '../../../user/playlist/playlist-select-contents/playlist-select-contents.component';
 import { PlaylistContainerComponent } from '../../../user/playlist/playlist-container/playlist-container.component';
 import { ScreenOtherInfoComponent } from '../../../shared/components/screen-other-info/screen-other-info.component';
 import { ScreenDownloadComponent } from '../../../user/screens/screen-download/screen-download.component';
@@ -47,12 +44,15 @@ import { ScreenBroadcastMessageComponent } from '../../../user/screen-management
 import { ScreenManagementListItemComponent } from '../../../user/screen-management/screen-management-list-item/screen-management-list-item.component';
 import { ScreenControlsComponent } from '../../../user/screen-management/screen-controls/screen-controls.component';
 import { ScreenFilterComponent } from '../../../user/screens/screen-filter/screen-filter.component';
-import { ScreenListItemComponent } from '../../../shared/components/screen-list-item/screen-list-item.component';
+import { ScreenListItemComponent } from '../../../user/screens/screen-list-item/screen-list-item.component';
 import { UserDetailsComponent } from '../../../shared/components/user-details/user-details.component';
 import { AssetUploadFileComponent } from '../../../user/assets/asset-upload-file/asset-upload-file.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { ScreenHealthStatusComponent } from '../../../shared/components/screen-health-status/screen-health-status.component';
 import { PlaylistContentComponent } from '../../../user/playlist/playlist-content/playlist-content.component';
+import { SetToScreenComponent } from '../../../shared/components/set-to-screen/set-to-screen.component';
+import { ScheduleAddContentComponent } from '../../../user/schedules/schedule-add-content/schedule-add-content.component';
+import { PlaylistAutoGenerateComponent } from '../../../user/playlist/playlist-auto-generate/playlist-auto-generate.component';
 
 const COMPONENT_MODULES = [
   CommonModule,
@@ -66,6 +66,7 @@ const COMPONENT_MODULES = [
   WeekdayHourSelectionComponent,
   FooterComponent,
   PaginatorComponent,
+  SetToScreenComponent,
 
   // Broadcast Components
   BroadcastListItemComponent,
@@ -95,11 +96,11 @@ const COMPONENT_MODULES = [
 
   // Playlist Components
   PlaylistContainerComponent,
-  PlaylistSelectContentsComponent,
   PlaylistListItemComponent,
   PlaylistFilterComponent,
   PlaylistPlayerComponent,
   PlaylistContentComponent,
+  PlaylistAutoGenerateComponent,
 
   // Asset Components
   AssetAiGenerateComponent,
@@ -113,11 +114,10 @@ const COMPONENT_MODULES = [
   AudienceTagFiltersComponent,
 
   // Schedule Components
-  SchedulesContentListComponent,
+  ScheduleAddContentComponent,
   ScheduleListItemComponent,
   ScheduleFilterComponent,
   ScheduleHourListComponent,
-  ScheduleFillersComponent,
 
   // Design Layout Components
   DesignLayoutToolsComponent,

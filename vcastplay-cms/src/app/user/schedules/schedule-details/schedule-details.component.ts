@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, HostListener, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, HostListener, inject, signal, ViewChild } from '@angular/core';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
 import { ComponentsModule } from '../../../core/modules/components/components.module';
@@ -11,20 +11,19 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import { UtilityService } from '../../../core/services/utility.service';
 import moment from 'moment-timezone';
 import { PlaylistService } from '../../playlist/playlist.service';
-import { SchedulesContentListComponent } from '../schedules-content-list/schedules-content-list.component';
 import { Router } from '@angular/router';
+import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { CalendarEventItem } from '../schedules';
 
 @Component({
   selector: 'app-schedule-details',
-  imports: [PrimengUiModule, ComponentsModule ],
+  imports: [ PrimengUiModule, ComponentsModule ],
   templateUrl: './schedule-details.component.html',
   styleUrl: './schedule-details.component.scss',
 })
 export class ScheduleDetailsComponent {
 
-  @ViewChild('viewport') viewportElement!: ElementRef<HTMLDivElement>;
   @ViewChild('scheduleCalendar') scheduleCalendar!: FullCalendarComponent;
-  @ViewChild('scheduleContents') scheduleContents!: SchedulesContentListComponent;
   
   pageInfo: MenuItem = [ {label: 'Schedules'}, {label: 'List', routerLink: '/schedule/schedule-library'}, {label: 'Details'} ];
 
@@ -35,8 +34,40 @@ export class ScheduleDetailsComponent {
   utils = inject(UtilityService);
   router = inject(Router);
 
-  currentDateRange = signal<string>('');
+  formBuilder = inject(FormBuilder);
+  scheduleForm = this.formBuilder.group({
+    id: [0],
+    name: ['Morning Promo Loop', Validators.required],
+    description: ['Displays promotional content every morning'],
+    start: [null],
+    end: [null],
+    entries: [[], Validators.required],
+  })
 
+  isEditMode = signal<boolean>(false);
+  isAddContent = signal<boolean>(false);
+    
+  calendarTitle = signal<string>('');
+  calendarDateRange = signal<{ start: Date, end: Date } | null>(null);
+  calendarViewSignal = signal<string>('timeGridWeek');
+  calendarViews = signal<any[]>([
+    { label: 'Day', value: 'timeGridDay' },
+    { label: 'Week', value: 'timeGridWeek' },
+    { label: 'Month', value: 'dayGridMonth' },
+  ]);
+  
+
+  onDateRangeValidator(group: AbstractControl): ValidationErrors | null {
+    const start = group.get('start')?.value;
+    const end = group.get('end')?.value;
+
+    if (start && end && new Date(start) > new Date(end)) {
+      return { startAfterEnd: true }
+    }
+    return null;
+  }
+
+  currentDateRange = signal<string>('');
   calendarOptions: CalendarOptions = {
     initialView: 'timeGridWeek',
     plugins: [ dayGridPlugin, timeGridPlugin, interactionPlugin  ],
@@ -45,6 +76,7 @@ export class ScheduleDetailsComponent {
     scrollTime: moment().subtract(1, 'hour').format('HH:mm'), // Set the scroll time to 1 hour ago
     selectable: true,
     editable: true,
+    
     dayHeaderFormat: { weekday: 'short' },
     headerToolbar: false,
     fixedWeekCount: false,
@@ -64,10 +96,6 @@ export class ScheduleDetailsComponent {
     eventClick: (info: any) => this.onEventClick(info),
     eventContent: (info: any) => this.onRenderEventContent(info),
   }
-
-  timeSlots = computed(() => this.generateTimeCode().map((timeSlot: any) => ({ ...timeSlot, value: `${timeSlot.start} - ${timeSlot.end}`})) );
-
-  totalByType = signal<any>({});
   
   hasUnsavedChanges!: () => boolean;
   @HostListener('window:beforeunload', ['$event'])
@@ -76,36 +104,18 @@ export class ScheduleDetailsComponent {
       $event.returnValue = true;
     }
   }
-
-  constructor() {
-    // effect(() => {
-    //   // change calendar view when mobile
-    //   if (!this.isDesktop()) {
-    //     this.calendarViewSignal.set('timeGridDay');
-    //     this.onChangeCalendarView({ value: 'timeGridDay' });
-    //   }
-    // })
-  }
-
-  ngOnInit() {
-    if (!this.isEditMode()) {
-      this.scheduleForm.reset();
-      this.contentItemForm.reset();
-    }    
-  }
-
-  ngAfterViewInit() {    
-    if (this.isEditMode()) this.onAddCalendarEvents();
-  }
-
-  ngOnDestroy() {
-    this.scheduleForm.reset();
-    this.calendarViewSignal.set('timeGridWeek');
-  }
   
   hasUnsavedData(): boolean {
-    return this.scheduleForm.invalid;
+    return this.scheduleForm.invalid && this.scheduleForm.dirty;
   }
+
+  constructor() { }
+
+  ngOnInit() { }
+
+  ngAfterViewInit() { }
+
+  ngOnDestroy() { }
 
   onClickSave(event: Event) {
     const calendarApi = this.scheduleCalendar.getApi();
@@ -131,10 +141,7 @@ export class ScheduleDetailsComponent {
         label: 'Save',
       },
       accept: () => {
-        console.log(this.scheduleForm.value);
         this.message.add({ severity: 'success', summary: 'Success', detail: 'Schedule saved successfully!' });
-        this.scheduleServices.onSaveSchedule(this.scheduleForm.value);
-        this.router.navigate([ '/schedule/schedule-library' ]);        
       },
       reject: () => { }
     })
@@ -145,32 +152,12 @@ export class ScheduleDetailsComponent {
   }
 
   onClickAddContent() {
-    this.contentItemForm.reset();
-    const isMonth = ['dayGridMonth'].includes(this.calendarViewSignal());
-    const time = this.timeSlots().find(slot => slot.value == this.timeSlotSignal());
-    const start = moment(this.calendarDateRange()?.start).format('YYYY-MM-DD');
-    const end = moment(this.calendarDateRange()?.end).subtract(1, 'day').format('YYYY-MM-DD');    
-    
-    const startDateTime = moment(`${start} ${time.start}`, 'YYYY-MM-DD HH:mm:ss').toDate();
-    const endDateTime = moment(`${end} ${time.end}`, 'YYYY-MM-DD HH:mm:ss').toDate();
-    
-    this.onSelectContents({ start: startDateTime, end: endDateTime, allDay: isMonth }, false);
-    this.scheduleContents.contents.selectionContent.set(null);
-    this.showAddContents.set(true);
+    this.isAddContent.set(true);
   }
 
-  onEventClick(data: any) { 
-    const { id, title, start, end, backgroundColor, borderColor, extendedProps, allDay } = data.event;
-    this.selectedContent.set({ id, title, start, end, backgroundColor, borderColor, extendedProps, allDay });    
-    this.showPreviewEvent.set(true);
-  }
+  onEventClick(data: any) {  }
 
-  async onClickDeleteContent(event: any) {
-    this.scheduleServices.onDeleteContent(this.selectedContent(), this.scheduleCalendar);
-    const { contents } = this.scheduleForm.value;
-    this.onUpdateTotalContentsByType(contents);
-    this.showPreviewEvent.set(false);
-  }
+  async onClickDeleteContent(event: any) { }
 
   onClickNextCalendar() {
     const calendar = this.scheduleCalendar.getApi();
@@ -182,41 +169,12 @@ export class ScheduleDetailsComponent {
     calendar.prev();
   }
 
-  onSelectContents({ start, end, allDay }: { start: any, end: any, allDay: boolean }, isSpecificTime: boolean = true) {    
-    const startDate = moment(start);
-    const endDate = allDay ? moment(end).subtract(1, 'day') : moment(end);
-    this.currentDateRange.set(`${startDate.format('MMM DD, yyyy')} - ${endDate.format('MMM DD, yyyy')}`);
-
-    this.contentItemForm.patchValue({ start: startDate.toDate(), end: !isSpecificTime ? endDate.toDate() : null, allDay });
-    this.calendarSelectedDate.set({ start, end, allDay, isSpecificTime });
-    this.showAddContents.set(true);
-  }
-
-  async onAddCalendarEvents() {    
-    const calendar = this.scheduleCalendar.getApi();
-    const { contents } = this.scheduleForm.value;    
-    const events: any[] = contents.filter((event: any) => !event.isFiller).map((content: any) => ({
-      id: content.id,
-      title: content.title,
-      start: moment(content.start).toISOString(),
-      end: moment(content.end).toISOString(),
-      backgroundColor: content.backgroundColor,
-      borderColor: content.borderColor,
-      extendedProps: content.extendedProps,
-      allDay: content.allDay,
-    }));
-    calendar.addEventSource(events);
-    this.onUpdateTotalContentsByType(contents);
-  }
-
   onChangeCalendarView(event: any) {
     const calendar = this.scheduleCalendar.getApi();
     calendar.changeView(event.value);
   }
 
-  onEventUpdate(info: any) {
-    this.scheduleServices.onUpdateContent(info.event);
-  }
+  onEventUpdate(info: any) { }
 
   onDateSet(event: any) {
     const start = event.start;
@@ -225,13 +183,7 @@ export class ScheduleDetailsComponent {
     this.calendarTitle.set(event.view.title);
   }
 
-  onClosePreview() {
-    const { extendedProps } = this.selectedContent();
-    if (extendedProps.type == 'playlist') {
-      this.playlistForm.reset();
-    }
-    this.selectedContent.set(null);
-  }
+  onClosePreview() { }
 
   onRenderEventContent(arg: any) {
     const event = arg.event;
@@ -242,41 +194,50 @@ export class ScheduleDetailsComponent {
       html: `<div class="text-xs text-white w-full h-full px-1 rounded-sm" style="background-color: ${bg}">${title}</div>`
     };
   }
-
-  async onUpdateTotalContentsByType(contents: any) {
-    const [ totalContentByType ]: any = await Promise.all([ this.scheduleServices.onGetTotalContentsByType(contents) ]);
-    this.totalByType.set(totalContentByType); 
-  }
-
-  onGetTotalContentsByType(event: any) {
-    this.totalByType.set(event); 
+  
+/**
+ * Handles adding content to the schedule form.
+ * It will add the given content as events to the calendar,
+ * and update the start and end dates of the schedule form accordingly.
+ * @param {any} event - The content to be added to the schedule form.
+ */
+  onAddContentChange(event: any) {    
+    const calendar = this.scheduleCalendar.getApi();
+    const events: CalendarEventItem[] = this.scheduleServices.onAddContent(event);
+    calendar.addEventSource(events.map((event: any, id: number) => ({ ...event, id })));
+    events.forEach((event: CalendarEventItem) => this.formControl('entries').value.push(event));
+    
+    const entries = this.formControl('entries').value;
+    const startDate: any = moment.min(entries.map((item: any) => moment(item.start))).startOf('day').toISOString();
+    const endDate: any = moment.max(entries.map((item: any) => moment(item.end))).endOf('day').toISOString();
+    
+    this.scheduleForm.patchValue({ start: startDate, end: endDate })
+    console.log(this.scheduleForm.value);    
   }
   
   formControl(fieldName: string) {
     return this.utils.getFormControl(this.scheduleForm, fieldName);
   }
-  
-  get totalFillers() {
-    const { contents } = this.scheduleForm.value;
-    return contents.filter((event: any) => event.isFiller).length.toString();
+
+  /**
+   * Returns an object containing the number of images, videos, audio files, and playlists associated with the schedule entries.
+   * @returns {Object} - An object containing the number of images, videos, audio files, and playlists associated with the schedule entries.
+   * @property {number} images - The number of images associated with the schedule entries.
+   * @property {number} videos - The number of videos associated with the schedule entries.
+   * @property {number} audios - The number of audio files associated with the schedule entries.
+   * @property {number} playlists - The number of playlists associated with the schedule entries.
+   */
+  fileCount() {
+    const entries = this.formControl('entries').value;
+    const assets = entries.map((item: any) => item.extendedProps).filter((item: any) => item.type == 'asset');
+    const playlists = entries.map((item: any) => item.extendedProps).filter((item: any) => item.type == 'playlist');
+
+    return {
+      image: assets.filter((item: any) => item.content.type == 'image').length,
+      video: assets.filter((item: any) => item.content.type == 'video').length,
+      audio: assets.filter((item: any) => item.content.type == 'audio').length,
+      playlist: playlists.length
+    }
+    
   }
-
-  get isDesktop() { return this.utils.isDesktop; }
-  get generateTimeCode() { return this.utils.generateTimeCode; }
-  get isEditMode() { return this.scheduleServices.isEditMode; }
-  get scheduleForm() { return this.scheduleServices.scheduleForm; }
-  get contentItemForm() { return this.scheduleServices.contentItemForm; }
-  get selectedContent() { return this.scheduleServices.selectedContent; }
-  get showAddContents() { return this.scheduleServices.showAddContents; }
-  get showFillerContents() { return this.scheduleServices.showFillerContents; }
-  get showPreviewEvent() { return this.scheduleServices.showPreviewEvent; }
-  get calendarTitle() { return this.scheduleServices.calendarTitle; }
-  get calendarViewSignal() { return this.scheduleServices.calendarViewSignal; }
-  get calendarViews() { return this.scheduleServices.calendarViews; }
-  get timeSlotSignal() { return this.scheduleServices.timeSlotSignal; }
-  get calendarDateRange() { return this.scheduleServices.calendarDateRange; }
-  get calendarSelectedDate() { return this.scheduleServices.calendarSelectedDate; }
-  get playlistForm() { return this.playlistService.playListForm; }
-  get status() { return this.scheduleForm.get('status'); }
-
 }

@@ -1,28 +1,70 @@
-<p-card>
-    <ng-template #title>
-        <div class="flex gap-2 items-center">
-            <div class="flex flex-col">
-                <p class="text-sm md:text-lg font-semibold">{{ playlist.name }}</p>
-                <p class="text-xs md:text-sm font-normal line-clamp-1">{{ playlist.description }}</p>
-            </div>
-            <div class="ml-auto">
-                <p-tag [value]="playlist.approvalStatus?.toUpperCase() || 'PENDING'" 
-                    [severity]="utils.getStatus(playlist.approvalStatus || 'PENDING')" [icon]="'pi ' + utils.getIcon(playlist.approvalStatus || 'PENDING')" />
-            </div>
+<div class="flex flex-col gap-4 p-4 border border-gray-200 rounded-lg shadow cursor-pointer hover:shadow-md hover:shadow-blue-500/50" (click)="isDrawerOpen.set(true)">
+    <div class="flex items-center gap-4 pb-4">
+        <i class="pi pi-images !text-4xl"></i>
+        <div class="flex flex-col">
+            <p class="text-lg font-semibold">{{ playlist.name }}</p>
+            <p class="text-sm line-clamp-1">{{ playlist.description }}</p>
         </div>
-    </ng-template>
-    <div class="flex flex-col my-5 gap-5">
-        <div class="flex gap-2 items-center">
-            <p class="font-semibold">Last Update:</p>
-            <div class="flex gap-2 items-center ml-auto">
-                <i class="pi pi-clock" [style]="{ 'font-size': '0.75rem'}"></i>
-                <p class="text-sm italic">{{ utils.onGetLastUpdatedLabel(playlist.updatedAt) }}</p>
-            </div>
+        <div class="ml-auto flex gap-2 items-center">
+            <i class="pi pi-clock !text-xs"></i>
+            <p class="italic text-xs">{{ utils.onGetLastUpdatedLabel(playlist.updatedAt) }}</p>
         </div>
+    </div>
+    <div class="flex gap-2">
+        <p-tag [value]="playlist.approvalStatus?.toUpperCase() || 'PENDING'" 
+            [severity]="utils.getStatus(playlist.approvalStatus || 'PENDING')" [icon]="'pi ' + utils.getIcon(playlist.approvalStatus || 'PENDING')" />
+    </div>
+</div>
+
+<p-drawer [header]="playlist.name" [(visible)]="isDrawerOpen" position="bottom" [style]="{ height: 'auto'}" appendTo="body"  (onShow)="onGetEntriesByPlaylistId(playlist.id)">
+    <div class="flex flex-col gap-2">
+        @if (!isLoading()) {
+            <p-divider [align]="'left'">Contents:</p-divider>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div class="flex gap-2 items-center p-4 border border-gray-200 rounded-lg">
+                    <i class="pi pi-image"></i>
+                    <p>Images: {{ fileCount().image }}</p>
+                </div>
+                <div class="flex gap-2 items-center p-4 border border-gray-200 rounded-lg">
+                    <i class="pi pi-video"></i>
+                    <p>Videos: {{ fileCount().video }}</p>
+                </div>
+                <div class="flex gap-2 items-center p-4 border border-gray-200 rounded-lg">
+                    <i class="pi pi-volume-up"></i>
+                    <p>Audio: {{ fileCount().audio }}</p>
+                </div>
+                <div class="flex gap-2 items-center p-4 border border-gray-200 rounded-lg">
+                    <i class="pi pi-link"></i>
+                    <p>Links: {{ fileCount().link }}</p>
+                </div>
+                <div class="flex gap-2 items-center p-4 border border-gray-200 rounded-lg">
+                    <i class="pi pi-facebook !text-blue-500"></i>
+                    <p>Facebook: {{ fileCount().facebook }}</p>
+                </div>
+                <div class="flex gap-2 items-center p-4 border border-gray-200 rounded-lg">
+                    <i class="pi pi-youtube !text-red-500"></i>
+                    <p>Youtube: {{ fileCount().youtube }}</p>
+                </div>
+            </div>
+            <p-divider [align]="'left'">Configuration:</p-divider>
+            <div class="flex flex-col gap-4">
+                <p>Transition: <span class="uppercase font-semibold">{{ playlist.transition }}</span></p>
+                <p>Transition Speed: {{ playlist.transitionSpeed }} sec</p>
+                <p>Duration: {{ utils.timeConversion(totalDuration()) }}</p>
+            </div>
+        } @else {
+            <div class="flex flex-col gap-4">
+                <p-skeleton height="2rem" width="100%" />
+                <p-skeleton height="1rem" width="75%" />
+                <p-skeleton height="1rem" width="50%" />
+                <p-skeleton height="1rem" width="75%" />
+                <p-skeleton height="1rem" width="50%" />
+            </div>
+        }
     </div>
     <ng-template #footer>
         <div class="flex justify-end gap-2">
             <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: playlist }"></ng-container>
         </div>
     </ng-template>
-</p-card>
+</p-drawer>

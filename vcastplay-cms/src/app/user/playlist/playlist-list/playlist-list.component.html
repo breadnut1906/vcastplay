@@ -22,9 +22,9 @@
         <div class="flex flex-col gap-4 h-full mt-4 md:mt-0">
             <div class="hidden lg:block relative flex-1">
                 <div class="absolute top-0 left-0 h-full w-full">
+                    @if (isLoading()) { <p-progressbar mode="indeterminate" /> }
                     <p-table
                         [value]="playlists()" 
-                        [loading]="isLoading()"
                         selectionMode="single"
                         [scrollable]="true" 
                         scrollHeight="flex"
@@ -37,8 +37,8 @@
                                 <th>Name</th>
                                 <th>Description</th>
                                 <th>Type</th>
-                                <th>Last Update</th>
                                 <th>Status</th>
+                                <th>Last Update</th>
                                 <th>
                                     <div class="text-center">Actions</div>
                                 </th>
@@ -55,9 +55,9 @@
                                 </td>
                                 <td>{{ item.description }}</td>
                                 <td><p-tag [value]="item.isAuto ? 'Auto' : 'Manual'" [severity]="item.isAuto ? 'warn' : 'info'" /></td>
-                                <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
                                 <td><p-tag [value]="item.approvalStatus?.toUpperCase() || 'PENDING'" [icon]="'pi ' + utils.getIcon(item.approvalStatus || 'PENDING')"
                                     [severity]="utils.getStatus(item.approvalStatus || 'PENDING')" /></td>
+                                <td><p class="text-sm">{{ utils.onGetLastUpdatedLabel(item.updatedAt) }}</p></td>
                                 <td>
                                     <div class="flex flex-row justify-center gap-2">
                                         <ng-container *ngTemplateOutlet="actionBtn; context: { $implicit: item }"></ng-container>
@@ -74,22 +74,24 @@
                         </ng-template>
                     </p-table>
                 </div>
+            </div>
                 
-                <div class="relative flex lg:hidden flex-1 overflow-y-auto">
-                    <div class="absolute top-0 left-0 h-full w-full">
-                    @if (!isLoading()) {
-                        @for (item of playlists(); track $index) {
-                            <app-playlist-list-item [playlist]="item" [actionBtn]="actionBtn" />
-                        } @empty {
-                            <div class="flex justify-center items-center p-5 h-100">
-                                <p>No playlists found</p>
-                            </div>
+            <div class="relative flex lg:hidden flex-1 overflow-y-auto w-full h-full">
+                <div class="absolute top-0 left-0 h-full w-full">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if (!isLoading()) {
+                            @for (item of playlists(); track $index) {
+                                <app-playlist-list-item [playlist]="item" [actionBtn]="actionBtn" />
+                            } @empty {
+                                <div class="flex justify-center items-center p-5 h-100">
+                                    <p>No playlists found</p>
+                                </div>
+                            }
+                        } @else {
+                            @for (item of utils.tableSkeletonRows; track $index) {
+                                <p-skeleton height="12rem" />
+                            }
                         }
-                    } @else {
-                        @for (item of utils.tableSkeletonRows; track $index) {
-                            <p-skeleton height="5rem" />
-                        }
-                    }
                     </div>
                 </div>
             </div>
@@ -107,11 +109,13 @@
 <ng-template #actionBtn let-item>
     <p-button (onClick)="onClickEdit(item)" icon="pi pi-pencil" pTooltip="Edit" 
         tooltipPosition="bottom" severity="success" size="small" [disabled]="['approved', 'disapproved'].includes(item.status)" />
-    <p-button (onClick)="onClickShowApproved($event, item, null)" icon="pi pi-check-circle" pTooltip="Approval" tooltipPosition="bottom"  severity="info" size="small" />
-    <p-button icon="pi pi-desktop" pTooltip="Set to screen" tooltipPosition="bottom" severity="warn" size="small" [disabled]="item.status == 'pending'" />
+    <p-button (onClick)="onClickShowApproved($event, item, null)" icon="pi pi-check-circle" pTooltip="Approval" tooltipPosition="bottom" disabled severity="info" size="small" />
+    <p-button (onClick)="onClickSetToScreen($event, item)" icon="pi pi-desktop" pTooltip="Set to screen" tooltipPosition="bottom" severity="warn" size="small" [disabled]="item.status == 'pending'" />
     <p-button icon="pi pi-history" pTooltip="Playlist Usage" tooltipPosition="bottom" severity="danger" size="small" [disabled]="item.status == 'pending'" />
     <p-button (onClick)="onClickOptions($event, item, actionMenu)" pTooltip="More" tooltipPosition="bottom" icon="pi pi-cog" severity="contrast" size="small" />
 </ng-template>
+
+<app-set-to-screen [dialog]="setToScreen" [content]="selectedPlaylist" (onScreenChange)="selectedPlaylist.set(null)" />
 
 <p-dialog header="Preview" [(visible)]="showPreview" [style]="{ width: '50rem' }" (onHide)="playlist.set(null)" [resizable]="false" modal>
     <div class="relative flex h-full w-full aspect-video">
@@ -122,52 +126,6 @@
     </div>
 </p-dialog>
 
-<p-dialog header="Generate Playlist" [(visible)]="showContents" [style]="{ width: '50rem', height: '560px' }" (onHide)="categoryForm.reset()"
-    [draggable]="false" closable modal>
-    <!-- <app-playlist-select-contents [playListForm]="playlistForm" (assetSelected)="selectedAssets.set($event)" [steps]="3" />
-    <ng-template #footer>
-        <div class="flex items-center w-full gap-2">
-            @switch (activeStep()) {
-                @case(2) {
-                    <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activeStep.set(1)" size="small" />
-                    <p-button class="ml-auto" label="Next" icon="pi pi-arrow-right" [disabled]="selectedAssets().length == 0" (onClick)="activeStep.set(3)" size="small" />
-                }
-                @case(3) {
-                    <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activeStep.set(2)" size="small" />
-                    <p-button class="ml-auto" label="Complete" severity="success"
-                        icon="pi pi-check" iconPos="right" (onClick)="onClickComplete($event)" [disabled]="playlistForm.invalid" size="small" />
-                }
-                @default {
-                    <p-button class="ml-auto" label="Next" icon="pi pi-arrow-right" (onClick)="activeStep.set(2)" size="small" />
-                }
-            }
-        </div>
-    </ng-template> -->
-</p-dialog>
-
 <p-menu #actionMenu [model]="actionItems" [popup]="true" appendTo="body" />
-<!-- <p-popover #approved (onHide)="playlistForm.reset()" appendTo="body" (onHide)="playlistForm.reset()">
-    <ng-template #content>
-        <div class="flex flex-col gap-3">
-            @if (!['approved', 'disapproved'].includes(status?.value)) {
-                <p class="text-sm font-semibold">Approve this playlist?</p>
-                <app-user-approval [approvedForm]="playlistForm" />
-                <div class="flex gap-2 justify-end">
-                    <p-button label="Disapprove" severity="danger" (onClick)="onClickConfirmApproved($event, approved, 'disapproved')" size="small" outlined />
-                    <p-button label="Approve" (onClick)="onClickConfirmApproved($event, approved, 'approved')" size="small" />
-                </div>
-            } @else {
-                <p class="text-sm font-semibold">Approval Info:</p>
-                <div class="flex flex-col gap-2 w-50">
-                    <p>User: {{ approvedInfo?.value.approvedBy }}</p>
-                    <p>Remarks: {{ approvedInfo?.value.remarks }}</p>
-                </div>
-                <div class="flex gap-2 items-center w-full">
-                    <p-button [label]="playListValue.isActive ? 'Deactivate' : 'Activate'" 
-                        [severity]="playListValue.isActive ? 'danger' : 'success'"  text />
-                    <p-button class="ml-auto" label="Close" (onClick)="onClickCloseApproved($event, approved)" size="small" text />
-                </div>
-            }
-        </div>
-    </ng-template>
-</p-popover> -->
+
+<app-playlist-auto-generate [dialog]="showGenerate" (onAutoGenerateChange)="onAutoGenerateChange($event)" />

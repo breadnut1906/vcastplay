@@ -121,7 +121,7 @@ export class ScreenControlsComponent {
         outlined: true,
       },
       acceptButtonProps: {
-        label: 'Save',
+        label: 'Confirm',
       },
       accept: () => {
         this.isSending.set(true);
@@ -184,24 +184,25 @@ export class ScreenControlsComponent {
       this.selectedContent.set(null);
       return;
     }
-    this.selectedContentForm.patchValue({ id: event.id, name: event.name, type: event.type });
-    if (this.contentType() == 'asset') {
+    const { type, content } = event;
+    this.selectedContentForm.patchValue({ id: content.id, name: content.name, type: content.type });
+    if (type == 'asset') {
       this.selectedContent.set({ 
-        type: this.contentType(), 
+        type, 
         content: {
-          name: event.name, 
-          type: event.type, 
-          url: ['facebook', 'youtube', 'link'].includes(event.type) ? event.link 
-            : `${this.publicApi}assets/${this.tenantId}/${event.name}`,
-          status: event.status,
-          updatedAt: event.updatedAt
+          name: content.name, 
+          type: content.type, 
+          url: ['facebook', 'youtube', 'link'].includes(content.type) ? content.link 
+            : `${this.publicApi}assets/${this.tenantId}/${content.name}`,
+          status: content.status,
+          updatedAt: content.updatedAt
         } 
       });
-    } else if (this.contentType() == 'playlist') {
-      this.playlistService.onGetPlaylistById(event.id).subscribe({
+    } else if (type == 'playlist') {
+      this.playlistService.onGetPlaylistById(content.id).subscribe({
         next: (res: any) => {
           const data = res[0];
-          this.selectedContent.set({ type: this.contentType(), content: data });
+          this.selectedContent.set({ type, content: data });
         },
         error: (error: any) => {
           this.selectedContent.set(null);
@@ -210,10 +211,6 @@ export class ScreenControlsComponent {
       })
     }
 
-  }
-
-  onContentTypeChange(event: any) {
-    this.contentType.set(event);
   }
 
   onCheckAllDone() {
@@ -244,7 +241,6 @@ export class ScreenControlsComponent {
 
   get isMobile() { return this.utils.isMobile(); }
   get isTablet() { return this.utils.isTablet(); }
-  get contentType() { return this.screenService.contentType; }
 
   get tenantId() { return this.storage.get('id'); }
   get hasSelected() { return this.selectMultipleScreens().length == 0; }

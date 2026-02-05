@@ -27,11 +27,13 @@ export interface Assets {
 
     // sequence id for playlist
     sequence?: any;
+    createdAt?: any;
+    updatedAt?: any;
 }
 
 export interface UploadItem {
     id: string;
-    file: File;
+    file: File | any;
     progress: number;
     status: 'pending' | 'uploading' | 'success' | 'error' | 'cancel';
     error?: any;

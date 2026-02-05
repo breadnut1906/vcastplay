@@ -112,4 +112,4 @@
     }
 </p-drawer>
 
-<app-screen-health-status [showHealthCheck]="showHealthCheck" [selectedScreen]="screen" />
+@if (!isAdmin) { <app-screen-health-status [showHealthCheck]="showHealthCheck" [selectedScreen]="screen" /> }

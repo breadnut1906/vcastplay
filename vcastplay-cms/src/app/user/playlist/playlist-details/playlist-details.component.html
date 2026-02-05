@@ -47,12 +47,12 @@
         </div>
 
         <!-- Preview Contents -->
-        <app-playlist-player class="relative flex-1 border-2 border-[var(--p-surface-300)] group bg-stone-800 text-white" 
+        <app-playlist-player class="relative flex-1 border-2 border-[var(--p-surface-300)] group bg-stone-800 text-white aspect-video md:aspect-auto" 
           [playlist]="playlistForm.value" (onCurrentItemChange)="onCurrentItemChange($event)" (isPlayingChange)="isPlaying.set($event)" />
       </div>
 
       <!-- Assets Lists -->
-      <div class="col-span-1 md:col-span-6 xl:col-span-5">
+      <div class="col-span-1 md:col-span-6 xl:col-span-5 h-[32rem] md:h-full">
         <app-playlist-content (onPlaylistContentChange)="onPlaylistContentChange($event)" />
       </div>
     </div>

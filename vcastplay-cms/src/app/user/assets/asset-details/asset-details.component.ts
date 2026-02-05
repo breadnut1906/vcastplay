@@ -89,7 +89,8 @@ export class AssetDetailsComponent {
     this.onLoadCategories();
     this.route.queryParams.subscribe(params => {
       const { id } = params;
-      this.onLoadAssetById(id);
+      if (!id) this.router.navigate([ '/assets/asset-library' ]);
+      else this.onLoadAssetById(id);
     })
   }
 
@@ -225,9 +226,8 @@ export class AssetDetailsComponent {
         const time = this.utils.timeToSeconds(duration);
         const dateTime = this.assetService.onDateTimeConversions(data, true);        
         this.assetService.onUpdateAssets(id, { ...data, ...dateTime, duration: time }).subscribe({
-          next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }),
           error: (err: any) => this.message.add({ severity:'error', summary: 'Error', detail: err.error.message || 'Failed to update asset!' }),
-          complete: () => this.router.navigate([ '/assets/asset-library' ])
+          complete: () => this.message.add({ severity:'success', summary: 'Success', detail: 'Asset updated successfully!' }) //this.router.navigate([ '/assets/asset-library' ])
         });
       },
     })

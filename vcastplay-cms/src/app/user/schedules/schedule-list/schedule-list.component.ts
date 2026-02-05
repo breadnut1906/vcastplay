@@ -6,6 +6,7 @@ import { SchedulesService } from '../schedules.service';
 import { UtilityService } from '../../../core/services/utility.service';
 import { Router } from '@angular/router';
 import { Schedule } from '../schedules';
+import { Pagination } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-schedule-list',
@@ -21,7 +22,7 @@ export class ScheduleListComponent {
       label: 'Options',
       items: [
         { label: 'Duplicate', icon: 'pi pi-copy', command: ($event: any) => this.onClickDuplicate($event, this.selectedSchedule()) },
-        { label: 'Delete', icon: 'pi pi-trash', command: ($event: any) => this.onClickDelete($event, this.selectedSchedule()) }
+        { label: 'Delete', icon: 'pi pi-trash', command: ($event: any) => this.onClickDelete($event, this.selectedSchedule()), styleClass: 'delete-menu-item' }
       ]
     }
   ];
@@ -32,42 +33,50 @@ export class ScheduleListComponent {
   message = inject(MessageService);
   router = inject(Router);
   
-  showApprove = signal<boolean>(false);
-  
-  scheduleFilters = signal<any>(this.scheduleFilterForm.valueChanges);
-  filterSchedules = computed(() => {
-    const { status, keywords } = this.scheduleFilters();
-    const schedules = this.scheduleServices.schedules();
-    return schedules.filter(schedule => {
-      const matchStatus = !status || (schedule.status == status);
-      const matchKeywords = !keywords || schedule.name.toLowerCase().includes(keywords.toLowerCase()) || schedule.description.toLowerCase().includes(keywords.toLowerCase());
-      
-      return matchStatus && matchKeywords;
-    })
-  })
+  schedules = signal<Schedule[]>([]);
+  selectedSchedule = signal<Schedule | any>(null);
+  pagination = signal<Pagination>({ currentPage: 1, itemCount: 0, itemsPerPage: 10, totalItems: 0, totalPages: 0 });
+  isLoading = signal<boolean>(false);
 
   ngOnInit() {
-    this.scheduleServices.onGetSchedule();
+    this.onInititalizedSchedules();
   }
 
+  onInititalizedSchedules(page: number = 1, limit: number = 10) {
+    this.isLoading.set(true);
+    this.scheduleServices.onLoadSchedules(page, limit).subscribe({
+      next: (res: any) => {
+        this.schedules.set(res.items);
+        this.pagination.set(res.meta);
+      },
+      error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
+      complete: () => this.isLoading.set(false)
+    })
+  }
+  
+  onPageChange(event: any) {
+    const rows = event.rows;
+    const pageNumber = event.first / event.rows + 1;
+    const { currentPage, itemsPerPage, ...meta } = this.pagination();
+    this.pagination.set({ ...meta, currentPage: pageNumber, itemsPerPage: rows });
+    this.onInititalizedSchedules(pageNumber, event.rows);
+  }
+
+  onFilterChange(event: any) { }
+
   onClickAddNew() {
-    this.isEditMode.set(false);
     this.router.navigate([ '/schedule/schedule-details' ]);
   }
 
   onClickEdit(schedule: Schedule) {
-    this.isEditMode.set(true);    
-    this.scheduleForm.patchValue(schedule);
-    this.router.navigate([ '/schedule/schedule-details' ]);
+    this.router.navigate([ '/schedule/schedule-details' ], { queryParams: { id: schedule.id } });
   }
 
   onClickOpenOptions(event: Event, item: any, menu: any) {
-    this.selectedSchedule.set(item);
     menu.toggle(event);
   }
 
   onClickDuplicate(event: Event, schedule: any) {
-    this.scheduleServices.onDuplicateSchedule(schedule);
     this.message.add({ severity:'success', summary: 'Success', detail: 'Schedule duplicated successfully!' });
   }
 
@@ -89,50 +98,17 @@ export class ScheduleListComponent {
         severity: 'danger',
       },
       accept: () => {
-        this.scheduleServices.onDeleteSchedule(schedule);
         this.message.add({ severity:'success', summary: 'Success', detail: 'Schedule deleted successfully!' });
-        this.selectedSchedule.set(null);
-        this.scheduleForm.reset();
       },
       reject: () => { }
     })
   }
 
-  onClickShowApproved(event: any, item: any, popup: any) {
-    this.scheduleForm.patchValue(item);
-    popup.toggle(event);
-  }
+  onClickShowApproved(event: any, item: any, popup: any) { }
 
-  onClickConfirmApproved(event: Event, popup: any, type: string) {
-    const { approvedInfo, ...info } = this.scheduleForm.value;
-    if (approvedInfo.remarks === '') {
-      this.message.add({ severity: 'error', summary: 'Error', detail: 'Remarks is required!' });
-      return;
-    }
-    this.showApprove.set(false);
-    this.scheduleServices.onApproveSchedule(this.scheduleForm.value, type);
-    this.scheduleForm.reset();
-    popup.hide();
-  }
+  onClickConfirmApproved(event: Event, popup: any, type: string) { }
 
   onClickCloseApproved(event: Event, popup: any) {
-    this.showApprove.set(false);
     popup.hide();
   }
-
-  onFilterChange(event: any) {
-    this.scheduleFilters.set(event.filters);
-  }
-
-  get rows() { return this.scheduleServices.rows; }
-  get first() { return this.scheduleServices.first; }
-  get schedules() { return this.scheduleServices.schedules; }
-  get isEditMode() { return this.scheduleServices.isEditMode; }
-  get scheduleForm() { return this.scheduleServices.scheduleForm; }
-  get totalRecords() { return this.scheduleServices.totalRecords; }
-  get selectedSchedule() { return this.scheduleServices.selectedSchedule; }
-  get scheduleFilterForm() { return this.scheduleServices.scheduleFilterForm; }
-  
-  get status() { return this.scheduleForm.get('status'); }
-  get approvedInfo() { return this.scheduleForm.get('approvedInfo'); }
 }

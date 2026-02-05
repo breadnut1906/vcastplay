@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ScheduleFillersComponent } from './schedule-fillers.component';
+import { SetToScreenComponent } from './set-to-screen.component';
 
-describe('ScheduleFillersComponent', () => {
-  let component: ScheduleFillersComponent;
-  let fixture: ComponentFixture<ScheduleFillersComponent>;
+describe('SetToScreenComponent', () => {
+  let component: SetToScreenComponent;
+  let fixture: ComponentFixture<SetToScreenComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ScheduleFillersComponent]
+      imports: [SetToScreenComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ScheduleFillersComponent);
+    fixture = TestBed.createComponent(SetToScreenComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

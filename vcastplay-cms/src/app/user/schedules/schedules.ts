@@ -12,23 +12,34 @@ export interface Schedule {
     contents: ScheduleContentItems[];
     startDate: string;
     endDate: string;
-    status: string;
+    approvalStatus: string;
     approvedInfo?: ApprovedInfo;
-    createdOn: Date;
-    updatedOn: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface ContentItems {
-    id: string;
-    content: Assets | Playlist | DesignLayout;
-    start: string;
-    end: string;
+    content: any;
+    type: string;
+    start: Date;
+    end: Date;
     weekdays: string[];
     hours: string[];
-    allWeekdays: boolean;
-    allDay: boolean;
-    isFiller: boolean;
+    isAllWeekdays: boolean;
+    isAllDay: boolean;
     color: string;
+}
+
+export interface CalendarEventItem {
+    id: number;
+    title: string;
+    extendedProps: any;
+    start: string;
+    end: string;
+    backgroundColor: string;
+    borderColor: string;
+    allDay: boolean;
+    editable: boolean;
 }
 
 export interface ScheduleContentItems {

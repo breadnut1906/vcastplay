@@ -12,7 +12,7 @@
         </div>
     }
     <p-fieldset legend="Weekdays">
-      <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mt-3">
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 mt-3">
         <div class="flex items-center gap-2">
           <p-checkbox
             formControlName="isAllWeekdays"
@@ -46,7 +46,7 @@
         />
       </div>
     </div>
-    <p-table [value]="hoursControl.value" scrollHeight="240px" showGridlines scrollable>
+    <p-table [value]="hoursControl.value" scrollHeight="200px" showGridlines scrollable>
       <ng-template #header>
         <tr>
           <th>Start Time</th>

@@ -15,21 +15,21 @@
                     }
                 </div>
                 <div class="hidden md:flex ml:auto gap-3">
-                    <p-button label="Fillers" icon="pi pi-images" (onClick)="showFillerContents.set(true)" severity="secondary" 
+                    <!-- <p-button label="Fillers" icon="pi pi-images" (onClick)="showFillerContents.set(true)" severity="secondary" 
                         [badge]="totalFillers > 0 ? totalFillers : null" badgeSeverity="danger" />
                     @if (!['approved', 'disapproved'].includes(status?.value)) {
-                        <p-button label="Add" icon="pi pi-plus" (onClick)="onClickAddContent()" severity="success" />
-                        <p-button icon="pi pi-save" label="Save" (onClick)="onClickSave($event)" />
-                    }
+                    } -->
+                    <p-button label="Add" icon="pi pi-plus" (onClick)="onClickAddContent()" severity="success" />
+                    <p-button icon="pi pi-save" label="Save" (onClick)="onClickSave($event)" />
                 </div>
                 <div class="flex md:hidden ml:auto gap-3">
-                    <p-overlaybadge severity="danger" [value]="totalFillers" badgeSize="small" [badgeDisabled]="totalFillers == 0">
+                    <!-- <p-overlaybadge severity="danger" [value]="totalFillers" badgeSize="small" [badgeDisabled]="totalFillers == 0">
                         <p-button icon="pi pi-images" (onClick)="showFillerContents.set(true)" severity="secondary" />
                     </p-overlaybadge>
                     @if (!['approved', 'disapproved'].includes(status?.value)) {
-                        <p-button icon="pi pi-plus" (onClick)="onClickAddContent()" severity="success" />
-                        <p-button icon="pi pi-save" (onClick)="onClickSave($event)" />
-                    }
+                    } -->
+                    <p-button icon="pi pi-plus" (onClick)="onClickAddContent()" severity="success" />
+                    <p-button icon="pi pi-save" (onClick)="onClickSave($event)" />
                 </div>
             </div>
         </ng-template>
@@ -79,20 +79,13 @@
                 </div>
             </p-popover> -->
             <div class="py-2 md:flex grid grid-cols-2 sm:grid-cols-5 gap-6">
-                <ng-container *ngTemplateOutlet="totalInfo; context: { $implicit: totalByType() }"></ng-container>
+                <ng-container *ngTemplateOutlet="totalInfo; context: { $implicit: fileCount() }"></ng-container>
             </div>
         </ng-template>
     </p-card>
 </div>
 
 <ng-template #totalInfo let-total>
-    <!-- <p-tag value="Image ({{ total.image ?? 0 }})" icon="pi pi-image" />
-    <p-tag value="Video ({{ total.video ?? 0 }})" icon="pi pi-video" severity="contrast" />
-    <p-tag value="Audio ({{ total.audio ?? 0 }})" icon="pi pi-volume-up" severity="success" />
-    <p-tag value="File ({{ total.file ?? 0 }})" icon="pi pi-file" severity="warn" />
-    <p-tag value="Web ({{ total.web ?? 0 }})" icon="pi pi-globe" severity="secondary" />
-    <p-tag value="Youtube ({{ total.youtube ?? 0 }})" icon="pi pi-youtube" severity="danger" />
-    <p-tag value="Facebook ({{ total.facebook ?? 0 }})" icon="pi pi-facebook" severity="info" /> -->
     <div class="flex gap-1 items-center md:justify-center">
         <p class="text-sm font-semibold">Image:</p>
         <p-badge [value]="total.image ?? 0" />
@@ -121,64 +114,10 @@
         <p class="text-sm font-semibold">Facebook:</p>
         <p-badge severity="info" [value]="total.facebook ?? 0" />
     </div>
+    <div class="flex gap-1 items-center md:justify-center">
+        <p class="text-sm font-semibold">Playlist:</p>
+        <p-badge [value]="total.playlist?? 0" />
+    </div>
 </ng-template>
 
-<app-schedules-content-list #scheduleContents [calendar]="scheduleCalendar" 
-    [showAddContents]="showAddContents" [scheduleForm]="scheduleForm" (contentsByType)="onGetTotalContentsByType($event)" />
-
-<app-schedule-fillers [showFillerContents]="showFillerContents" [scheduleForm]="scheduleForm" />
-
-<p-dialog header="Content Preview" [(visible)]="showPreviewEvent" (onHide)="onClosePreview()"
-    styleClass="w-[30rem] md:w-[40rem] h-auto" [modal]="true" [draggable]="false" [resizable]="true">
-    <ng-container *ngIf="selectedContent() as content">
-        <div class="relative flex flex-col flex-1 items-center justify-center overflow-hidden
-            h-full w-full border-[var(--p-surface-300)] bg-stone-800 text-white rounded-lg aspect-video">
-            @switch (content.extendedProps.type) {
-                @case ('playlist') {             
-                    <app-playlist-player class="group flex items-center justify-center h-full w-full flex items-center justify-center"  
-                        [playlist]="content.extendedProps" />
-                }
-                @case ('design') {
-                    <div #viewport class="relative flex w-full h-full flex items-center justify-center">
-                        <app-design-layout-preview [viewport]="viewport" [designLayout]="content.extendedProps" [isPlaying]="true" [isPreview]="true" />
-                    </div>
-                }
-                @default {
-                    <app-asset-preview class="absolute h-full w-full flex items-center justify-center"
-                        [asset]="content.extendedProps" [showControls]="true" />
-                }
-            }
-        </div>
-        <div class="flex flex-col gap-3 mt-3">
-            <p class="text-sm italic text-gray-400">Information</p>
-            <div class="flex gap-2">
-                <p class="text-lg font-semibold">{{ content.extendedProps.name }}</p>
-                <p-tag class="ml-auto" [value]="content.extendedProps.type.toUpperCase()" severity="info" />
-            </div>
-            <p class="text-lg">{{ content.extendedProps.description }}</p>
-            @if (!content.allDay) {
-                <div class="flex gap-2">
-                    <p>Start Date:</p>
-                    <p class="ml-auto text-sm">{{ content?.start | date: 'medium' }}</p>
-                </div>
-                <div class="flex gap-2">
-                    <p>End Date:</p>
-                    <p class="ml-auto text-sm">{{ content?.end | date: 'medium' }}</p>
-                </div>
-            } @else {
-                <div class="flex">
-                    <p>Schedule:</p>
-                    <p-tag class="ml-auto" severity="success" value="Runs All Day" />
-                </div>
-            }
-            <div class="flex gap-2">
-                <p>Duration:</p>
-                <p-tag class="ml-auto" severity="info" [value]="utils.timeConversion(content.extendedProps.duration)" />
-            </div>
-        </div>
-    </ng-container>
-    <ng-template #footer>
-        <p-button label="Close" severity="secondary" (onClick)="showPreviewEvent.set(false)" />
-        <p-button label="Delete" severity="danger" (onClick)="onClickDeleteContent($event)" />
-    </ng-template>
-</p-dialog>
+<app-schedule-add-content [dialog]="isAddContent" (onAddContentChange)="onAddContentChange($event)" />

@@ -15,6 +15,7 @@ export class AudienceTagFiltersComponent {
 
   @Input() formGroup!: FormGroup;
   @Input() isShowAudienceTag = signal<boolean>(false);
+  @Input() isDialog: boolean = false;
 
   @Output() onAudienceTagChange = new EventEmitter<any>();
 
@@ -34,23 +35,26 @@ export class AudienceTagFiltersComponent {
 
   ngOnInit() {
     this.onLoadTags();
+    if (!this.isDialog) this.onShowAudienceTag();
   }
 
   ngOnDestroy() {
+    if (!this.isDialog) {
+      this.onAudienceTagChange.emit(this.audienceTags());
+      this.onHideAudienceTag();
+    }
     this.tagValues.set([]);
   }
 
   ngAfterViewInit() { }
 
   onLoadTags() {
-    // const { currentPage, itemsPerPage }: any = this.paginatedTag;
-    this.tagService.onLoadTags(1, 10);
+    this.tagService.onLoadTags(1, 100);
   }
 
   onLoadTagValuesById(id: number) {
     this.tagValues.set([]);
-    // const { currentPage, itemsPerPage }: any = this.paginatedTagValue;
-    this.tagService.onLoadTagValuesById(id, 1, 10);
+    this.tagService.onLoadTagValuesById(id, 1, 100);
   }
 
   onSelectionChange(event: any) {
@@ -59,7 +63,8 @@ export class AudienceTagFiltersComponent {
   }
 
   onShowAudienceTag() {
-    this.audienceTags.set(this.formGroup.get('audienceTags')?.value || []);
+    const audienceTags = this.formGroup?.get('audienceTags')?.value || [];
+    this.audienceTags.set(audienceTags);
   }
 
   onHideAudienceTag() {

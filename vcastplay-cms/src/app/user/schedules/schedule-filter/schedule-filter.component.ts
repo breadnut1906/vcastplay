@@ -1,6 +1,8 @@
 import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
 import { SchedulesService } from '../schedules.service';
 import { PrimengUiModule } from '../../../core/modules/primeng-ui/primeng-ui.module';
+import { FormBuilder } from '@angular/forms';
+import { SelectOption } from '../../../shared/interfaces/general';
 
 @Component({
   selector: 'app-schedule-filter',
@@ -15,6 +17,21 @@ export class ScheduleFilterComponent {
   scheduleService = inject(SchedulesService);
 
   useFilter = signal<boolean>(false);
+  
+  formBuilder = inject(FormBuilder);
+  scheduleFilterForm = this.formBuilder.group({
+    dateRange: [null],
+    status: [null],
+    keywords: [null],
+  })
+  
+  scheduleStatus = signal<SelectOption[]>([
+    { label: 'Approved', value: 'approved' },
+    { label: 'Disapproved', value: 'disapproved' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Expiring', value: 'expiring' },
+    { label: 'Expired', value: 'expired' },
+  ])
 
   onClickApply(filter: any) {
     const filters = this.scheduleFilterForm.value;
@@ -29,7 +46,4 @@ export class ScheduleFilterComponent {
     this.useFilter.set(false);
     filter.hide();
   }
-
-  get scheduleStatus() { return this.scheduleService.scheduleStatus; }
-  get scheduleFilterForm() { return this.scheduleService.scheduleFilterForm; }
 }

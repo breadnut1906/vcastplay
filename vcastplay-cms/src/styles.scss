@@ -149,6 +149,14 @@ html {
   background: none !important;
 }
 
+.p-menu .delete-menu-item > .p-menu-item-content .p-menu-item-link {
+  color: #e53935 !important;
+}
+
+.p-menu .delete-menu-item > .p-menu-item-content .p-menu-item-link .p-menu-item-icon {
+  color: #e53935 !important;
+}
+
 /* calendar.component.scss */
 .fc .fc-timegrid-slot-label {
   font-size: 12px !important;
