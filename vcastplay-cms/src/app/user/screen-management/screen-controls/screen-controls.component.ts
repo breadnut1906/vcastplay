@@ -201,7 +201,7 @@ export class ScreenControlsComponent {
     } else if (type == 'playlist') {
       this.playlistService.onGetPlaylistById(content.id).subscribe({
         next: (res: any) => {
-          const data = res[0];
+          const data = res;
           this.selectedContent.set({ type, content: data });
         },
         error: (error: any) => {

@@ -135,7 +135,7 @@ export class PlaylistListComponent {
    */
   onClickPreview(item: Playlist | any) {
     this.playlistService.onGetPlaylistById(item.id).subscribe({
-      next: (res: any) => this.playlist.set(res[0]),
+      next: (res: any) => this.playlist.set(res),
       error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
       complete: () => this.showPreview.set(true)
     })
@@ -152,7 +152,7 @@ export class PlaylistListComponent {
 
   onClickSetToScreen(event: any, item: any) {
     this.playlistService.onGetPlaylistById(item.id).subscribe({
-      next: (res: any) => this.selectedPlaylist.set({ type: 'playlist', content: res[0] }),
+      next: (data: any) => this.selectedPlaylist.set({ type: 'playlist', content: data }),
       error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
       complete: () => this.setToScreen.set(true)
     })

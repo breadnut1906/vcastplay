@@ -26,7 +26,7 @@ export class PlaylistListItemComponent {
   onGetEntriesByPlaylistId(id: number) {
     this.isLoading.set(true);
     this.playlistService.onGetEntriesByPlaylistId(id).subscribe({
-      next: (res: any) => this.entries = res[0].entries,
+      next: (data: any) => this.entries = data.entries,
       error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
       complete: () => this.isLoading.set(false)
     });

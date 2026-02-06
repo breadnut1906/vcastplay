@@ -139,7 +139,7 @@ export class PlaylistDetailsComponent {
   onLoadPlaylistById(id: number) {
     this.isLoading.set(true);
     this.playlistService.onGetPlaylistById(id).subscribe({
-      next: (res: any) => this.playlistForm.patchValue(res[0]),
+      next: (res: any) => this.playlistForm.patchValue(res),
       error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
       complete: () => this.isLoading.set(false)
     })
