@@ -51,7 +51,7 @@ export class AssetListComponent {
     { 
       label: 'More',
       items: [
-        // { label: 'Add to Playlist', icon: 'pi pi-list', command: ($event: any) => this.onClickMultipleToPlaylist($event) },
+        { label: 'Add to Playlist', icon: 'pi pi-list', command: ($event: any) => this.onClickMultipleToPlaylist($event) },
         { label: 'Audience Tag', icon: 'pi pi-users', command: ($event: any) => this.onClickAudienceTag($event) },
         { label: 'Delete', icon: 'pi pi-trash', command: ($event: any) => this.onClickDeleteMultiple($event), styleClass: 'delete-menu-item' },
       ]
