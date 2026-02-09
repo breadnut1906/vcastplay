@@ -78,9 +78,6 @@ export class PlaylistDetailsComponent {
 
   ngOnDestroy(event: Event) {    
     this.isEdit.set(false);
-    // this.playlistForm.markAsPristine();
-    // this.playlistForm.markAsUntouched();
-    // this.playlistForm.reset();
   }
 
   async onClickSave(event: Event) {
@@ -106,13 +103,13 @@ export class PlaylistDetailsComponent {
           } else {
             return { layoutId: entry.layoutId, duration: entry.duration, sequence: entry.sequence, type: entry.type };
           }
-        })        
-        this.playlistForm.patchValue({ entries: newEntries });
+        })
+        
         const { id, ...playlist }: any = this.playlistForm.value;
-        this.playlistService.onSavePlaylist(id, playlist, this.isEdit()).subscribe({
+        this.playlistService.onSavePlaylist(id, { ...playlist, entries: newEntries }, this.isEdit()).subscribe({
           next: (res: any) => this.message.add({ severity:'success', summary: 'Success', detail: 'Playlist saved successfully!' }),
           error: (error: any) => this.message.add({ severity: 'error', summary: 'Error', detail: error.error.message }),
-          complete: () => this.router.navigate([ '/playlist/playlist-library' ])
+          // complete: () => this.router.navigate([ '/playlist/playlist-library' ])
         })
       },
     });

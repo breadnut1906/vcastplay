@@ -95,7 +95,7 @@ export class SchedulesService {
             borderColor: color, 
             extendedProps: { type, content }, 
             allDay: isAllDay || false,
-            editable: false
+            editable: true
           })
           index++;
         }
@@ -115,7 +115,7 @@ export class SchedulesService {
           borderColor: color,
           extendedProps: { type, content }, 
           allDay: isAllDay || false,
-          editable: false
+          editable: true
         })
       }
 

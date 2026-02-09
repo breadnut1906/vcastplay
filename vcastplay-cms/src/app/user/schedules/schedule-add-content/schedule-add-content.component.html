@@ -3,25 +3,15 @@
     header="Add Content"
     [style]="{ width: '40rem' }"
     [draggable]="false"
+    (onShow)="onDialogShow()"
     closable
     modal
 >
     <div class="flex flex-col gap-4" [formGroup]="contentForm">
         <div class="grid grid-cols-12 items-center gap-4 py-2">
-            <p-inputgroup class="col-span-9 w-full" formGroupName="content">
-                <p-inputgroup-addon>
-                    <i class="pi pi-file"></i>
-                </p-inputgroup-addon>
-                <p-floatlabel variant="on">
-                    <input type="text" placeholder="Content" formControlName="name" readonly pInputText fluid>
-                </p-floatlabel>
-                <p-inputgroup-addon>
-                    <p-button (onClick)="showContents.set(true)" icon="pi pi-search" />
-                </p-inputgroup-addon>
-            </p-inputgroup>
             <p-floatlabel class="col-span-3 w-full" variant="on">
-                <p-select inputId="color" formControlName="color" [options]="filteredColor()" [ngClass]="{ 'ng-dirty ng-invalid': contentForm.invalid }"
-                    optionLabel="text" optionValue="hex" appendTo="body" fluid>
+                <p-select inputId="color" formControlName="color" [options]="filteredColor()" optionLabel="text" optionValue="hex" appendTo="body" fluid
+                    [ngClass]="{ 'ng-invalid ng-dirty': formcontrol('color').invalid && formcontrol('color').touched }" >
                     <ng-template #selectedItem let-color>
                         <div class="flex items-center gap-2">
                             <div class="w-5 h-5" [style.background-color]="color.hex"></div>
@@ -37,6 +27,17 @@
                 </p-select>
                 <label for="color">Color</label>
             </p-floatlabel>
+            <p-inputgroup class="col-span-9 w-full" formGroupName="content">
+                <p-inputgroup-addon>
+                    <i class="pi pi-file"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel variant="on">
+                    <input type="text" placeholder="Content" formControlName="name" (click)="showContents.set(true)" readonly pInputText fluid>
+                </p-floatlabel>
+                <p-inputgroup-addon>
+                    <p-button (onClick)="showContents.set(true)" icon="pi pi-search" />
+                </p-inputgroup-addon>
+            </p-inputgroup>
         </div>
         <div class="flex gap-4">
             <p-floatlabel class="w-full" variant="on">
@@ -71,7 +72,7 @@
     </div>
     <ng-template #footer>
         <p-button (onClick)="onCloseDialog()" label="Cancel" severity="secondary" text />
-        <p-button (onClick)="onAddContent()" label="Save" severity="success" [disabled]="contentForm.invalid" />
+        <p-button (onClick)="onAddContent()" label="Save" severity="success" />
     </ng-template>
 </p-dialog>
 

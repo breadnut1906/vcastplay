@@ -5,6 +5,7 @@ import { ContentSelectionComponent } from '../../../shared/components/content-se
 import { WeekdayHourSelectionComponent } from '../../../shared/components/weekday-hour-selection/weekday-hour-selection.component';
 import { UtilityService } from '../../../core/services/utility.service';
 import moment from 'moment';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-schedule-add-content',
@@ -17,6 +18,7 @@ export class ScheduleAddContentComponent {
   @Input() dialog = signal<boolean>(false);
   @Output() onAddContentChange = new EventEmitter<any>();
 
+  message = inject(MessageService);
   utils = inject(UtilityService);
 
   formBuilder = inject(FormBuilder);
@@ -38,6 +40,13 @@ export class ScheduleAddContentComponent {
   showContents = signal<boolean>(false);
   
   constructor() {  }
+
+  onDialogShow() {
+    this.contentForm.patchValue({
+      start: moment(new Date()).startOf('week').toDate(),
+      end: moment(new Date()).endOf('week').toDate()
+    })
+  }
   
   onDateRangeValidator(group: AbstractControl): ValidationErrors | null {
     const start = group.get('start')?.value;
@@ -54,6 +63,11 @@ export class ScheduleAddContentComponent {
   })
 
   onAddContent() {
+    if (this.contentForm.invalid) {
+      this.message.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
+      this.contentForm.markAllAsTouched();
+      return;
+    }
     this.onAddContentChange.emit(this.contentForm.value);
     this.onCloseDialog();
   }

@@ -84,6 +84,8 @@ export class WeekdayHourSelectionComponent {
     return weekdaysCtrl?.length > 0 && weekdaysCtrl.length < this.weekdays.length;
   }
 
+  formControl(fieldName: string) { return this.formGroup.get(fieldName); }
+
   get isAllDay() { return this.formGroup.get('isAllDay')?.value; }
   get isAllWeekdays() { return this.formGroup.get('isAllWeekdays')?.value; }
   get weekdaysControl() { return this.formGroup.get('weekdays'); }

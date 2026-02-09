@@ -25,7 +25,8 @@
         </div>
         @for (item of weekdays; track $index) {
         <div class="flex items-center gap-2">
-          <p-checkbox [value]="item" formControlName="weekdays" (onChange)="onWeekdayChange($event)" [readonly]="isAllDay || isDisabled" />
+          <p-checkbox [value]="item" formControlName="weekdays" (onChange)="onWeekdayChange($event)" [readonly]="isAllDay || isDisabled" 
+            [ngClass]="{ 'ng-invalid ng-dirty': formControl('weekdays')?.invalid && formControl('weekdays')?.touched }"/>
           <label [for]="item">{{ item }}</label>
         </div>
         }

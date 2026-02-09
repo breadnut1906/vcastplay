@@ -69,15 +69,6 @@
             <full-calendar #scheduleCalendar [options]="calendarOptions"></full-calendar>
         </div>
         <ng-template #footer>
-            <!-- <div class="hidden md:grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                <ng-container *ngTemplateOutlet="totalInfo; context: { $implicit: totalByType() }"></ng-container>
-            </div>
-            <p-button class="md:hidden" label="Info" icon="pi pi-info-circle" (onClick)="infoPop.show($event)" size="small" />
-            <p-popover #infoPop appendTo="body">
-                <div class="grid gap-2">
-                    <ng-container *ngTemplateOutlet="totalInfo; context: { $implicit: totalByType() }"></ng-container>
-                </div>
-            </p-popover> -->
             <div class="py-2 md:flex grid grid-cols-2 sm:grid-cols-5 gap-6">
                 <ng-container *ngTemplateOutlet="totalInfo; context: { $implicit: fileCount() }"></ng-container>
             </div>
